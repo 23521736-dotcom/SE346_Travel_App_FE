@@ -11,23 +11,29 @@ import { colors } from '../common/colors';
 
 export default function DetailLocationScreen({ navigation, route }: any) {
     const placeId = route.params?.placeId as string | undefined;
-    const [place, setPlace] = useState<PlaceDetail | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [isLiked, setIsLiked] = useState(false);
+    const fallbackPlace = route.params?.placeData as PlaceDetail | undefined;
+    const [place, setPlace] = useState<PlaceDetail | null>(fallbackPlace || null);
+    const [loading, setLoading] = useState(Boolean(placeId));
+    const [isLiked, setIsLiked] = useState(Boolean(fallbackPlace?.isFavorite));
 
     const loadPlace = useCallback(async () => {
-        if (!placeId) return;
+        if (!placeId) {
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
         try {
             const data = await fetchPlaceDetail(placeId);
             setPlace(data);
             setIsLiked(Boolean(data.isFavorite));
         } catch {
-            setPlace(null);
+            setPlace(fallbackPlace || null);
+            setIsLiked(Boolean(fallbackPlace?.isFavorite));
         } finally {
             setLoading(false);
         }
-    }, [placeId]);
+    }, [fallbackPlace, placeId]);
 
     useEffect(() => {
         loadPlace();

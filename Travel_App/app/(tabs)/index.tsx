@@ -11,6 +11,7 @@ import OwnerManagementScreen from './screens/OwnerManagementScreen';
 import PlanningTrip from './screens/PlanningTrip';
 import ProfileScreen from './screens/ProfileScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import SavedTripScreen from './screens/SavedTripScreen';
 import TripDiaryScreen from './screens/TripDiaryScreen';
 import TripSettingScreen from './screens/TripSettingScreen';
 import ViewReviewsScreen from './screens/ViewReviewsScreen';
@@ -41,6 +42,16 @@ const MainTabs = () => {
         options={{
           headerShown: false, tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Saved Trip"
+        component={SavedTripScreen}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="heart" size={size} color={color} />
           ),
         }}
       />
