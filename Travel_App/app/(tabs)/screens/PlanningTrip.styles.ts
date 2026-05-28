@@ -10,648 +10,442 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
 
-  header: {
-    paddingHorizontal: 18,
-    paddingTop: 52,
-    paddingBottom: 14,
-    backgroundColor: colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
+  container: { flex: 1, backgroundColor: '#F3F6FA' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 40 },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#1a202c' },
+  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
 
-  headerButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  headerSaveButton: {
-    minWidth: 58,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 12,
-  },
-
-  headerSaveText: {
-    color: colors.white,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-
-  headerTitle: {
-    color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: "800",
-  },
-
-  scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 36,
-  },
-
-  settingsCard: {
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    padding: 18,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-
-  cardHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 18,
-    columnGap: 14,
-  },
-
-  cardTitleWrap: {
-    flex: 1,
-  },
-
-  cardTitle: {
-    color: colors.textPrimary,
-    fontSize: 18,
-    fontWeight: "800",
-  },
-
-  statusRow: {
-    alignSelf: "flex-start",
-    backgroundColor: colors.primaryLight,
-    borderRadius: 7,
-    marginTop: 6,
-    paddingHorizontal: 9,
-    paddingVertical: 4,
-  },
-
-  statusText: {
-    color: colors.primaryDark,
+  card: { backgroundColor: '#fff', borderRadius: 24, padding: 20, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#2d3748' },
+  actionButtons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  modifyBtnText: { color: '#0EB4D3', fontWeight: 'bold', fontSize: 13 },
+  infoGrid: { flexDirection: 'row', marginBottom: 16 },
+  infoCol: { flex: 1 },
+  label: { fontSize: 12, color: '#a0aec0', marginBottom: 6, fontWeight: '600' },
+  iconRow: { flexDirection: 'row', alignItems: 'center' },
+  infoValue: { fontSize: 14, fontWeight: '700', color: '#2d3748' },
+  dateRangeText: {
+    color: '#94A3B8',
     fontSize: 11,
-    fontWeight: "800",
+    fontWeight: '600',
+    marginTop: 5,
   },
+  bottomSettingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
 
-  cardActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 12,
-  },
-
-  saveButton: {
-    backgroundColor: colors.primary,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 8,
-  },
-
-  saveButtonText: {
-    color: colors.white,
-    fontSize: 12,
-    fontWeight: "800",
-  },
-
-  modifyText: {
-    color: colors.primary,
-    fontSize: 14,
-    fontWeight: "700",
-  },
-
-  autoFillButton: {
-    minHeight: 36,
-    borderRadius: 9,
-    backgroundColor: colors.successSoft,
-    borderWidth: 1,
-    borderColor: "#BBF7D0",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    columnGap: 6,
-    paddingHorizontal: 12,
-  },
-
-  autoFillButtonText: {
-    color: colors.success,
-    fontSize: 12,
-    fontWeight: "900",
-  },
-
-  settingsGrid: {
-    flexDirection: "row",
-    columnGap: 16,
-    marginBottom: 12,
-  },
-
-  settingBlock: {
-    flex: 1,
-  },
-
-  metaLabel: {
-    color: "#94A3B8",
-    fontSize: 12,
-    fontWeight: "600",
-    marginBottom: 7,
-  },
-
-  settingRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 8,
-  },
-
-  settingButton: {
-    minHeight: 42,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    backgroundColor: "#F8FAFC",
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    columnGap: 8,
-    paddingHorizontal: 10,
-  },
-
-  settingValue: {
-    flex: 1,
-    color: colors.textPrimary,
-    fontSize: 13,
-    fontWeight: "800",
-  },
-
-  chipWrap: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
-    marginBottom: 20,
-  },
-
-  interestChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 8,
-    backgroundColor: colors.primaryLight,
-  },
-
-  interestChipText: {
-    color: colors.primaryDark,
-    fontSize: 12,
-    fontWeight: "700",
-  },
-
-  summaryDivider: {
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    paddingTop: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    columnGap: 14,
-  },
-
-  avatarRow: {
-    flexDirection: "row",
-  },
-
-  memberAvatar: {
+  avatarGroup: { flexDirection: 'row', alignItems: 'center', paddingLeft: 0 },
+  avatar: {
     width: 34,
     height: 34,
     borderRadius: 17,
     borderWidth: 2,
-    borderColor: colors.surface,
-    marginRight: -8,
-    overflow: "hidden",
+    borderColor: '#fff',
+    backgroundColor: '#edf2f7',
   },
-
-  memberCountAvatar: {
+  avatarOverlap: {
+    marginLeft: -10,
+  },
+  avatarMore: {
     width: 34,
     height: 34,
     borderRadius: 17,
-    backgroundColor: colors.primaryDark,
-    alignItems: "center",
-    justifyContent: "center",
     borderWidth: 2,
-    borderColor: colors.surface,
-    marginRight: -8,
+    borderColor: '#fff',
+    backgroundColor: '#0EB4D3',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-
-  memberCountText: {
-    color: colors.white,
+  avatarMoreText: {
+    color: '#fff',
     fontSize: 11,
-    fontWeight: "900",
+    fontWeight: '900',
   },
-
-  addAvatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-    borderWidth: 2,
-    borderColor: colors.surface,
+  emptyMembersText: {
+    fontSize: 12,
+    color: '#a0aec0',
+    marginLeft: 8,
+    fontStyle: 'italic',
   },
-
-  addAvatarWithMembers: {
-    marginLeft: 0,
-  },
-
-  memberMeta: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: "600",
-    marginTop: 6,
-  },
-
-  budgetBlock: {
-    flex: 1,
-    alignItems: "flex-end",
-  },
-
-  budgetText: {
-    color: colors.primaryDark,
-    fontSize: 18,
-    fontWeight: "800",
-  },
-
-  budgetInput: {
-    minWidth: 118,
-    minHeight: 42,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    backgroundColor: "#F8FAFC",
-    color: colors.primaryDark,
-    fontSize: 18,
-    fontWeight: "800",
-    textAlign: "right",
-    paddingHorizontal: 10,
-  },
-
-  budgetSuffix: {
-    color: colors.textSecondary,
-    fontSize: 10,
-    fontWeight: "500",
-  },
+  avatarPlus: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#edf2f7', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff' },
+  budgetAmount: { fontSize: 18, fontWeight: 'bold', color: '#0EB4D3' },
+  budgetUnit: { fontSize: 12, color: '#a0aec0', fontWeight: 'normal' },
 
   dayHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff', // Giữ nền trắng
+    padding: 16,
+    borderRadius: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2
   },
 
   dayBadge: {
-    width: 50,
-    height: 50,
-    borderRadius: 12,
-    backgroundColor: colors.primary,
-    alignItems: "center",
-    justifyContent: "center",
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.18,
-    shadowRadius: 10,
-    elevation: 4,
+    backgroundColor: '#0EB4D3',
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#0EB4D3',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4
+  },
+  dayBadgeText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
+
+  dayTitleCol: { flex: 1, marginLeft: 12 },
+  dayTitle: { fontSize: 16, fontWeight: 'bold', color: '#2d3748' },
+  daySubtitle: { fontSize: 13, color: '#a0aec0', marginTop: 2 },
+
+  iconButton: {
+    width: 24,
+    alignItems: 'center',
   },
 
-  dayBadgeText: {
-    color: colors.white,
+  section: {
+    marginBottom: 24,
+  },
+
+  scheduleDayHeader: {
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+
+  scheduleDayTitle: {
     fontSize: 18,
-    fontWeight: "900",
+    fontWeight: 'bold',
+    color: '#333',
   },
 
-  dayTitleWrap: {
+  scheduleDayDate: {
+    color: '#888',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+
+  dayContainer: {
+    marginBottom: 24,
+  },
+
+  itineraryCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#EDF0F2',
+  },
+
+  itineraryImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    marginRight: 12,
+  },
+
+  itineraryInfo: {
     flex: 1,
   },
 
-  dayTitle: {
-    color: colors.textPrimary,
-    fontSize: 20,
-    fontWeight: "800",
+  itineraryTitle: {
+    fontSize: 15,
+    fontWeight: 'bold',
+    color: '#000',
   },
 
-  dayDate: {
-    color: colors.textSecondary,
-    fontSize: 13,
-    fontWeight: "600",
-    marginTop: 3,
+  itineraryRating: {
+    fontSize: 12,
+    color: '#888',
+    marginBottom: 8,
+    marginTop: 2,
   },
 
-  dayThumb: {
+  itineraryDetailsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    rowGap: 6,
+  },
+
+  costDetailBlock: {
+    marginLeft: 20,
+  },
+
+  detailLabel: {
+    fontSize: 10,
+    color: '#888',
+    marginBottom: 2,
+  },
+
+  detailValue: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+
+  deleteBtn: {
+    padding: 8,
+  },
+
+  addLocationBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: '#1E88E5',
+    borderStyle: 'dashed',
+    borderRadius: 12,
+    marginTop: 4,
+  },
+
+  addLocationIcon: {
+    marginRight: 8,
+  },
+
+  addLocationText: {
+    color: '#1E88E5',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+
+  budgetCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#EDF0F2',
+  },
+
+  budgetIconContainer: {
+    backgroundColor: '#1E88E5',
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: colors.surfaceMuted,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+  },
+
+  budgetInfo: {
+    flex: 1,
+  },
+
+  budgetCardAmount: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+
+  budgetCurrency: {
+    fontSize: 13,
+    color: '#888',
+  },
+
+  timelineDay: {
+    marginBottom: 14,
+  },
+
+  dayHeaderExpanded: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 0,
+    paddingVertical: 10,
+    marginBottom: 4,
+  },
+
+  dayHeaderCollapsed: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F8FF',
+    padding: 17,
+    borderRadius: 20,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#B9ECF8',
+    shadowColor: '#0EB4D3',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.12,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+
+  dayBadgeExpanded: {
+    backgroundColor: '#0EB4D3',
+    width: 34,
+    height: 34,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dayBadgeCollapsed: {
+    backgroundColor: '#0EB4D3',
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  dayBadgeTextExpanded: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 14,
+  },
+
+  dayBadgeTextCollapsed: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 16,
+  },
+
+  dayTitleExpanded: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#2d3748',
+  },
+
+  dayTitleCollapsed: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#075B70',
   },
 
   timelineWrap: {
-    position: "relative",
-    paddingLeft: 15,
-    rowGap: 28,
+    position: 'relative',
+    paddingLeft: 16,
+    marginLeft: 16,
+    paddingBottom: 8,
   },
 
   timelineLine: {
-    position: "absolute",
-    left: 20,
-    top: 0,
-    bottom: 0,
-    width: 2,
-    backgroundColor: "#E2E8F0",
+    position: 'absolute',
+    left: 4,
+    top: 4,
+    bottom: 8,
+    width: 1,
+    backgroundColor: '#D9E4EE',
   },
 
-  timeBlock: {
-    position: "relative",
+  timelineItem: {
+    marginBottom: 18,
   },
 
   timeHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 8,
-    marginBottom: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+    marginLeft: -16,
   },
 
   timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: colors.surface,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     borderWidth: 2,
-    borderColor: colors.primary,
-    zIndex: 1,
+    borderColor: '#0EB4D3',
+    backgroundColor: '#fff',
+    marginRight: 10,
   },
 
   timeTitle: {
-    color: colors.primary,
-    fontSize: 12,
-    fontWeight: "900",
-    textTransform: "uppercase",
-    letterSpacing: 1,
+    color: '#0EB4D3',
+    fontSize: 10,
+    fontWeight: '900',
   },
 
   timeText: {
-    color: "#CBD5E1",
-    fontWeight: "600",
-  },
-
-  activityCard: {
-    marginLeft: 18,
-    backgroundColor: colors.surface,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    padding: 14,
-    shadowColor: colors.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    marginBottom: 5,
-  },
-
-  activityContent: {
-    flexDirection: "row",
-    columnGap: 13,
-    marginBottom: 14,
-  },
-
-  imagePlaceholder: {
-    width: 92,
-    height: 92,
-    borderRadius: 16,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  activityInfo: {
-    flex: 1,
-  },
-
-  activityTitleRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    justifyContent: "space-between",
-    columnGap: 8,
-  },
-
-  activityTitle: {
-    flex: 1,
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: "800",
-  },
-
-  ratingPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 3,
-    backgroundColor: "#FFF7ED",
-    paddingHorizontal: 6,
-    paddingVertical: 3,
-    borderRadius: 5,
-  },
-
-  ratingText: {
-    color: "#EA580C",
+    color: '#A0AEC0',
     fontSize: 10,
-    fontWeight: "900",
+    fontWeight: '700',
   },
 
-  activityDescription: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    lineHeight: 16,
+  timelineCard: {
+    marginLeft: 12,
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+
+  timelineImage: {
+    width: 76,
+    height: 76,
+    borderRadius: 10,
+    marginRight: 14,
+  },
+
+  timelineInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  timelineTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 6,
+  },
+
+  timelineTitle: {
+    flex: 1,
+    color: '#2D3748',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+
+  timelineDescription: {
+    color: '#718096',
+    fontSize: 12,
+    lineHeight: 17,
     marginTop: 5,
   },
 
-  costRow: {
-    marginTop: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    columnGap: 8,
+  ratingPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF7ED',
+    borderRadius: 6,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    columnGap: 2,
   },
 
-  freePill: {
-    backgroundColor: colors.successSoft,
-    borderWidth: 1,
-    borderColor: "#BBF7D0",
-    borderRadius: 6,
+  ratingText: {
+    color: '#F97316',
+    fontSize: 9,
+    fontWeight: '900',
+  },
+
+  estimatePill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#CFFAF0',
+    borderRadius: 4,
     paddingHorizontal: 8,
     paddingVertical: 5,
+    marginTop: 10,
   },
 
-  freePillText: {
-    color: colors.success,
+  estimateText: {
+    color: '#0FAD90',
     fontSize: 10,
-    fontWeight: "900",
-  },
-
-  splitButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 4,
-    backgroundColor: "#F97316",
-    borderRadius: 8,
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-  },
-
-  splitButtonText: {
-    color: colors.white,
-    fontSize: 10,
-    fontWeight: "900",
-  },
-
-  nearbyRow: {
-    borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
-    paddingTop: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 8,
-    flexWrap: "wrap",
-    
-  },
-
-  nearbyLabel: {
-    color: colors.textMuted,
-    fontSize: 10,
-    fontWeight: "900",
-    textTransform: "uppercase",
-  },
-
-  addPlaceButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 4,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 14,
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-  },
-
-  addPlaceButtonText: {
-    color: colors.textSecondary,
-    fontSize: 10,
-    fontWeight: "700",
-  },
-
-  nearbyChip: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 4,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    backgroundColor: "#F8FAFC",
-    borderRadius: 14,
-    paddingHorizontal: 9,
-    paddingVertical: 6,
-  },
-
-  nearbyText: {
-    color: colors.textSecondary,
-    fontSize: 10,
-    fontWeight: "700",
-  },
-
-  transitPill: {
-    alignSelf: "flex-start",
-    marginLeft: 42,
-    marginTop: 20,
-    backgroundColor: "#EEF2FF",
-    borderWidth: 1,
-    borderColor: "#E0E7FF",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 9,
-  },
-
-  transitText: {
-    color: "#4F46E5",
-    fontSize: 12,
-    fontWeight: "800",
-  },
-
-  transitCost: {
-    color: "#818CF8",
-    fontSize: 10,
-    fontWeight: "700",
-  },
-
-  otherDays: {
-    marginTop: 28,
-    rowGap: 12,
-  },
-
-  daysList: {
-    marginTop: 24,
-    rowGap: 20,
-  },
-
-  daySection: {
-    rowGap: 18,
-  },
-
-  dayPlaceholder: {
-    backgroundColor: colors.surface,
-    borderRadius: 22,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-    padding: 14,
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 13,
-    opacity: 0.82,
-  },
-
-  dayPlaceholderBadge: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: colors.surfaceMuted,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  dayPlaceholderText: {
-    color: colors.textMuted,
-    fontSize: 16,
-    fontWeight: "900",
-  },
-
-  dayPlaceholderInfo: {
-    flex: 1,
-  },
-
-  dayPlaceholderTitle: {
-    color: colors.textPrimary,
-    fontSize: 15,
-    fontWeight: "800",
-  },
-
-  dayPlaceholderMeta: {
-    color: colors.textSecondary,
-    fontSize: 11,
-    fontWeight: "600",
-    marginTop: 3,
+    fontWeight: '900',
   },
 });
 

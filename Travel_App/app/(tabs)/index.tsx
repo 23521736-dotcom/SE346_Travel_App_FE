@@ -14,6 +14,9 @@ import RegisterScreen from './screens/RegisterScreen';
 import TripDiaryScreen from './screens/TripDiaryScreen';
 import TripSettingScreen from './screens/TripSettingScreen';
 import ViewReviewsScreen from './screens/ViewReviewsScreen';
+import EditingTripScreen from './screens/EditingTripScreen';
+import AddLocationScreen_user from './screens/AddLocationScreen_user';
+import AddCollaboratorsScreen from './screens/AddCollaboratorsScreen';
 
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -195,6 +198,18 @@ const RootNavigation = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+          name="EditingTrip"
+          component={EditingTripScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen
+          name="AddLocation_user"
+          component={AddLocationScreen_user}
+          options={{ headerShown: false }} />
+        <Stack.Screen
+          name="AddCollaborators"
+          component={AddCollaboratorsScreen}
+          options={{ headerShown: false }} />
+        <Stack.Screen
         name="Trip Diary"
         component={TripDiaryScreen}
         options={{ headerShown: false }}

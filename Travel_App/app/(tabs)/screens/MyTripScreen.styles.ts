@@ -76,6 +76,54 @@ const styles = StyleSheet.create({
     borderRadius: 29,
   },
 
+  featuredOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.34)",
+  },
+
+  featuredInfo: {
+    flex: 1,
+    justifyContent: "flex-end",
+    padding: 18,
+  },
+
+  featuredBadge: {
+    alignSelf: "flex-start",
+    borderRadius: 6,
+    backgroundColor: "rgba(255,255,255,0.9)",
+    paddingHorizontal: 9,
+    paddingVertical: 4,
+    marginBottom: 8,
+  },
+
+  featuredBadgeText: {
+    color: colors.textPrimary,
+    fontSize: 10,
+    fontWeight: "900",
+    textTransform: "uppercase",
+  },
+
+  featuredTripTitle: {
+    color: colors.white,
+    fontSize: 24,
+    fontWeight: "900",
+    marginBottom: 8,
+  },
+
+  featuredMetaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 6,
+    marginTop: 4,
+  },
+
+  featuredMetaText: {
+    flex: 1,
+    color: "rgba(255,255,255,0.92)",
+    fontSize: 12,
+    fontWeight: "700",
+  },
+
   featuredActions: {
     flexDirection: "row",
     columnGap: 12,
