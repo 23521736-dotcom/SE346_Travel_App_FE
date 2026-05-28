@@ -1,0 +1,7 @@
+env: load .env
+env: export EXPO_PUBLIC_API_BASE_URL
+Starting project at D:\SE336-Lap trinh thiet bi di dong\Travel-app-main\Travel_App
+React Compiler enabled
+Starting Metro Bundler
+Waiting on http://localhost:8082
+Logs for your project will appear below.

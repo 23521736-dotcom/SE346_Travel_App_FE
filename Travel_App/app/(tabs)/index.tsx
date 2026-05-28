@@ -2,12 +2,17 @@ import AddLocationScreen from './screens/AddLocationScreen';
 import DashboardScreen from './screens/DashboardScreen';
 import DetailLocationScreen from './screens/DetailLocationScreen';
 import EditProfileScreen from './screens/EditProfileScreen';
+import EditTripDiaryScreen from './screens/EditTripDiaryScreen';
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import LogoutScreen from './screens/LogoutScreen';
+import MyTripScreen from './screens/MyTripScreen';
 import OwnerManagementScreen from './screens/OwnerManagementScreen';
+import PlanningTrip from './screens/PlanningTrip';
 import ProfileScreen from './screens/ProfileScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import TripDiaryScreen from './screens/TripDiaryScreen';
+import TripSettingScreen from './screens/TripSettingScreen';
 import ViewReviewsScreen from './screens/ViewReviewsScreen';
 
 import { Ionicons } from '@expo/vector-icons';
@@ -15,8 +20,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { AuthProvider, useAuth } from './context/AuthContext';
 import { colors } from './common/colors';
+import { AuthProvider, useAuth } from './context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -33,6 +38,16 @@ const MainTabs = () => {
         options={{
           headerShown: false, tabBarIcon: ({ color, size }) => (
             <Ionicons name="home" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="My Trip"
+        component={MyTripScreen}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="map" size={size} color={color} />
           ),
         }}
       />
@@ -167,6 +182,26 @@ const RootNavigation = () => {
       <Stack.Screen
         name="Detail Location"
         component={DetailLocationScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="TripSetting"
+        component={TripSettingScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="PlanningTrip"
+        component={PlanningTrip}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Trip Diary"
+        component={TripDiaryScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Edit Trip Diary"
+        component={EditTripDiaryScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
