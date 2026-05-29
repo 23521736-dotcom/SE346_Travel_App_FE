@@ -7,7 +7,7 @@ import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import LogoutScreen from './screens/LogoutScreen';
 import MyTripScreen from './screens/MyTripScreen';
-import NotificationScreen from './screens/NotificationScreen';
+import NotificationScreenUser from './screens/NotificationScreen_user';
 import OwnerManagementScreen from './screens/OwnerManagementScreen';
 import PlanningTrip from './screens/PlanningTrip';
 import ProfileScreen from './screens/ProfileScreen';
@@ -68,7 +68,7 @@ const MainTabs = () => {
       />
       <Tab.Screen
         name="Notifications"
-        component={NotificationScreen}
+        component={NotificationScreenUser}
         options={{
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
