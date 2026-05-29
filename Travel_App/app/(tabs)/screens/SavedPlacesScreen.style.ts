@@ -1,14 +1,13 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../common/colors";
 import { commonStyles } from "../common/styles";
 
 const styles = StyleSheet.create({
     ...commonStyles,
 
     container: { flex: 1, backgroundColor: '#f8fafc' },
-    headerContainer: { paddingHorizontal: 20, paddingTop: 20, backgroundColor: '#fff', paddingBottom: 10 },
+    headerContainer: { paddingHorizontal: 20, paddingTop: 35, backgroundColor: '#fff', paddingBottom: 10 },
     headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-    headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#1e293b' },
+    headerTitle: { fontSize: 25, fontWeight: 'bold', color: '#1e293b' },
     searchContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 15, position: 'relative' },
     searchIcon: { position: 'absolute', left: 15, zIndex: 1 },
     clearIcon: { position: 'absolute', right: 15, zIndex: 1 },
@@ -25,7 +24,7 @@ const styles = StyleSheet.create({
     cardImage: { width: '100%', height: '100%' },
     discountBadge: { position: 'absolute', top: 15, left: 15, backgroundColor: '#2563eb', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
     discountText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
-    heartButton: { position: 'absolute', top: 15, right: 15, backgroundColor: '#fff', padding: 8, borderRadius: 20 },
+    heartButton: { position: 'absolute', top: 15, right: 15, backgroundColor: 'rgba(0,0,0,0.25)', padding: 8, borderRadius: 20 },
     priceBadge: { position: 'absolute', bottom: 15, right: 15, backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 6 },
     priceText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
     cardBody: { padding: 15 },

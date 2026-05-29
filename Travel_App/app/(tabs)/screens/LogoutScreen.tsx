@@ -23,7 +23,7 @@ export default function LogoutScreen({ navigation }: any) {
             Leaving so soon?
           </Text>
           <Text style={{ color: 'grey', fontSize: 17 }}>
-            Are you sure you want to log out? Your saved trips will be waiting for you when you return.
+            Are you sure you want to log out? Your saved places will be waiting for you when you return.
           </Text>
         </View>
 

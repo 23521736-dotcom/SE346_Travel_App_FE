@@ -7,14 +7,15 @@ import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import LogoutScreen from './screens/LogoutScreen';
 import MyTripScreen from './screens/MyTripScreen';
+import NotificationScreen from './screens/NotificationScreen';
 import OwnerManagementScreen from './screens/OwnerManagementScreen';
 import PlanningTrip from './screens/PlanningTrip';
 import ProfileScreen from './screens/ProfileScreen';
 import RegisterScreen from './screens/RegisterScreen';
-import SavedTripScreen from './screens/SavedTripScreen';
+import SavedPlacesScreen from './screens/SavedPlacesScreen';
 import TripDiaryScreen from './screens/TripDiaryScreen';
-import TripSettingScreen from './screens/TripSettingScreen';
 import ViewReviewsScreen from './screens/ViewReviewsScreen';
+import WriteReviewScreen from './screens/WriteReviewScreen';
 import EditingTripScreen from './screens/EditingTripScreen';
 import AddLocationScreen_user from './screens/AddLocationScreen_user';
 import AddCollaboratorsScreen from './screens/AddCollaboratorsScreen';
@@ -46,8 +47,8 @@ const MainTabs = () => {
         }}
       />
       <Tab.Screen
-        name="Saved Trip"
-        component={SavedTripScreen}
+        name="Saved Places"
+        component={SavedPlacesScreen}
         options={{
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
@@ -62,6 +63,16 @@ const MainTabs = () => {
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="map" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Notifications"
+        component={NotificationScreen}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="notifications" size={size} color={color} />
           ),
         }}
       />
@@ -199,11 +210,6 @@ const RootNavigation = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-        name="TripSetting"
-        component={TripSettingScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
         name="PlanningTrip"
         component={PlanningTrip}
         options={{ headerShown: false }}
@@ -238,6 +244,11 @@ const RootNavigation = () => {
       <Stack.Screen
         name="All Reviews"
         component={ViewReviewsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Write Review"
+        component={WriteReviewScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

@@ -49,6 +49,9 @@ export type PlaceDetail = {
 
 export type ReviewListItem = {
   id: string;
+  userId?: number | string;
+  authorId?: number | string;
+  UserId?: number | string;
   username: string;
   Rate: number;
   date: string;
