@@ -46,7 +46,7 @@ const MainTabs = () => {
         }}
       />
       <Tab.Screen
-        name="Saved Trip"
+        name="Saved Place"
         component={SavedTripScreen}
         options={{
           headerShown: false,
