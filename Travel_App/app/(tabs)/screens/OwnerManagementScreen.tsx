@@ -11,7 +11,7 @@ import {
   fetchPlacePromotions,
 } from '../../../lib/api/owner';
 import type { OwnerPlace } from '../../../lib/api/owner';
-import type { PromotionItem } from '../types/promotion';
+import type { PromotionItem } from '@/lib/types/promotion';
 import { getApiErrorMessage } from '../context/AuthContext';
 
 const renderPlace = (item: OwnerPlace, onEdit: (item: OwnerPlace) => void) => {

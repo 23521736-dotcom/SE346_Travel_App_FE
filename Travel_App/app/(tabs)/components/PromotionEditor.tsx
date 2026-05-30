@@ -1,4 +1,4 @@
-import { formatDate, getTimeValue } from '@/app/service/PromotionShedule';
+import { formatDate, getTimeValue } from '@/lib/service/PromotionShedule';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';

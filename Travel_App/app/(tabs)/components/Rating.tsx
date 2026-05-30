@@ -55,14 +55,15 @@ export const RatingBar = ({ stars, percentage }: { stars: number, percentage: nu
 
 export const ratingBarStyles = StyleSheet.create({
   mainContainer: {
-    width: '90%',
-    padding: 20,
+    width: '80%',
+    padding: 10,
     borderRadius: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.5,
     shadowRadius: 5,
     elevation: 3,
+    backgroundColor: 'black'
   },
   barRowContainer: {
     flexDirection: 'row',
@@ -75,17 +76,18 @@ export const ratingBarStyles = StyleSheet.create({
     marginRight: 10,
   },
   starText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
     color: BAR_COLOR,
   },
   progressTrack: {
     flex: 1,
-    height: 12,
+    height: 7,
     backgroundColor: BAR_COLOR,
     borderRadius: 6,
     overflow: 'hidden',
     marginRight: 15,
+    
   },
   progressFilled: {
     height: '100%',
@@ -95,9 +97,10 @@ export const ratingBarStyles = StyleSheet.create({
   percentageContainer: {
     width: 25,
     alignItems: 'flex-end',
+    //backgroundColor: 'red'
   },
   percentageText: {
-    fontSize: 14,
+    fontSize: 12,
     color: BAR_COLOR,
   },
 });

@@ -1,9 +1,10 @@
 import type { ApiOk, PlaceListItem } from './types';
+import { normalizePlaceListItem } from './types';
 import { apiClient } from './client';
 
 export async function fetchFavorites(): Promise<PlaceListItem[]> {
   const res = await apiClient.get<ApiOk<PlaceListItem[]>>('/users/me/favorites');
-  return res.data.data;
+  return res.data.data.map((item) => normalizePlaceListItem(item as any));
 }
 
 export async function addFavorite(placeId: string): Promise<void> {

@@ -1,4 +1,4 @@
-import { type Schedule, type PromotionItem } from "../types/promotion";
+import { type Schedule, type PromotionItem } from '../types/promotion';
 
 export const PromotionData: PromotionItem[] = [
   {
@@ -21,7 +21,7 @@ export const PromotionData: PromotionItem[] = [
     schedule: {
       startDate: 'Oct 10, 2024',
       endDate: 'Oct 30, 2024',
-      days: ['Sa', 'S'], // Thứ 7, CN
+      days: ['Sa', 'S'],
       startTime: '05:00 PM',
       endTime: '08:00 PM',
       specificTime: true,

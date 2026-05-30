@@ -1,18 +1,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import Fontisto from '@expo/vector-icons/Fontisto';
-import Octicons from '@expo/vector-icons/Octicons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
   FlatList,
   Image,
   ImageBackground,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   Text,
-  TextInput,
   TouchableHighlight,
   TouchableOpacity,
   View,
@@ -21,14 +17,25 @@ import { colors } from '../common/colors';
 import { calculateRatingStats, RatingBar, ratingBarStyles, RatingStartBar } from '../components/Rating';
 import { PicturesContainer } from '../components/ReviewPicture';
 import styles from './ViewReviewsScreen.styles';
-import * as ImagePicker from 'expo-image-picker';
 import { fetchPlaceDetail } from '../../../lib/api/places';
-import { createReview, fetchPlaceReviews, toggleReviewLike } from '../../../lib/api/reviews';
-import { uploadReviewImage } from '../../../lib/api/uploads';
+import { deleteReview, fetchPlaceReviews, toggleReviewLike } from '../../../lib/api/reviews';
 import type { ReviewListItem } from '../../../lib/api/types';
-import { getApiErrorMessage } from '../context/AuthContext';
+import { getApiErrorMessage, useAuth } from '../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
 
-function ReviewItem({ item, onLikeToggle }: { item: ReviewListItem; onLikeToggle: (id: string) => void }) {
+function ReviewItem({
+  item,
+  canManage,
+  onLikeToggle,
+  onEdit,
+  onDelete,
+}: {
+  item: ReviewListItem;
+  canManage: boolean;
+  onLikeToggle: (id: string) => void;
+  onEdit: (review: ReviewListItem) => void;
+  onDelete: (review: ReviewListItem) => void;
+}) {
   const handlePress = () => {
     onLikeToggle(item.id);
   };
@@ -56,7 +63,7 @@ function ReviewItem({ item, onLikeToggle }: { item: ReviewListItem; onLikeToggle
 
       <PicturesContainer pictures={item.images} />
 
-      <View style={{ flexDirection: 'row', columnGap: 25, marginTop: 5 }}>
+      <View style={{ flexDirection: 'row', columnGap: 18, marginTop: 5, alignItems: 'center' }}>
         <TouchableHighlight underlayColor="transparent" onPress={handlePress}>
           <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}>
             <Fontisto name="like" size={20} color={colors.primary} />
@@ -64,19 +71,34 @@ function ReviewItem({ item, onLikeToggle }: { item: ReviewListItem; onLikeToggle
           </View>
         </TouchableHighlight>
 
-        <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}>
-          <Octicons name="report" size={20} color="#908a8a" />
-          <Text style={{ color: '#908a8a', fontSize: 16 }}>Report</Text>
-        </TouchableOpacity>
+        {canManage ? (
+          <>
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}
+              onPress={() => onEdit(item)}
+            >
+              <Ionicons name="create-outline" size={20} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontSize: 16, fontWeight: '600' }}>Edit</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}
+              onPress={() => onDelete(item)}
+            >
+              <Ionicons name="trash-outline" size={20} color={colors.danger} />
+              <Text style={{ color: colors.danger, fontSize: 16, fontWeight: '600' }}>Delete</Text>
+            </TouchableOpacity>
+          </>
+        ) : null}
       </View>
     </View>
   );
 }
 
 export default function ViewReviewsScreen({ navigation, route }: any) {
+  const { user } = useAuth();
   const placeId = route.params?.placeId as string | undefined;
-  const [reviewText, setReviewText] = useState('');
-  const [userRating, setUserRating] = useState(5);
+  const placeName = route.params?.placeName as string | undefined;
   const [reviews, setReviews] = useState<ReviewListItem[]>([]);
   const [placeRate, setPlaceRate] = useState(0);
   const [placeCount, setPlaceCount] = useState(0);
@@ -84,8 +106,6 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
     'https://i.pinimg.com/1200x/6f/54/22/6f542272eef1c2846c752192ff2cd542.jpg'
   );
   const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [pendingImages, setPendingImages] = useState<string[]>([]);
 
   const loadData = useCallback(async () => {
     if (!placeId) return;
@@ -106,9 +126,11 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
     }
   }, [placeId]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
 
   const handleLikeToggle = async (reviewId: string) => {
     try {
@@ -121,53 +143,42 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
     }
   };
 
-  const handlePickImage = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Loi', 'Can quyen truy cap thu vien anh');
-      return;
+  const canManageReview = (review: ReviewListItem) => {
+    if (!user) return false;
+
+    const ownerId = review.userId ?? review.authorId ?? review.UserId;
+    if (ownerId !== undefined && ownerId !== null) {
+      return String(ownerId) === String(user.id);
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
-    if (!result.canceled && pendingImages.length < 5) {
-      setPendingImages((prev) => [...prev, result.assets[0].uri]);
-    }
+
+    const ownerName = review.username?.trim().toLowerCase();
+    const currentNames = [user.username, user.fullName, user.name]
+      .filter(Boolean)
+      .map((name) => String(name).trim().toLowerCase());
+
+    return Boolean(ownerName && currentNames.includes(ownerName));
   };
 
-  const handleSubmitReview = async () => {
-    if (!placeId || !reviewText.trim()) return;
-    setSubmitting(true);
-    try {
-      const imageUrls: string[] = [];
-      for (const uri of pendingImages) {
-        try {
-          const url = await uploadReviewImage(uri);
-          imageUrls.push(url);
-        } catch (err) {
-          const msg = getApiErrorMessage(err);
-          if (msg === 'STORAGE_UNAVAILABLE' && imageUrls.length === 0 && pendingImages[0] === uri) {
-            Alert.alert(
-              'Upload chua san sang',
-              'Can service_role key (eyJ...) trong .env BE. Chay: npm run storage:verify'
-            );
+  const handleOpenEdit = (review: ReviewListItem) => {
+    navigation.navigate('Write Review', { placeId, placeName, review });
+  };
+
+  const handleDeleteReview = (review: ReviewListItem) => {
+    Alert.alert('Xoa danh gia', 'Ban co chac muon xoa danh gia nay?', [
+      { text: 'Huy', style: 'cancel' },
+      {
+        text: 'Xoa',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deleteReview(review.id);
+            await loadData();
+          } catch (err) {
+            Alert.alert('Loi', getApiErrorMessage(err));
           }
-        }
-      }
-      await createReview(placeId, {
-        rating: userRating,
-        content: reviewText.trim(),
-        imageUrls: imageUrls.length > 0 ? imageUrls : undefined,
-      });
-      setReviewText('');
-      setPendingImages([]);
-      await loadData();
-    } catch (err) {
-      Alert.alert('Loi', getApiErrorMessage(err));
-    } finally {
-      setSubmitting(false);
-    }
+        },
+      },
+    ]);
   };
 
   const ratingStats = calculateRatingStats(reviews);
@@ -189,14 +200,18 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
   }
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: '#FFFFFF' }}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-    >
+    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
       <FlatList
         data={reviews}
-        renderItem={({ item }) => <ReviewItem item={item} onLikeToggle={handleLikeToggle} />}
+        renderItem={({ item }) => (
+          <ReviewItem
+            item={item}
+            canManage={canManageReview(item)}
+            onLikeToggle={handleLikeToggle}
+            onEdit={handleOpenEdit}
+            onDelete={handleDeleteReview}
+          />
+        )}
         keyExtractor={(item) => item.id}
         ListHeaderComponent={
           <View>
@@ -243,57 +258,14 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
         }
       />
 
-      {pendingImages.length > 0 && (
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 12, paddingBottom: 8 }}>
-          {pendingImages.map((uri, idx) => (
-            <View key={`${uri}-${idx}`} style={{ marginRight: 8, marginBottom: 8 }}>
-              <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 8 }} />
-              <TouchableOpacity
-                style={{ position: 'absolute', top: -6, right: -6 }}
-                onPress={() => setPendingImages((prev) => prev.filter((_, i) => i !== idx))}
-              >
-                <Ionicons name="close-circle" size={20} color={colors.danger} />
-              </TouchableOpacity>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View style={styles.bottomInputContainer}>
-        <TouchableOpacity style={styles.addPhotoIcon} onPress={handlePickImage}>
-          <Ionicons name="camera-outline" size={24} color="#908a8a" />
-        </TouchableOpacity>
-        <View style={{ marginRight: 8 }}>
-          <RatingStartBar ratingValue={userRating} size={18} />
-          <View style={{ flexDirection: 'row', marginTop: 4 }}>
-            {[1, 2, 3, 4, 5].map((n) => (
-              <TouchableOpacity key={n} onPress={() => setUserRating(n)}>
-                <Text style={{ fontSize: 12, color: userRating === n ? colors.primary : '#999', marginHorizontal: 2 }}>
-                  {n}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
-        <TextInput
-          style={styles.textInput}
-          placeholder="Write your review..."
-          value={reviewText}
-          onChangeText={setReviewText}
-          multiline
-        />
+      <View style={styles.bottomActionContainer}>
         <TouchableOpacity
-          style={[styles.sendButton, { backgroundColor: reviewText && !submitting ? colors.primary : '#ddd' }]}
-          disabled={!reviewText || submitting}
-          onPress={handleSubmitReview}
+          style={styles.writeReviewButton}
+          onPress={() => navigation.navigate('Write Review', { placeId, placeName })}
         >
-          {submitting ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Ionicons name="send" size={20} color="white" />
-          )}
+          <Text style={styles.writeReviewButtonText}>Write your review</Text>
         </TouchableOpacity>
       </View>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
