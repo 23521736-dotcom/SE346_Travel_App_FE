@@ -11,9 +11,9 @@ const styles = StyleSheet.create({
   },
 
   header: {
-    paddingHorizontal: 16,
-    paddingTop: 52,
-    paddingBottom: 12,
+    paddingHorizontal: 18,
+    paddingTop: 50,
+    paddingBottom: 14,
     backgroundColor: colors.background,
     flexDirection: "row",
     alignItems: "center",
@@ -27,9 +27,9 @@ const styles = StyleSheet.create({
   },
 
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
@@ -41,20 +41,21 @@ const styles = StyleSheet.create({
   },
 
   scrollContent: {
-    paddingBottom: 118,
+    paddingBottom: 104,
   },
 
   featuredSection: {
-    paddingHorizontal: 20,
-    marginBottom: 40,
+    paddingHorizontal: 16,
+    marginTop: 4,
+    marginBottom: 18,
   },
 
   featuredCard: {
     backgroundColor: colors.surface,
-    borderRadius: 40,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: "#F1F5F9",
-    padding: 12,
+    padding: 10,
     overflow: "hidden",
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
@@ -66,14 +67,14 @@ const styles = StyleSheet.create({
   featuredImage: {
     width: "100%",
     aspectRatio: 16 / 9,
-    borderRadius: 29,
+    borderRadius: 18,
     overflow: "hidden",
-    marginBottom: 16,
+    marginBottom: 12,
     backgroundColor: colors.surfaceMuted,
   },
 
   featuredImageRadius: {
-    borderRadius: 29,
+    borderRadius: 18,
   },
 
   featuredOverlay: {
@@ -84,7 +85,7 @@ const styles = StyleSheet.create({
   featuredInfo: {
     flex: 1,
     justifyContent: "flex-end",
-    padding: 18,
+    padding: 16,
   },
 
   featuredBadge: {
@@ -113,8 +114,8 @@ const styles = StyleSheet.create({
   featuredMetaRow: {
     flexDirection: "row",
     alignItems: "center",
-    columnGap: 6,
-    marginTop: 4,
+    columnGap: 8,
+    marginTop: 5,
   },
 
   featuredMetaText: {
@@ -126,14 +127,14 @@ const styles = StyleSheet.create({
 
   featuredActions: {
     flexDirection: "row",
-    columnGap: 12,
-    padding: 4,
+    columnGap: 10,
+    padding: 2,
   },
 
   featuredPrimaryButton: {
     flex: 1,
-    minHeight: 52,
-    borderRadius: 16,
+    minHeight: 48,
+    borderRadius: 14,
     backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
@@ -146,8 +147,8 @@ const styles = StyleSheet.create({
 
   featuredSecondaryButton: {
     flex: 1,
-    minHeight: 52,
-    borderRadius: 16,
+    minHeight: 48,
+    borderRadius: 14,
     borderWidth: 2,
     borderColor: colors.primary,
     backgroundColor: colors.surface,
@@ -291,6 +292,7 @@ const styles = StyleSheet.create({
 
   tabsWrap: {
     marginHorizontal: 16,
+    marginTop: 2,
     height: 42,
     borderRadius: 10,
     backgroundColor: colors.surfaceMuted,
@@ -327,17 +329,38 @@ const styles = StyleSheet.create({
 
   tripList: {
     paddingHorizontal: 16,
-    paddingTop: 16,
-    rowGap: 12,
+    paddingTop: 14,
+    rowGap: 10,
+  },
+
+  tripState: {
+    minHeight: 72,
+    alignItems: "center",
+    justifyContent: "center",
+    rowGap: 8,
+  },
+
+  tripStateText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: "700",
+    textAlign: "center",
+  },
+
+  tripErrorText: {
+    color: "#DC2626",
+    fontSize: 13,
+    fontWeight: "700",
+    textAlign: "center",
   },
 
   tripCard: {
     backgroundColor: colors.surface,
     borderRadius: 12,
-    padding: 12,
+    padding: 10,
     flexDirection: "row",
-    alignItems: "flex-start",
-    columnGap: 14,
+    alignItems: "center",
+    columnGap: 13,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -350,15 +373,15 @@ const styles = StyleSheet.create({
   },
 
   tripImage: {
-    width: 80,
-    height: 80,
+    width: 76,
+    height: 76,
     borderRadius: 10,
     backgroundColor: colors.surfaceMuted,
   },
 
   tripContent: {
     flex: 1,
-    minHeight: 80,
+    minHeight: 76,
     justifyContent: "space-between",
   },
 
@@ -366,6 +389,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 16,
     fontWeight: "800",
+    marginBottom: 1,
   },
 
   tripDate: {
@@ -378,17 +402,20 @@ const styles = StyleSheet.create({
   collaboratorRow: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
+    flexWrap: "wrap",
+    marginTop: 9,
+    paddingLeft: 1,
+    paddingRight: 4,
   },
 
   avatar: {
-    width: 25,
-    height: 25,
-    borderRadius: 13,
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     borderWidth: 2,
     borderColor: colors.surface,
     backgroundColor: "#CBD5E1",
-    marginRight: -8,
+    marginRight: -6,
   },
 
   moreAvatar: {
@@ -406,7 +433,8 @@ const styles = StyleSheet.create({
   collaboratorText: {
     color: colors.textMuted,
     fontSize: 12,
-    marginLeft: 8,
+    fontWeight: "600",
+    marginLeft: 12,
   },
 
   tripActions: {
@@ -415,7 +443,7 @@ const styles = StyleSheet.create({
 
   holdBadge: {
     alignSelf: "flex-start",
-    marginTop: 10,
+    marginTop: 9,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,

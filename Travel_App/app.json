@@ -46,6 +46,8 @@
       "typedRoutes": true,
       "reactCompiler": true
     },
-    "extra": {}
+    "extra": {
+      "apiBaseUrl": "http://192.168.102.23:8000"
+    }
   }
 }

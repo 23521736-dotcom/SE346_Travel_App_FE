@@ -10,6 +10,7 @@ export type ScheduleLocation = {
   rating: string;
   image: string;
   time: string;
+  period?: string;
   cost: string;
 };
 
@@ -77,6 +78,11 @@ export function getTripDayDate(startDate: Date | null, day: number) {
   return formatTripDate(date);
 }
 
+function formatTripDayDate(value?: string) {
+  const parsedDate = parseTripDate(value);
+  return parsedDate ? formatTripDate(parsedDate) : value || undefined;
+}
+
 export function normalizeTripDays(trip: TripData): TripData {
   const startDate = parseTripDate(trip.startDate);
   const endDate = parseTripDate(trip.endDate);
@@ -95,8 +101,8 @@ export function normalizeTripDays(trip: TripData): TripData {
 
       return {
         dayId: existingDay?.dayId || `day_${index + 1}`,
-        title: `Day ${index + 1}`,
-        date: getTripDayDate(startDate, index + 1),
+        title: existingDay?.title || `Day ${index + 1}`,
+        date: formatTripDayDate(existingDay?.date) || getTripDayDate(startDate, index + 1),
         locations: existingDay?.locations || [],
       };
     }),
