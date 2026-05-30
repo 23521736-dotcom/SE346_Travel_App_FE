@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { formatDate } from '@/app/service/PromotionShedule';
+import { formatDate } from '@/lib/service/PromotionShedule';
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
@@ -20,7 +20,7 @@ import PromotionEditor from '../components/PromotionEditor';
 import { styles } from './AddLocationScreen.style';
 import { createOwnerPlace } from '../../../lib/api/owner';
 import { uploadPlaceCover } from '../../../lib/api/uploads';
-import type { PromotionItem } from '../types/promotion';
+import type { PromotionItem } from '@/lib/types/promotion';
 import { getApiErrorMessage } from '../context/AuthContext';
 
 const DEFAULT_COVER =

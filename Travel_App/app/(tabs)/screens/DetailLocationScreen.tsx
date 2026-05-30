@@ -54,6 +54,13 @@ export default function DetailLocationScreen({ navigation, route }: any) {
         }
     };
 
+    const openWriteReview = () => {
+        navigation.navigate('Write Review', {
+            placeId: place?.Id ?? placeId,
+            placeName: place?.Name,
+        });
+    };
+
     if (loading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -102,6 +109,43 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                         <Ionicons name="heart"
                             size={24}
                             color={isLiked ? "red" : "white"} />
+                    </Pressable>
+                </View>
+
+                <View style={{ flexDirection: 'row', columnGap: 10, marginHorizontal: 15, marginTop: 12 }}>
+                    <Pressable
+                        onPress={openWriteReview}
+                        style={({ pressed }) => [
+                            {
+                                flex: 1,
+                                backgroundColor: '#00B4D8',
+                                paddingVertical: 12,
+                                borderRadius: 12,
+                                alignItems: 'center',
+                                opacity: pressed ? 0.85 : 1,
+                            },
+                        ]}
+                    >
+                        <Text style={{ color: '#fff', fontWeight: '700' }}>Write Review</Text>
+                    </Pressable>
+
+                    <Pressable
+                        onPress={() => navigation.navigate("All Reviews", {
+                            placeId: place?.Id ?? placeId,
+                            placeName: place?.Name,
+                        })}
+                        style={({ pressed }) => [
+                            {
+                                flex: 1,
+                                backgroundColor: '#E0F2FE',
+                                paddingVertical: 12,
+                                borderRadius: 12,
+                                alignItems: 'center',
+                                opacity: pressed ? 0.85 : 1,
+                            },
+                        ]}
+                    >
+                        <Text style={{ color: '#00B4D8', fontWeight: '700' }}>See Reviews</Text>
                     </Pressable>
                 </View>
 
