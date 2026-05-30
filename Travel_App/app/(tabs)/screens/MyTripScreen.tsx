@@ -1,5 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import { useFocusEffect } from "@react-navigation/native";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -139,7 +140,7 @@ function isPastTrip(trip: Trip) {
 }
 
 function mapApiTrip(apiTrip: ApiTrip): Trip {
-  const id = String(apiTrip.id ?? apiTrip.Id ?? "");
+  const id = String(apiTrip.id ?? apiTrip.Id ?? apiTrip.tripId ?? apiTrip.trip_id ?? "");
   const startDate = apiTrip.startDate ?? apiTrip.StartDate ?? apiTrip.start_date;
   const endDate = apiTrip.endDate ?? apiTrip.EndDate ?? apiTrip.end_date;
   const members = apiTrip.members ?? apiTrip.Members ?? apiTrip.collaborators ?? [];
@@ -290,10 +291,10 @@ export default function MyTripScreen({ navigation }: any) {
   const trips = activeFilter === "Upcoming" ? upcomingTripList : pastTripList;
   const featuredTrip = upcomingTripList[0];
 
-  useEffect(() => {
+  const loadTrips = useCallback(() => {
     let isMounted = true;
 
-    async function loadTrips() {
+    async function fetchTrips() {
       setIsLoadingTrips(true);
       setTripLoadError(null);
 
@@ -304,8 +305,14 @@ export default function MyTripScreen({ navigation }: any) {
         }
 
         const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
-        setUpcomingTripList(mappedTrips.filter((trip) => !isPastTrip(trip)));
-        setPastTripList(mappedTrips.filter(isPastTrip));
+        const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
+        const pastTrips = mappedTrips.filter(isPastTrip);
+
+        setUpcomingTripList(upcomingTrips);
+        setPastTripList(pastTrips);
+        if (!upcomingTrips.length && pastTrips.length) {
+          setActiveFilter("Past");
+        }
       } catch (error) {
         if (isMounted) {
           setTripLoadError(getApiErrorMessage(error));
@@ -317,12 +324,14 @@ export default function MyTripScreen({ navigation }: any) {
       }
     }
 
-    loadTrips();
+    fetchTrips();
 
     return () => {
       isMounted = false;
     };
   }, []);
+
+  useFocusEffect(loadTrips);
 
   useEffect(() => {
     return subscribeTripDrafts((updatedTrip) => {
