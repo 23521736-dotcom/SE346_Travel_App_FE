@@ -13,7 +13,7 @@ import {
     View
 } from 'react-native';
 import { useAuth, getApiErrorMessage } from '../context/AuthContext';
-import { forgotPassword, oauthLogin } from '../../../lib/api/auth';
+import { oauthLogin } from '../../../lib/api/auth';
 
 export default function LoginScreen({ navigation }: any) {
     const [isPasswordVisible, setPasswordVisible] = useState(false);
@@ -22,17 +22,8 @@ export default function LoginScreen({ navigation }: any) {
     const [submitting, setSubmitting] = useState(false);
     const { login } = useAuth();
 
-    const handleForgotPassword = async () => {
-        if (!email.trim()) {
-            Alert.alert('Loi', 'Nhap email truoc khi dat lai mat khau');
-            return;
-        }
-        try {
-            const res = await forgotPassword(email.trim());
-            Alert.alert('Thanh cong', res.message);
-        } catch (err) {
-            Alert.alert('Loi', getApiErrorMessage(err));
-        }
+    const handleForgotPassword = () => {
+        navigation.navigate('ForgotPassword_email', { email: email.trim() });
     };
 
     const handleOAuth = async (provider: 'google' | 'apple') => {
@@ -83,24 +74,31 @@ export default function LoginScreen({ navigation }: any) {
                             source={{ uri: "https://cdn-icons-png.flaticon.com/128/201/201623.png" }}
                             style={{ height: 70, width: 70, marginBottom: 5 }}
                         />
-                        <Text style={{ fontWeight: 'bold', fontSize: 32, textAlign: 'center', color: '#f2ebeb' }}>
+                        <Text style={{ fontWeight: '800', fontSize: 32, textAlign: 'center', color: '#ffffff' }}>
                             Welcome Back
                         </Text>
-                        <Text style={{ marginTop: 2, textAlign: 'center', color: '#b6adad', fontSize: 18 }}>
+                        <Text style={{ marginTop: 6, textAlign: 'center', color: '#9ca3af', fontSize: 16 }}>
                             Log in to continue your adventure
                         </Text>
                     </View>
 
                     <View style={styles.container}>
+                        {/* --- Ô NHẬP EMAIL --- */}
                         <View style={[styles.inputContainer, { marginBottom: 20 }]}>
                             <Image
                                 source={require('../../../assets/images/email-icon.png')}
-                                style={{ width: 20, height: 20, marginRight: 10 }}
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
                             />
                             <TextInput
                                 placeholder="Email Address"
-                                style={{ flex: 1 }}
-                                placeholderTextColor="#ccc"
+                                style={{
+                                    flex: 1,
+                                    color: '#ffffff',
+                                    fontSize: 16,
+                                    fontWeight: '500',
+                                    letterSpacing: 0.5
+                                }}
+                                placeholderTextColor="#94a3b8" // Đồng bộ màu chữ mờ với icon
                                 value={email}
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
@@ -108,37 +106,49 @@ export default function LoginScreen({ navigation }: any) {
                             />
                         </View>
 
+                        {/* --- Ô NHẬP PASSWORD --- */}
                         <View style={styles.inputContainer}>
                             <Image
                                 source={require('../../../assets/images/password-icon.png')}
-                                style={{ width: 20, height: 20, marginRight: 20 }}
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
                             />
+
                             <TextInput
                                 placeholder="Password"
                                 secureTextEntry={!isPasswordVisible}
-                                style={{ flex: 1 }}
-                                autoCapitalize="none"
-                                placeholderTextColor="#ccc"
+                                style={{
+                                    flex: 1,
+                                    color: '#ffffff',
+                                    fontSize: 16,
+                                    fontWeight: '500',
+                                    letterSpacing: 0.5
+                                }}
+                                placeholderTextColor="#94a3b8" // Đồng bộ màu chữ mờ với icon
                                 value={password}
                                 onChangeText={setPassword}
+                                autoCapitalize="none"
                             />
-                            <TouchableOpacity onPress={() => setPasswordVisible(!isPasswordVisible)}>
+
+                            <TouchableOpacity
+                                onPress={() => setPasswordVisible(!isPasswordVisible)}
+                                style={{ paddingLeft: 10 }}
+                            >
                                 <Image
                                     source={isPasswordVisible
                                         ? require('../../../assets/images/hidden_eyepassword-icon.png')
                                         : require('../../../assets/images/eyepassword-icon.png')}
-                                    style={{ width: 20, height: 20, marginRight: 20 }}
+                                    style={{ width: 20, height: 20, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
                                 />
                             </TouchableOpacity>
                         </View>
 
-                        <View style={{ alignItems: 'flex-end', paddingRight: 20, marginTop: 10 }}>
+                        {/* --- QUÊN MẬT KHẨU --- */}
+                        <View style={{ alignItems: 'flex-end', paddingTop: 12 }}>
                             <TouchableOpacity onPress={handleForgotPassword}>
                                 <Text style={styles.linkText}>Forgot Password</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
-
                     <View style={[styles.containerChild, { marginTop: 20, alignItems: 'center' }]}>
                         <Pressable style={styles.button} onPress={handleLogin} disabled={submitting}>
                             {submitting ? (
