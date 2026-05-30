@@ -1,12 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Alert,
   ImageBackground,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
+import { getApiErrorMessage } from "../../../lib/api/client";
+import { ApiTrip, fetchMyTrips } from "../../../lib/api/trips";
 import { colors } from "../common/colors";
 import {
   getTripDraft,
@@ -37,109 +41,162 @@ type Trip = {
   itineraryData?: ItineraryDay[];
 };
 
-const londonSchedule: ItineraryDay[] = [
-  {
-    dayId: "day_1",
-    title: "Day 1",
-    date: "Nov 12, 2026",
-    locations: [
-      {
-        id: "loc_1",
-        name: "Tower Bridge",
-        rating: "4.8 (12k)",
-        image:
-          "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=200&auto=format&fit=crop",
-        time: "09:00 - 11:00",
-        cost: "$0.00",
-      },
-      {
-        id: "loc_2",
-        name: "Borough Market",
-        rating: "4.7 (8.1k)",
-        image:
-          "https://images.unsplash.com/photo-1528909514045-2fa4ac7a08ba?q=80&w=200&auto=format&fit=crop",
-        time: "12:00 - 13:30",
-        cost: "$25.00",
-      },
-    ],
-  },
-  {
-    dayId: "day_2",
-    title: "Day 2",
-    date: "Nov 13, 2026",
-    locations: [],
-  },
-];
+const defaultTripImage =
+  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=600&auto=format&fit=crop";
 
-const upcomingTrips: Trip[] = [
-  {
-    id: "london",
-    title: "London Getaway",
-    date: "Nov 12 - Nov 18",
-    startDate: "2026-11-12T00:00:00.000Z",
-    endDate: "2026-11-18T00:00:00.000Z",
-    image:
-      "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=600&auto=format&fit=crop",
-    avatars: [
-      "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop",
-      "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=200&auto=format&fit=crop",
-    ],
-    extraCount: 2,
-    hotel: "The Hoxton Shoreditch",
-    duration: 7,
-    budget: 320,
-    currency: "USD",
-    itineraryData: londonSchedule,
-  },
-  {
-    id: "aspen",
-    title: "Skiing in Aspen",
-    date: "Dec 20 - Dec 27",
-    startDate: "2026-12-20T00:00:00.000Z",
-    endDate: "2026-12-27T00:00:00.000Z",
-    image:
-      "https://images.unsplash.com/photo-1483664852095-d6cc6870702d?q=80&w=600&auto=format&fit=crop",
-    avatars: [
-      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop",
-    ],
-    collaboratorLabel: "1 Collab",
-    hotel: "Not selected",
-    duration: 8,
-    budget: 0,
-  },
-  {
-    id: "san-francisco",
-    title: "San Francisco",
-    date: "Pending Confirmation",
-    image:
-      "https://images.unsplash.com/photo-1501594907352-04cda38ebc29?q=80&w=600&auto=format&fit=crop",
-    status: "hold",
-    muted: true,
-  },
-];
+function formatApiDateRange(startDate?: string, endDate?: string, fallback?: string) {
+  if (fallback) {
+    return fallback;
+  }
 
-const pastTrips: Trip[] = [
-  {
-    id: "paris",
-    title: "Paris Weekend",
-    date: "Sep 2 - Sep 5",
-    image:
-      "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=600&auto=format&fit=crop",
-    collaboratorLabel: "2 Collabs",
-  },
-  {
-    id: "seoul",
-    title: "Seoul Food Crawl",
-    date: "Aug 14 - Aug 19",
-    image:
-      "https://images.unsplash.com/photo-1538485399081-7191377e8241?q=80&w=600&auto=format&fit=crop",
-    collaboratorLabel: "Solo trip",
-  },
-];
+  const start = startDate ? new Date(startDate) : null;
+  const end = endDate ? new Date(endDate) : null;
 
-const featuredDestinationImage =
-  "https://lh3.googleusercontent.com/aida/ADBb0ugQ1ljWdJ1EbrE2Vg0NumH0OfcHQuQRv_sweAYc29gRXn_BnYrbdFQkdfftHnMigzy1NefxWhkJEs-JFf-_p-IjR1v0sKsTyNUbXRir1O4zmzsvuMl-Ag0M5Wuglyf8x_E8fTgX82P9V7rZmxDMfsU4qMlZfY7Sbz6naaZWAC2AnZQv3CJ4Abgfedx6usBG6TJnqYgb21a9tbOVq_BAHwl8MHci25XoPLk9X0LImB36nIhKpcR14nx8Sg";
+  if (start && end && !Number.isNaN(start.getTime()) && !Number.isNaN(end.getTime())) {
+    return `${start.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })} - ${end.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    })}`;
+  }
+
+  return "Choose your travel dates";
+}
+
+function formatApiFullDate(value?: string) {
+  if (!value) {
+    return "Date not set";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function toNumber(value: unknown, fallback = 0) {
+  const numberValue = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+}
+
+function formatMoney(value: unknown) {
+  if (value === null || value === undefined || value === "") {
+    return "0";
+  }
+
+  if (typeof value === "number") {
+    return String(value);
+  }
+
+  const numericValue = Number(value);
+  if (Number.isFinite(numericValue)) {
+    return String(numericValue);
+  }
+
+  return String(value);
+}
+
+function getCostValue(cost: string) {
+  return Number(cost.replace(/[^0-9.]/g, '')) || 0;
+}
+
+function getTripTotalBudget(days?: ItineraryDay[]) {
+  return days?.reduce(
+    (tripSum, day) =>
+      tripSum + day.locations.reduce((daySum, location) => daySum + getCostValue(location.cost), 0),
+    0
+  ) ?? 0;
+}
+
+function formatVnd(value: number) {
+  return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+function formatActivityTime(period?: string | null, scheduledTime?: string | null) {
+  return scheduledTime || period || "Time not set";
+}
+
+function isPastTrip(trip: Trip) {
+  if (!trip.endDate) {
+    return false;
+  }
+
+  const endDate = new Date(trip.endDate);
+  if (Number.isNaN(endDate.getTime())) {
+    return false;
+  }
+
+  endDate.setHours(23, 59, 59, 999);
+  return endDate.getTime() < Date.now();
+}
+
+function mapApiTrip(apiTrip: ApiTrip): Trip {
+  const id = String(apiTrip.id ?? apiTrip.Id ?? "");
+  const startDate = apiTrip.startDate ?? apiTrip.StartDate ?? apiTrip.start_date;
+  const endDate = apiTrip.endDate ?? apiTrip.EndDate ?? apiTrip.end_date;
+  const members = apiTrip.members ?? apiTrip.Members ?? apiTrip.collaborators ?? [];
+  const itinerary = apiTrip.itineraryData ?? apiTrip.itinerary ?? apiTrip.days;
+  const status = apiTrip.status ?? apiTrip.Status;
+  const hotelName = apiTrip.currentHotel?.name ?? apiTrip.hotel ?? apiTrip.Hotel ?? "Not selected";
+  const coverImage =
+    apiTrip.image ??
+    apiTrip.Image ??
+    apiTrip.coverImageUrl ??
+    apiTrip.currentHotel?.place?.coverImageUrl ??
+    defaultTripImage;
+
+  const itineraryData = itinerary?.map((day, index) => ({
+    dayId: String(day.dayId ?? day.DayId ?? day.id ?? `day_${day.dayNumber ?? index + 1}`),
+    title: day.title ?? day.Title ?? `Day ${day.dayNumber ?? index + 1}`,
+    date: formatApiFullDate(day.date ?? day.Date),
+    locations: day.activities?.length
+      ? day.activities.map((activity, activityIndex) => ({
+        id: String(activity.id ?? activity.placeId ?? `${index + 1}-${activityIndex + 1}`),
+        name: activity.title ?? activity.place?.name ?? "Selected activity",
+        rating: String(activity.rating ?? activity.place?.averageRating ?? "0"),
+        image: activity.imageUrl ?? activity.place?.coverImageUrl ?? defaultTripImage,
+        time: formatActivityTime(activity.period, activity.scheduledTime),
+        period: activity.period ?? undefined,
+        cost: formatMoney(activity.estimatedCost),
+      }))
+      : (day.locations ?? day.Locations ?? []).map((location, locationIndex) => ({
+        id: String(location.id ?? location.Id ?? location.placeId ?? `${index + 1}-${locationIndex + 1}`),
+        name: location.name ?? location.Name ?? "Selected location",
+        rating: String(location.rating ?? location.Rate ?? "0"),
+        image: location.image ?? location.Image ?? defaultTripImage,
+        time: location.time ?? location.Time ?? "Time not set",
+        cost: formatMoney(location.cost ?? location.Cost),
+      })),
+  }));
+
+  return {
+    id,
+    title: apiTrip.title ?? apiTrip.Title ?? apiTrip.name ?? apiTrip.Name ?? apiTrip.destination ?? "Untitled Trip",
+    date: formatApiDateRange(startDate, endDate, apiTrip.date ?? apiTrip.Date),
+    startDate,
+    endDate,
+    image: coverImage,
+    avatars: members
+      .map((member) => member.avatar ?? member.avatarUrl)
+      .filter((avatar): avatar is string => Boolean(avatar)),
+    collaboratorLabel: members.length ? `${members.length} Collab${members.length > 1 ? "s" : ""}` : undefined,
+    status: status?.toLowerCase() === "hold" ? "hold" : undefined,
+    muted: status?.toLowerCase() === "hold",
+    hotel: hotelName,
+    duration: toNumber(apiTrip.durationDays ?? apiTrip.duration ?? apiTrip.Duration, 1),
+    budget: getTripTotalBudget(itineraryData),
+    currency: apiTrip.currency ?? apiTrip.Currency ?? "USD",
+    itineraryData,
+  };
+}
 
 function toTripData(trip: Trip): TripData {
   const draft = getTripDraft(trip.id);
@@ -157,7 +214,7 @@ function toTripData(trip: Trip): TripData {
     image: trip.image,
     hotel: trip.hotel || "Not selected",
     duration: trip.duration || 1,
-    budget: trip.budget || 0,
+    budget: getTripTotalBudget(trip.itineraryData),
     currency: trip.currency || "USD",
     members:
       trip.avatars?.map((avatar, index) => ({
@@ -222,13 +279,50 @@ function TripCard({ trip, onPress }: { trip: Trip; onPress?: () => void }) {
 }
 
 export default function MyTripScreen({ navigation }: any) {
-  const [upcomingTripList, setUpcomingTripList] = useState(upcomingTrips);
-  const [pastTripList, setPastTripList] = useState(pastTrips);
+  const [upcomingTripList, setUpcomingTripList] = useState<Trip[]>([]);
+  const [pastTripList, setPastTripList] = useState<Trip[]>([]);
+  const [isLoadingTrips, setIsLoadingTrips] = useState(false);
+  const [openingTripId, setOpeningTripId] = useState<string | null>(null);
+  const [tripLoadError, setTripLoadError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<"Upcoming" | "Past">(
     "Upcoming"
   );
   const trips = activeFilter === "Upcoming" ? upcomingTripList : pastTripList;
   const featuredTrip = upcomingTripList[0];
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadTrips() {
+      setIsLoadingTrips(true);
+      setTripLoadError(null);
+
+      try {
+        const apiTrips = await fetchMyTrips();
+        if (!isMounted) {
+          return;
+        }
+
+        const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
+        setUpcomingTripList(mappedTrips.filter((trip) => !isPastTrip(trip)));
+        setPastTripList(mappedTrips.filter(isPastTrip));
+      } catch (error) {
+        if (isMounted) {
+          setTripLoadError(getApiErrorMessage(error));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingTrips(false);
+        }
+      }
+    }
+
+    loadTrips();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   useEffect(() => {
     return subscribeTripDrafts((updatedTrip) => {
@@ -256,11 +350,9 @@ export default function MyTripScreen({ navigation }: any) {
   }, []);
 
   const planTrip = () => {
-    navigation.navigate("PlanningTrip", {
-      mode: "create",
-      title: "Featured Destination",
-      image: featuredDestinationImage,
-    });
+    if (featuredTrip) {
+      openTrip(featuredTrip);
+    }
   };
 
   const writeDiaryTrip = () => {
@@ -273,21 +365,21 @@ export default function MyTripScreen({ navigation }: any) {
     });
   };
 
-  const openPlanningTrip = (trip: Trip) => {
+  const openPlanningTrip = (trip: Trip, selectedFilter = activeFilter) => {
     const tripData = toTripData(trip);
     upsertTripDraft(tripData);
 
     navigation.navigate("PlanningTrip", {
       tripData,
-      mode: activeFilter === "Upcoming" ? "upcoming" : "draft",
-      statusLabel: trip.status === "hold" ? "On Hold" : activeFilter,
+      mode: selectedFilter === "Upcoming" ? "upcoming" : "draft",
+      statusLabel: trip.status === "hold" ? "On Hold" : selectedFilter,
       collaboratorLabel: trip.collaboratorLabel,
       memberAvatars: trip.avatars,
       extraCount: trip.extraCount,
     });
   };
 
-  const openTrip = (trip: Trip) => {
+  const openTrip = async (trip: Trip) => {
     if (activeFilter === "Past") {
       navigation.navigate("Trip Diary", {
         id: trip.id,
@@ -298,7 +390,17 @@ export default function MyTripScreen({ navigation }: any) {
       return;
     }
 
-    openPlanningTrip(trip);
+    setOpeningTripId(trip.id);
+
+    try {
+      const apiTrips = await fetchMyTrips();
+      const latestTrip = apiTrips.map(mapApiTrip).find((item) => item.id === trip.id) ?? trip;
+      openPlanningTrip(latestTrip);
+    } catch (error) {
+      Alert.alert("Cannot load trip", getApiErrorMessage(error));
+    } finally {
+      setOpeningTripId(null);
+    }
   };
 
   return (
@@ -317,10 +419,11 @@ export default function MyTripScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        {featuredTrip ? (
         <View style={styles.featuredSection}>
           <View style={styles.featuredCard}>
             <ImageBackground
-              source={{ uri: featuredTrip?.image || featuredDestinationImage }}
+              source={{ uri: featuredTrip.image }}
               imageStyle={styles.featuredImageRadius}
               style={styles.featuredImage}
             >
@@ -330,18 +433,24 @@ export default function MyTripScreen({ navigation }: any) {
                   <Text style={styles.featuredBadgeText}>Current Trip</Text>
                 </View>
                 <Text numberOfLines={1} style={styles.featuredTripTitle}>
-                  {featuredTrip?.title || "Featured Destination"}
+                  {featuredTrip.title}
                 </Text>
                 <View style={styles.featuredMetaRow}>
                   <Ionicons name="calendar-outline" size={14} color={colors.white} />
                   <Text numberOfLines={1} style={styles.featuredMetaText}>
-                    {featuredTrip?.date || "Choose your travel dates"}
+                    {featuredTrip.date}
                   </Text>
                 </View>
                 <View style={styles.featuredMetaRow}>
                   <Ionicons name="bed-outline" size={14} color={colors.white} />
                   <Text numberOfLines={1} style={styles.featuredMetaText}>
-                    {featuredTrip?.hotel || "Hotel not selected"} - {featuredTrip?.duration || 1} days
+                    {featuredTrip.hotel || "Hotel not selected"} - {featuredTrip.duration || 1} days
+                  </Text>
+                </View>
+                <View style={styles.featuredMetaRow}>
+                  <Ionicons name="wallet-outline" size={14} color={colors.white} />
+                  <Text numberOfLines={1} style={styles.featuredMetaText}>
+                    Total budget: VND: {formatVnd(featuredTrip.budget || 0)}
                   </Text>
                 </View>
               </View>
@@ -372,6 +481,7 @@ export default function MyTripScreen({ navigation }: any) {
             </View>
           </View>
         </View>
+        ) : null}
 
         <View style={styles.tabsWrap}>
           {(["Upcoming", "Past"] as const).map((filter) => {
@@ -393,11 +503,23 @@ export default function MyTripScreen({ navigation }: any) {
         </View>
 
         <View style={styles.tripList}>
+          {isLoadingTrips ? (
+            <View style={styles.tripState}>
+              <ActivityIndicator color={colors.primary} />
+              <Text style={styles.tripStateText}>Loading trips...</Text>
+            </View>
+          ) : null}
+          {tripLoadError ? (
+            <Text style={styles.tripErrorText}>{tripLoadError}</Text>
+          ) : null}
+          {!isLoadingTrips && trips.length === 0 ? (
+            <Text style={styles.tripStateText}>No trips yet</Text>
+          ) : null}
           {trips.map((trip) => (
             <TripCard
               key={trip.id}
               trip={trip}
-              onPress={() => openTrip(trip)}
+              onPress={openingTripId ? undefined : () => openTrip(trip)}
             />
           ))}
         </View>
