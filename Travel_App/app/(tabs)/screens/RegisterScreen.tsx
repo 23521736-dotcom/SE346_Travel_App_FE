@@ -234,8 +234,8 @@ export default function RegisterScreen({ navigation }: any) {
                         I agree to the{' '}
                         <Text
                             style={styles.linkText}
-                            onPress={() => alert('Chuyển hướng đến trang điều khoản')}>
-                            Terms & Conditions
+                                onPress={() => navigation.navigate('Terms of Service')}>
+                                Terms of Service
                         </Text>
                     </Text>
                 </View>

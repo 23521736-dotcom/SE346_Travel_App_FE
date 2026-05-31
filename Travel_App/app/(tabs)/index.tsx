@@ -9,6 +9,8 @@ import ForgotPasswordScreen_email from './screens/ForgotPasswordScreen_email';
 import ForgotPasswordScreen_OTP from './screens/ForgotPasswordScreen_OTP';
 import ForgotPasswordScreen_resetPw from './screens/ForgotPasswordScreen_resetPw';
 import LogoutScreen from './screens/LogoutScreen';
+import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import MyTripScreen from './screens/MyTripScreen';
 import NotificationScreenUser from './screens/NotificationScreen_user';
 import OwnerManagementScreen from './screens/OwnerManagementScreen';
@@ -167,6 +169,7 @@ const RootNavigation = () => {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Terms of Service" component={TermsOfServiceScreen} />
         <Stack.Screen name="ForgotPassword_email" component={ForgotPasswordScreen_email} />
         <Stack.Screen name="ForgotPassword_OTP" component={ForgotPasswordScreen_OTP} />
         <Stack.Screen name="ForgotPassword_resetPw" component={ForgotPasswordScreen_resetPw} />
@@ -190,6 +193,16 @@ const RootNavigation = () => {
       <Stack.Screen
         name="Log Out"
         component={LogoutScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Privacy Policy"
+        component={PrivacyPolicyScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Terms of Service"
+        component={TermsOfServiceScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -247,6 +260,16 @@ const RootNavigation = () => {
       <Stack.Screen
         name="Log Out"
         component={LogoutScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Privacy Policy"
+        component={PrivacyPolicyScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Terms of Service"
+        component={TermsOfServiceScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
