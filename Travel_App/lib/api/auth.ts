@@ -30,7 +30,7 @@ export async function forgotPassword(email: string): Promise<{ message: string }
   return res.data.data;
 }
 
-export async function oauthLogin(provider: 'google' | 'apple'): Promise<never> {
+export async function oauthLogin(provider: 'google' | 'apple'): Promise<unknown> {
   const res = await apiClient.post(`/auth/oauth/${provider}`, {});
   return res.data;
 }

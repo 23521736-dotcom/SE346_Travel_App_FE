@@ -7,6 +7,7 @@ export async function fetchMe(): Promise<ApiUser> {
 }
 
 export async function updateMe(body: {
+  email?: string;
   fullName?: string;
   username?: string;
   location?: string;
