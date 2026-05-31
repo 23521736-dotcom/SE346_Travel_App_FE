@@ -1,121 +1,127 @@
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
-import React from 'react';
-import { Image, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Switch,
+  Image,
+  ImageSourcePropType,
+} from 'react-native';
 import styles from './ProfileScreen.styles';
 import { useAuth } from '../context/AuthContext';
 
+interface SettingItemProps {
+  title: string;
+  iconSource: ImageSourcePropType;
+  iconBgColor: string;
+  hasSwitch?: boolean;
+  onPress?: () => void;
+}
 const DEFAULT_AVATAR =
   'https://th.bing.com/th/id/OIP.iY6OLSZImubhw9Yiwg6OuAHaHa?w=186&h=186&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3';
-
 export default function ProfileScreen({ navigation }: any) {
+  const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(true);
   const { user } = useAuth();
   const displayName = user?.fullName || user?.name || 'User';
   const avatar = user?.avatarUrl || DEFAULT_AVATAR;
+  const SettingItem = ({
+    title,
+    iconSource,
+    iconBgColor,
+    hasSwitch,
+    onPress,
+  }: SettingItemProps) => {
+    return (
+      <TouchableOpacity
+        style={styles.itemContainer}
+        onPress={onPress}
+        disabled={hasSwitch}
+      >
+        <View style={styles.itemLeft}>
+          <View style={[styles.iconWrapper, { backgroundColor: iconBgColor }]}>
+            <Image
+              source={iconSource}
+              style={[
+                styles.icon,
+                { tintColor: iconBgColor === '#e5f3fa' ? '#177bb3' : '#64748b' },
+              ]}
+            />
+          </View>
+          <Text style={styles.itemText}>{title}</Text>
+        </View>
+
+        {hasSwitch ? (
+          <Switch
+            trackColor={{ false: '#d1d5db', true: '#177bb3' }}
+            thumbColor={'#ffffff'}
+            ios_backgroundColor="#d1d5db"
+            onValueChange={() => setIsNotificationsEnabled(!isNotificationsEnabled)}
+            value={isNotificationsEnabled}
+          />
+        ) : (
+          <Text style={styles.chevron}>{'>'}</Text>
+        )}
+      </TouchableOpacity>
+    );
+  };
 
   return (
-    <View style={{ flex: 1, marginTop: 40, backgroundColor: '#ffff' }}>
-      <View style={[styles.container, { marginTop: 20 }]}>
-        <View style={{ alignItems: 'center' }}>
+    <View style={styles.container}>
+      <View style={styles.content}>
+        <View style={styles.headerContainer}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatarBorder}>
-              <Image
-                source={{ uri: avatar }}
-                style={{ width: '100%', height: '100%' }}
-              />
-            </View>
-
-            <TouchableOpacity style={styles.iconContainer} onPress={() => navigation.navigate("Edit Profile")}>
-              <Image
-                source={{ uri: 'https://cdn-icons-png.flaticon.com/128/10337/10337572.png' }}
-                style={{ width: '100%', height: '100%' }}
-              />
-            </TouchableOpacity>
+            <Image
+              source={{ uri: avatar }}
+              style={styles.avatar}
+            />
           </View>
-
-          <Text style={{ fontSize: 30, fontWeight: 'bold' }}>
+          <Text style={styles.userName}>
             {displayName}
           </Text>
           {user?.username ? (
-            <Text style={{ color: '#928d8d', fontSize: 16, marginTop: 4 }}>@{user.username}</Text>
+            <Text style={styles.userEmail}>@{user.username}</Text>
           ) : null}
         </View>
+        {/* --- ACCOUNT SETTINGS --- */}
+        <Text style={styles.sectionTitle}>ACCOUNT SETTINGS</Text>
+        <SettingItem
+          title="Edit Personal Information"
+          iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1077/1077063.png' }}
+          iconBgColor="#e5f3fa"
+          onPress={() => navigation.navigate("Edit Profile")}
+        />
 
-        <View style={styles.profileMenuContainer}>
-          <TouchableOpacity style={styles.profileMenuItemContainer}>
-            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#f0d3e8' }]}>
-              <Ionicons name="heart" size={30} color="#da2c2c" />
-            </View>
-            <View style={styles.profileMenuTextContainer}>
-              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>
-                Saved Places
-              </Text>
-              <Text style={{ color: '#928d8d', fontSize: 15 }}>
-                View your favourite places
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
-          </TouchableOpacity>
+        {/* --- PREFERENCES --- */}
+        <Text style={styles.sectionTitle}>PREFERENCES</Text>
+        <SettingItem
+          title="Notifications"
+          iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1827/1827370.png' }}
+          iconBgColor="#e5f3fa"
+          hasSwitch={true}
+        />
 
-          <TouchableOpacity style={styles.profileMenuItemContainer}>
-            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#c8c2f3' }]}>
-              <Ionicons name="images" size={25} color="#2e22d3" />
-            </View>
-            <View style={styles.profileMenuTextContainer}>
-              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>
-                Trips Memories
-              </Text>
-              <Text style={{ color: '#928d8d', fontSize: 15 }}>
-                Take a trip down memory lane
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
-          </TouchableOpacity>
+        {/* --- SUPPORT & LEGAL --- */}
+        <Text style={styles.sectionTitle}>SUPPORT & LEGAL</Text>
+        <SettingItem
+          title="Terms of Service"
+          iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/2912/2912760.png' }}
+          iconBgColor="#f1f5f9"
+          onPress={() => navigation.navigate('Terms of Service')}
+        />
+        <SettingItem
+          title="Privacy Policy"
+          iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1161/1161388.png' }}
+          iconBgColor="#f1f5f9"
+          onPress={() => navigation.navigate('Privacy Policy')}
+        />
 
-          <TouchableOpacity style={[styles.profileMenuItemContainer]}>
-            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#daf7b5' }]}>
-              <MaterialIcons name="rate-review" size={28} color="#a4c626" />
-            </View>
-            <View style={styles.profileMenuTextContainer}>
-              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>
-                Your Reviews
-              </Text>
-              <Text style={{ color: '#928d8d', fontSize: 15 }}>
-                Manage your contributions
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.profileMenuItemContainer]}>
-            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#c4c2c2' }]}>
-              <Ionicons name="settings-sharp" size={30} color="#000000" />
-            </View>
-            <View style={styles.profileMenuTextContainer}>
-              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>
-                Settings
-              </Text>
-              <Text style={{ color: '#928d8d', fontSize: 15 }}>
-                App preferences
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
-          </TouchableOpacity>
-
-          <TouchableOpacity style={[styles.profileMenuItemContainer]} onPress={() => navigation.navigate('Log Out')}>
-            <View style={[styles.profileMenuItemIcon, { backgroundColor: '#f5d0d0' }]}>
-              <Ionicons name="log-out-outline" size={30} color="#da2c2c" />
-            </View>
-            <View style={styles.profileMenuTextContainer}>
-              <Text style={{ fontWeight: 'bold', fontSize: 20 }}>
-                Log Out
-              </Text>
-              <Text style={{ color: '#928d8d', fontSize: 15 }}>
-                Sign out of your account
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={20} color="#cbc8c8" />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.navigate('Log Out')}>
+          <Image
+            source={{ uri: 'https://cdn-icons-png.flaticon.com/128/1828/1828427.png' }}
+            style={styles.logoutIcon}
+          />
+          <Text style={styles.logoutText}>Logout</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );

@@ -1,6 +1,6 @@
 import { Checkbox } from 'expo-checkbox';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Image, Pressable, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ImageBackground, Pressable, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import styles from './RegisterScreen.styles';
 import { useAuth, getApiErrorMessage } from '../context/AuthContext';
 
@@ -12,6 +12,7 @@ export default function RegisterScreen({ navigation }: any) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [selectedRole, setSelectedRole] = useState<'traveler' | 'owner'>('traveler');
     const [submitting, setSubmitting] = useState(false);
     const { register } = useAuth();
 
@@ -45,167 +46,246 @@ export default function RegisterScreen({ navigation }: any) {
     };
 
     return (
-        <View style={{ flex: 1, justifyContent: 'center', marginTop: 40 }}>
-            <View style={styles.container}>
-                <View style={{ flexDirection: "column", alignItems: 'center' }}>
-                    <View style={styles.imageFrame}>
+        <ImageBackground
+            source={{ uri: "https://i.pinimg.com/736x/77/b4/21/77b421686d6088e6527cf57d68c69e96.jpg" }}
+            style={styles.background}
+            resizeMode="cover"
+        >
+            <View style={styles.overlay}>
+                <View style={styles.screenContent}>
+
+                    <View style={styles.headerBlock}>
                         <Image
-                            source={{ uri: "https://i.pinimg.com/736x/ed/d9/86/edd98622650c6f964291fef1a968adc6.jpg" }}
-                            style={{ width: "100%", height: "100%" }} />
+                            source={{ uri: "https://cdn-icons-png.flaticon.com/128/201/201623.png" }}
+                            style={styles.headerIcon}
+                        />
+                        <Text style={styles.headerTitle}>
+                            Start Your Journey
+                        </Text>
+                        <Text style={styles.headerSubtitle}>
+                            Create an account to explore the world
+
+                        </Text>
                     </View>
-                    <Text style={{
-                        fontWeight: 'bold', fontSize: 35, textAlign: 'center', marginTop: 5
 
-                    }}> Start your Journey </Text>
-                    <Text style={[styles.text, { marginTop: 5 }]}>
-                        Create an account to explore the world
-                    </Text>
-                </View>
+                    <View style={styles.container}>
+                        <View style={styles.inputContainer}>
+                            <Image
+                                source={require('../../../assets/images/user-icon.png')}
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                            />
+                            <TextInput
+                                placeholder="Full Name"
+                                style={{
+                                    flex: 1,
+                                    color: '#ffffff',
+                                    fontSize: 16,
+                                    fontWeight: '500',
+                                    letterSpacing: 0.5
+                                }}
+                                placeholderTextColor="#94a3b8"
+                                value={fullName}
+                                onChangeText={setFullName}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                            />
+                        </View>
+                        <View style={styles.inputContainer}>
+                            <Image
+                                source={require('../../../assets/images/email-icon.png')}
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }}
+                            />
+                            <TextInput
+                                placeholder="Email Address"
+                                placeholderTextColor="#94a3b8"
+                                style={{
+                                    flex: 1,
+                                    color: '#ffffff',
+                                    fontSize: 16,
+                                    fontWeight: '500',
+                                    letterSpacing: 0.5
+                                }}
+                                value={email}
+                                onChangeText={setEmail}
+                                keyboardType="email-address"
+                                autoCapitalize="none"
+                            />
+                        </View>
 
+                        <View style={styles.inputContainer}>
+                            <Image
+                                source={require('../../../assets/images/password-icon.png')}
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                            />
+                            <TextInput
+                                placeholder="Password"
+                                style={{
+                                    flex: 1,
+                                    color: '#ffffff',
+                                    fontSize: 16,
+                                    fontWeight: '500',
+                                    letterSpacing: 0.5
+                                }}
+                                secureTextEntry={!isPasswordVisible}
 
-                <View style={[styles.inputContainer, { marginTop: 20 }]}>
-                    <Image
-                        source={require('../../../assets/images/user-icon.png')}
-                        style={{ width: 20, height: 20, marginRight: 2 }}
-                    />
-                    <TextInput placeholder="Full Name" style={{ flex: 1 }} value={fullName} onChangeText={setFullName} />
-                </View>
-
-                <View style={styles.inputContainer}>
-                    <Image
-                        source={require('../../../assets/images/email-icon.png')}
-                        style={{ width: 20, height: 20, marginRight: 2 }}
-                    />
-                    <TextInput placeholder="Email Address" style={{ flex: 1 }} value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
-                </View>
-                <View style={styles.inputContainer}>
-                    <Image
-                        source={require('../../../assets/images/password-icon.png')}
-                        style={{ width: 20, height: 20, marginRight: 2 }}
-                    />
-                    <TextInput placeholder="Password"
-                        secureTextEntry={!isPasswordVisible}
-                        style={{ flex: 1 }}
-                        keyboardType='default'
-                        autoCorrect={false}
-                        autoCapitalize="none"
-                        value={password}
-                        onChangeText={setPassword} />
-                    <TouchableOpacity
-                        onPress={() => setPasswordVisible(!isPasswordVisible)} >
+                                placeholderTextColor="#94a3b8"
+                                keyboardType='default'
+                                autoCorrect={false}
+                                autoCapitalize="none"
+                                value={password}
+                                onChangeText={setPassword}
+                            />
+                            <TouchableOpacity
+                                onPress={() => setPasswordVisible(!isPasswordVisible)} >
                         <Image
                             source={
                                 isPasswordVisible
                                     ? require('../../../assets/images/hidden_eyepassword-icon.png')
                                     : require('../../../assets/images/eyepassword-icon.png')}
-                            style={{ width: 20, height: 20 }}
-                            resizeMode="contain" />
+                                    style={{ width: 20, height: 20, tintColor: '#94a3b8' }}
+                                    resizeMode="contain" />
                     </TouchableOpacity>
-                </View>
 
-                <View style={styles.inputContainer}>
-                    <Image
+                        </View>
+                        <View style={styles.inputContainer}>
+                            <Image
                         source={require('../../../assets/images/cfpassword-icon.png')}
-                        style={{ width: 20, height: 20, marginRight: 2 }}
-                    />
-                    <TextInput placeholder="Confirm Password"
-                        secureTextEntry={!isCfPasswordVisible}
-                        style={{ flex: 1 }}
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword} />
-                    <TouchableOpacity
-                        onPress={() => setCfPasswordVisible(!isCfPasswordVisible)} >
-                        <Image
-                            source={
-                                isCfPasswordVisible
-                                    ? require('../../../assets/images/hidden_eyepassword-icon.png')
-                                    : require('../../../assets/images/eyepassword-icon.png')}
-                            style={{ width: 20, height: 20 }}
-                            resizeMode="contain" />
-                    </TouchableOpacity>
-                </View>
-                <View style={{ flexDirection: 'row', marginLeft: 10, marginTop: 10 }}>
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                            />
+                            <TextInput
+                                placeholder="Confirm Password"
+                                style={{
+                                    flex: 1,
+                                    color: '#ffffff',
+                                    fontSize: 16,
+                                    fontWeight: '500',
+                                    letterSpacing: 0.5
+                                }}
+                                secureTextEntry={!isCfPasswordVisible}
+                                placeholderTextColor="#94a3b8"
+                                value={confirmPassword}
+                                onChangeText={setConfirmPassword}
+                            />
+                            <TouchableOpacity
+                                onPress={() => setCfPasswordVisible(!isCfPasswordVisible)} >
+                                <Image
+                                    source={
+                                        isCfPasswordVisible
+                                            ? require('../../../assets/images/hidden_eyepassword-icon.png')
+                                            : require('../../../assets/images/eyepassword-icon.png')}
+                                    style={{ width: 20, height: 20, tintColor: '#94a3b8' }}
+                                    resizeMode="contain" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={styles.roleSection}>
+                            <Text style={styles.roleTitle}>Account Type</Text>
+                            <View style={styles.roleOptions}>
+                                <Pressable
+                                    style={[
+                                        styles.roleCard,
+                                        selectedRole === 'traveler' && styles.roleCardActive,
+                                    ]}
+                                    onPress={() => setSelectedRole('traveler')}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.roleName,
+                                            selectedRole === 'traveler' && styles.roleNameActive,
+                                        ]}
+                                    >
+                                        Traveler
+                                    </Text>
+                                    <Text style={styles.roleDescription}>
+                                        Explore places and write reviews
+                                    </Text>
+                                </Pressable>
+
+                                <Pressable
+                                    style={[
+                                        styles.roleCard,
+                                        selectedRole === 'owner' && styles.roleCardActive,
+                                    ]}
+                                    onPress={() => setSelectedRole('owner')}
+                                >
+                                    <Text
+                                        style={[
+                                            styles.roleName,
+                                            selectedRole === 'owner' && styles.roleNameActive,
+                                        ]}
+                                    >
+                                        Place Owner
+                                    </Text>
+                                    <Text style={styles.roleDescription}>
+                                        Manage and promote your locations
+                                    </Text>
+                                </Pressable>
+                            </View>
+                        </View>
+                    </View>
+                    <View style={styles.termsRow}>
                     <Checkbox
                         style={styles.checkbox}
                         value={isChecked}
                         onValueChange={setChecked}
-                        color={isChecked ? '#4630EB' : undefined} // Màu khi tích vào
+                            color={isChecked ? '#4630EB' : undefined} 
                     />
-                    <Text>
+                        <Text style={styles.text}>
                         I agree to the{' '}
                         <Text
                             style={styles.linkText}
-                            onPress={() => alert('Chuyển hướng đến trang điều khoản')}>
-                            Terms & Conditions
+                                onPress={() => navigation.navigate('Terms of Service')}>
+                                Terms of Service
                         </Text>
                     </Text>
                 </View>
 
-                <View style={{
-                    marginTop: 10,
-                    alignItems: 'center',
-
-                }} >
-                    <Pressable
-                        style={styles.button}
-                        onPress={handleRegister}
-                        disabled={submitting}>
-                        {submitting ? (
-                            <ActivityIndicator color="#fff" />
-                        ) : (
-                            <Text style={styles.buttonText}>
-                                Create Account
-                            </Text>
-                        )}
-                    </Pressable>
-                </View>
-
-                <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-                    <View style={styles.line} />
-                    <Text style={[styles.text, { marginVertical: 10 }]}>
-                        Or sign up with
-                    </Text>
-                    <View style={styles.line} />
-                    <View style={styles.containerGG_Apple}>
-                        <Pressable
-                            style={styles.buttonGG_Apple}
-                            onPress={() => alert('Pressed')}>
-                            <View style={styles.containerImageGG_Apple}>
-                                <Image source={require('../../../assets/images/google-icon.png')}
-                                    style={{ width: 20, height: 20, marginRight: 2 }}>
-                                </Image>
-                                <Text style={styles.buttonGG_AppleText}>
-                                    Google
+                    <View style={styles.containerChild}>
+                        <Pressable style={styles.button}
+                            onPress={handleRegister}
+                            disabled={submitting}>
+                            {submitting ? (
+                                <ActivityIndicator color="#fff" />
+                            ) : (
+                                <Text style={styles.buttonText}>
+                                    Create Account
                                 </Text>
-                            </View>
-
-                        </Pressable>
-
-                        <Pressable
-                            style={styles.buttonGG_Apple}
-                            onPress={() => alert('Pressed')}>
-                            <View style={styles.containerImageGG_Apple}>
-                                <Image source={require('../../../assets/images/apple-icon.png')}
-                                    style={{ width: 20, height: 20, marginRight: 2 }}>
-                                </Image>
-                                <Text style={styles.buttonGG_AppleText}>
-                                    Apple
-                                </Text>
-                            </View>
-
+                            )}
                         </Pressable>
                     </View>
-                    <Text style={[styles.text, { marginVertical: 10 }]}>
-                        Already have an account? {''}
-                        <Text style={styles.linkText}
-                            onPress={() => navigation.navigate("Login")}>
-                            Login
+                    <View style={styles.socialSection}>
+                        <View style={styles.lineContainer}>
+                            <View style={styles.line} />
+                            <Text style={styles.text}>Or continue with</Text>
+                            <View style={styles.line} />
+                        </View>
+
+                        <View style={styles.containerGG_Apple}>
+                            <Pressable style={styles.buttonGG_Apple}>
+                                <View style={styles.containerImageGG_Apple}>
+                                    <Image source={require('../../../assets/images/google-icon.png')} style={{ width: 20, height: 20 }} />
+                                    <Text style={styles.buttonGG_AppleText}>Google</Text>
+                                </View>
+                            </Pressable>
+
+                            <Pressable style={styles.buttonGG_Apple} >
+                                <View style={styles.containerImageGG_Apple}>
+                                    <Image source={require('../../../assets/images/apple-icon.png')} style={{ width: 20, height: 20 }} />
+                                    <Text style={styles.buttonGG_AppleText}>Apple</Text>
+                                </View>
+                            </Pressable>
+                        </View>
+
+                        <Text style={styles.loginFooterText}>
+                            Already have an account? {''}
+                            <Text style={styles.linkText} onPress={() => navigation.navigate("Login")}>
+                                Login
+                            </Text>
                         </Text>
-                    </Text>
+                    </View>
+
                 </View>
-
-
             </View>
-        </View >
-    )
+        </ImageBackground>
+    );
 }

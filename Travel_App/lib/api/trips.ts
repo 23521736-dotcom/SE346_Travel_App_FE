@@ -1,6 +1,7 @@
 import type { ApiOk } from './types';
 import { apiClient } from './client';
 
+
 export type ApiTripLocation = {
   id?: string | number;
   Id?: string | number;
@@ -67,6 +68,9 @@ export type ApiTripMember = {
 export type ApiTrip = {
   id?: string | number;
   Id?: string | number;
+  tripId?: string | number;
+  trip_id?: string | number;
+
   title?: string;
   Title?: string;
   name?: string;
@@ -112,7 +116,28 @@ export type ApiTrip = {
   days?: ApiTripDay[];
 };
 
+type TripsResponse =
+  | ApiTrip[]
+  | {
+    trips?: ApiTrip[];
+    items?: ApiTrip[];
+    results?: ApiTrip[];
+    rows?: ApiTrip[];
+  };
+
+function normalizeTripsResponse(data: TripsResponse | undefined): ApiTrip[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return data?.trips ?? data?.items ?? data?.results ?? data?.rows ?? [];
+}
+
 export async function fetchMyTrips(): Promise<ApiTrip[]> {
-  const res = await apiClient.get<ApiOk<ApiTrip[]>>('/users/me/trips');
-  return res.data.data;
+  const res = await apiClient.get<ApiOk<TripsResponse> | TripsResponse>('/users/me/trips');
+  const body = res.data as ApiOk<TripsResponse> | TripsResponse;
+  const payload = Array.isArray(body) ? body : 'data' in body ? body.data : body;
+
+  return normalizeTripsResponse(payload);
+
 }

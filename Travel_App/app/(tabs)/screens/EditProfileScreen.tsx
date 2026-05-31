@@ -103,7 +103,7 @@ export default function EditProfileScreen({ navigation }: any) {
                             activeOpacity={0.7}
                         >
                             <Image source={{uri: 'https://cdn-icons-png.flaticon.com/128/14025/14025489.png'}}
-                                style={{width: '100%', height: '100%'}}>
+                                style={{ width: '70%', height: '70%' }}>
                             </Image>
                         </TouchableOpacity>
                     </View>

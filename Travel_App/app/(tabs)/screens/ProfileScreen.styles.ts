@@ -6,86 +6,119 @@ const styles = StyleSheet.create({
   // Kế thừa các style chung
   ...commonStyles,
 
-    avatarContainer : {
-        width: 160,
-        height: 160,
+    container: {
+        flex: 1,
+        backgroundColor: '#f8fafc',
     },
-  
-    avatarBorder: {
-        borderWidth: 3,
-        borderColor: colors.primary,
-        width: 150,
-        height: 150,
-        //backgroundColor: "#fff",
-        //     //backgroundColor: "#fff",
-        //     borderRadius: 70,
-        //     overflow: "hidden",
-        borderRadius: 70,
-        overflow: "hidden",
-        position: 'relative',
+    content: {
+        flex: 1,
+        paddingHorizontal: 20,
+        paddingTop: 24,
+        paddingBottom: 24,
     },
-  
-    iconContainer: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        //borderWidth: 5,
-        //borderColor: colors.primary,
-        width: 50,
-        height: 50,
-        borderRadius: 70,
-        position: 'absolute',
-        bottom: 5, // combine with position to be clear
-        right: 10,
-        shadowColor: colors.primary,
-        shadowOpacity: 0.5, 
-        shadowRadius: 10, // cang be cang net, lon thi lan trong
-        shadowOffset: {width: 0, height: 4},
+    sectionTitle: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: '#177bb3',
+        letterSpacing: 0.8,
+        marginTop: 18,
+        marginBottom: 12,
+        marginLeft: 4,
     },
-  
-      // borderAvatar: {
-      //     borderWidth: 5,
-      //     borderColor: colors.primary,
-
-    profileMenuContainer: {
-        //flex: 1,
-        flexDirection: 'column',
-        marginHorizontal: 20,
-        marginTop: 30,
-        borderRadius: 30,
-        overflow: 'hidden',
-        //backgroundColor:'black'
-    },
-
-    profileMenuItemContainer: {
-        //flex: 1,
+    itemContainer: {
         flexDirection: 'row',
-        //position: 'relative',
-        padding: 10,
-        //margin: 10,
-        borderRadius: 10,
-        //height: 80,
-        columnGap: 15,
-        alignItems:'center',
-        justifyContent: 'flex-start',
-        borderBottomColor: '#eae4e4',
-        borderBottomWidth: 2,
-        backgroundColor: "#ffffff"
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#ffffff',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+        borderRadius: 14,
+        marginBottom: 12,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        elevation: 2,
     },
-
-    profileMenuItemIcon: {
-        //position: 'relative',
-        width: 45,
-        height: 45,
-        borderRadius: 100,
+    itemLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    iconWrapper: {
+        width: 38,
+        height: 38,
+        borderRadius: 19,
         alignItems: 'center',
         justifyContent: 'center',
+        marginRight: 14,
     },
-
-    profileMenuTextContainer: {
-        flexDirection: 'column',
-        flex: 1, // làm đầy phần text thì đẩy được phần > ra ngoài cùng
-        //marginRight: 70,
-        //backgroundColor: 'blue'
+    icon: {
+        width: 18,
+        height: 18,
+    },
+    itemText: {
+        fontSize: 15,
+        fontWeight: '500',
+        color: '#334155',
+    },
+    chevron: {
+        fontSize: 18,
+        color: '#94a3b8',
+        fontWeight: '500',
+    },
+    logoutButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#fff1f2',
+        paddingVertical: 15,
+        borderRadius: 14,
+        marginTop: 25,
+    },
+    logoutIcon: {
+        width: 20,
+        height: 20,
+        tintColor: '#e11d48',
+        marginRight: 10,
+    },
+    logoutText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#e11d48',
+    },
+    headerContainer: {
+        alignItems: 'center',
+        marginTop: 30,
+        marginBottom: 18,
+    },
+    avatarContainer: {
+        width: 140,
+        height: 140,
+        borderRadius: 70,
+        backgroundColor: '#ffffff',
+        padding: 4, // Tạo viền trắng mỏng bọc ngoài ảnh
+        marginBottom: 14,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+        elevation: 5,
+    },
+    avatar: {
+        width: '100%',
+        height: '100%',
+        borderRadius: 66,
+    },
+    userName: {
+        fontSize: 20,
+        fontWeight: '800',
+        color: '#1e293b',
+        marginBottom: 4,
+    },
+    userEmail: {
+        fontSize: 14,
+        color: '#64748b',
+        fontWeight: '500',
     },
       
 });
