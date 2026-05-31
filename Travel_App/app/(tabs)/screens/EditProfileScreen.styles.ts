@@ -36,6 +36,8 @@ const styles = StyleSheet.create({
         position: 'absolute',
         bottom: 5, // combine with position to be clear
         right: 10,
+        zIndex: 10,
+        elevation: 10,
         shadowColor: colors.primary,
         shadowOpacity: 0.5, 
         shadowRadius: 10, // cang be cang net, lon thi lan trong

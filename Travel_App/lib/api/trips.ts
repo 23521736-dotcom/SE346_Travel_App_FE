@@ -1,6 +1,7 @@
 import type { ApiOk } from './types';
 import { apiClient } from './client';
 
+
 export type ApiTripLocation = {
   id?: string | number;
   Id?: string | number;
@@ -69,6 +70,7 @@ export type ApiTrip = {
   Id?: string | number;
   tripId?: string | number;
   trip_id?: string | number;
+
   title?: string;
   Title?: string;
   name?: string;
@@ -137,4 +139,5 @@ export async function fetchMyTrips(): Promise<ApiTrip[]> {
   const payload = Array.isArray(body) ? body : 'data' in body ? body.data : body;
 
   return normalizeTripsResponse(payload);
+
 }

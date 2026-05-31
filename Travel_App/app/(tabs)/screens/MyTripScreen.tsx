@@ -334,6 +334,40 @@ export default function MyTripScreen({ navigation }: any) {
   useFocusEffect(loadTrips);
 
   useEffect(() => {
+    let isMounted = true;
+
+    async function loadTrips() {
+      setIsLoadingTrips(true);
+      setTripLoadError(null);
+
+      try {
+        const apiTrips = await fetchMyTrips();
+        if (!isMounted) {
+          return;
+        }
+
+        const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
+        setUpcomingTripList(mappedTrips.filter((trip) => !isPastTrip(trip)));
+        setPastTripList(mappedTrips.filter(isPastTrip));
+      } catch (error) {
+        if (isMounted) {
+          setTripLoadError(getApiErrorMessage(error));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingTrips(false);
+        }
+      }
+    }
+
+    loadTrips();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
     return subscribeTripDrafts((updatedTrip) => {
       const applyTripUpdate = (trip: Trip) =>
         trip.id === updatedTrip.id
@@ -429,67 +463,67 @@ export default function MyTripScreen({ navigation }: any) {
         contentContainerStyle={styles.scrollContent}
       >
         {featuredTrip ? (
-        <View style={styles.featuredSection}>
-          <View style={styles.featuredCard}>
-            <ImageBackground
-              source={{ uri: featuredTrip.image }}
-              imageStyle={styles.featuredImageRadius}
-              style={styles.featuredImage}
-            >
-              <View style={styles.featuredOverlay} />
-              <View style={styles.featuredInfo}>
-                <View style={styles.featuredBadge}>
-                  <Text style={styles.featuredBadgeText}>Current Trip</Text>
-                </View>
-                <Text numberOfLines={1} style={styles.featuredTripTitle}>
-                  {featuredTrip.title}
-                </Text>
-                <View style={styles.featuredMetaRow}>
-                  <Ionicons name="calendar-outline" size={14} color={colors.white} />
-                  <Text numberOfLines={1} style={styles.featuredMetaText}>
-                    {featuredTrip.date}
+          <View style={styles.featuredSection}>
+            <View style={styles.featuredCard}>
+              <ImageBackground
+                source={{ uri: featuredTrip.image }}
+                imageStyle={styles.featuredImageRadius}
+                style={styles.featuredImage}
+              >
+                <View style={styles.featuredOverlay} />
+                <View style={styles.featuredInfo}>
+                  <View style={styles.featuredBadge}>
+                    <Text style={styles.featuredBadgeText}>Current Trip</Text>
+                  </View>
+                  <Text numberOfLines={1} style={styles.featuredTripTitle}>
+                    {featuredTrip.title}
                   </Text>
+                  <View style={styles.featuredMetaRow}>
+                    <Ionicons name="calendar-outline" size={14} color={colors.white} />
+                    <Text numberOfLines={1} style={styles.featuredMetaText}>
+                      {featuredTrip.date}
+                    </Text>
+                  </View>
+                  <View style={styles.featuredMetaRow}>
+                    <Ionicons name="bed-outline" size={14} color={colors.white} />
+                    <Text numberOfLines={1} style={styles.featuredMetaText}>
+                      {featuredTrip.hotel || "Hotel not selected"} - {featuredTrip.duration || 1} days
+                    </Text>
+                  </View>
+                  <View style={styles.featuredMetaRow}>
+                    <Ionicons name="wallet-outline" size={14} color={colors.white} />
+                    <Text numberOfLines={1} style={styles.featuredMetaText}>
+                      Total budget: VND: {formatVnd(featuredTrip.budget || 0)}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.featuredMetaRow}>
-                  <Ionicons name="bed-outline" size={14} color={colors.white} />
-                  <Text numberOfLines={1} style={styles.featuredMetaText}>
-                    {featuredTrip.hotel || "Hotel not selected"} - {featuredTrip.duration || 1} days
+              </ImageBackground>
+
+              <View style={styles.featuredActions}>
+                <Pressable
+                  onPress={planTrip}
+                  style={({ pressed }) => [
+                    styles.featuredPrimaryButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text style={styles.featuredPrimaryButtonText}>Plan Trip</Text>
+                </Pressable>
+
+                <Pressable
+                  onPress={writeDiaryTrip}
+                  style={({ pressed }) => [
+                    styles.featuredSecondaryButton,
+                    pressed && styles.buttonPressed,
+                  ]}
+                >
+                  <Text style={styles.featuredSecondaryButtonText}>
+                    Write Diary Trip
                   </Text>
-                </View>
-                <View style={styles.featuredMetaRow}>
-                  <Ionicons name="wallet-outline" size={14} color={colors.white} />
-                  <Text numberOfLines={1} style={styles.featuredMetaText}>
-                    Total budget: VND: {formatVnd(featuredTrip.budget || 0)}
-                  </Text>
-                </View>
+                </Pressable>
               </View>
-            </ImageBackground>
-
-            <View style={styles.featuredActions}>
-              <Pressable
-                onPress={planTrip}
-                style={({ pressed }) => [
-                  styles.featuredPrimaryButton,
-                  pressed && styles.buttonPressed,
-                ]}
-              >
-                <Text style={styles.featuredPrimaryButtonText}>Plan Trip</Text>
-              </Pressable>
-
-              <Pressable
-                onPress={writeDiaryTrip}
-                style={({ pressed }) => [
-                  styles.featuredSecondaryButton,
-                  pressed && styles.buttonPressed,
-                ]}
-              >
-                <Text style={styles.featuredSecondaryButtonText}>
-                  Write Diary Trip
-                </Text>
-              </Pressable>
             </View>
           </View>
-        </View>
         ) : null}
 
         <View style={styles.tabsWrap}>
