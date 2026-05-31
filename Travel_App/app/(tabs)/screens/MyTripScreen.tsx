@@ -347,7 +347,17 @@ export default function MyTripScreen({ navigation }: any) {
   };
 
   const writeDiaryTrip = () => {
-    navigation.navigate("Trip Diary");
+    if (!featuredTrip) {
+      Alert.alert("No trip selected", "Open a trip before writing a diary.");
+      return;
+    }
+
+    navigation.navigate("Trip Diary", {
+      id: featuredTrip.id,
+      title: featuredTrip.title,
+      date: featuredTrip.date,
+      image: featuredTrip.image,
+    });
   };
 
   const createEmptyPlanningTrip = () => {
