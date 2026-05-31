@@ -1,5 +1,5 @@
-import { apiClient } from './client';
 import type { ApiOk } from './types';
+import { apiClient } from './client';
 
 export type ApiTripLocation = {
   id?: string | number;
@@ -115,20 +115,4 @@ export type ApiTrip = {
 export async function fetchMyTrips(): Promise<ApiTrip[]> {
   const res = await apiClient.get<ApiOk<ApiTrip[]>>('/users/me/trips');
   return res.data.data;
-}
-
-export async function fetchTripById(tripId: string): Promise<ApiTrip> {
-  try {
-    const res = await apiClient.get<ApiOk<ApiTrip>>(`/trips/${encodeURIComponent(tripId)}`);
-    return res.data.data;
-  } catch (error) {
-    const trips = await fetchMyTrips();
-    const trip = trips.find((item) => String(item.id ?? item.Id ?? '') === String(tripId));
-
-    if (trip) {
-      return trip;
-    }
-
-    throw error;
-  }
 }
