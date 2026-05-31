@@ -89,6 +89,27 @@ function updateDayDates(days: ItineraryDay[] | undefined, duration: number, star
   });
 }
 
+function getVietnameseDayTitle(title: string, index: number) {
+  const dayNumber = title.match(/\d+/)?.[0] ?? String(index + 1);
+  return `Ngày ${dayNumber}`;
+}
+
+function getCostValue(cost: string) {
+  return Number(cost.replace(/[^0-9.]/g, '')) || 0;
+}
+
+function getTripTotalBudget(days: ItineraryDay[]) {
+  return days.reduce(
+    (tripSum, day) =>
+      tripSum + day.locations.reduce((daySum, location) => daySum + getCostValue(location.cost), 0),
+    0
+  );
+}
+
+function formatBudget(value: number) {
+  return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
 export default function EditingTripScreen({ navigation, route }: any) {
   const incomingTrip = {
     ...defaultTrip,
@@ -101,6 +122,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
   const itineraryData = trip.itineraryData?.length
     ? trip.itineraryData
     : buildEmptyDays(trip.duration, startDate);
+  const totalEstimatedBudget = getTripTotalBudget(itineraryData);
 
   const updateText = (field: 'title' | 'hotel', value: string) => {
     setTrip((current) => ({
@@ -114,19 +136,6 @@ export default function EditingTripScreen({ navigation, route }: any) {
       setTrip(route.params.tripData);
     }
   }, [route?.params?.tripData]);
-
-  const updateNumber = (field: 'duration' | 'budget', value: string) => {
-    const nextValue = Number(value.replace(/[^0-9]/g, '')) || 0;
-
-    setTrip((current) => ({
-      ...current,
-      [field]: nextValue,
-      itineraryData:
-        field === 'duration' && !current.itineraryData?.some((day) => day.locations.length > 0)
-          ? buildEmptyDays(nextValue)
-          : current.itineraryData,
-    }));
-  };
 
   const closeDatePicker = () => {
     setActiveDateInput(null);
@@ -189,6 +198,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
   const saveTrip = () => {
     const updatedTrip = normalizeTripDays({
       ...trip,
+      budget: totalEstimatedBudget,
       itineraryData,
     });
 
@@ -226,7 +236,6 @@ export default function EditingTripScreen({ navigation, route }: any) {
           imageStyle={{ borderRadius: 16 }}
         >
           <View style={styles.heroOverlay}>
-            <Text style={styles.heroSubtitle}>Current Trip</Text>
             <Text style={styles.heroTitle}>{trip.title}</Text>
           </View>
         </ImageBackground>
@@ -269,7 +278,6 @@ export default function EditingTripScreen({ navigation, route }: any) {
               </View>
             </TouchableOpacity>
           </View>
-          <Text style={styles.durationHint}>{trip.duration} Days</Text>
 
           <Text style={styles.label}>Hotel</Text>
           <View style={styles.inputBox}>
@@ -283,9 +291,12 @@ export default function EditingTripScreen({ navigation, route }: any) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Detailed schedule</Text>
+          <View style={styles.scheduleTitleRow}>
+            <Text style={styles.sectionTitle}>Detail Schedule</Text>
+            <Text style={styles.durationHint}>{trip.duration} Days</Text>
+          </View>
 
-          {itineraryData.map((day) => (
+          {itineraryData.map((day, index) => (
             <View key={day.dayId} style={styles.dayContainer}>
               <View style={styles.dayHeader}>
                 <Text style={styles.dayTitle}>{day.title}</Text>
@@ -297,7 +308,10 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
                   <View style={styles.itineraryInfo}>
                     <Text style={styles.itineraryTitle}>{loc.name}</Text>
-                    <Text style={styles.itineraryRating}>{loc.rating}</Text>
+                    <View style={styles.itineraryRatingRow}>
+                      <Ionicons name="star" size={12} color="#F97316" />
+                      <Text style={styles.itineraryRating}>{loc.rating}</Text>
+                    </View>
 
                     <View style={styles.itineraryDetailsRow}>
                       <View>
@@ -306,7 +320,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
                       </View>
                       <View style={{ marginLeft: 20 }}>
                         <Text style={styles.detailLabel}>ESTIMATED BUDGET</Text>
-                        <Text style={styles.detailValue}>{loc.cost}</Text>
+                        <Text style={styles.detailValue}>VND: {formatBudget(getCostValue(loc.cost))}</Text>
                       </View>
                     </View>
                   </View>
@@ -332,27 +346,25 @@ export default function EditingTripScreen({ navigation, route }: any) {
                   })
                 }
               >
-                <Feather name="map-pin" size={16} color="#1E88E5" style={{ marginRight: 8 }} />
-                <Text style={styles.addLocationText}>Add location for {day.title}</Text>
+                <View style={styles.addLocationIconWrap}>
+                  <Feather name="map-pin" size={15} color="#1E88E5" />
+                </View>
+                <Text style={styles.addLocationText}>
+                  Thêm địa điểm cho {getVietnameseDayTitle(day.title, index)}
+                </Text>
               </TouchableOpacity>
             </View>
           ))}
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Estimated budget</Text>
+          <Text style={styles.sectionTitle}>Total estimated budget</Text>
           <View style={styles.budgetCard}>
             <View style={styles.budgetIconContainer}>
               <MaterialCommunityIcons name="cash" size={24} color="#FFF" />
             </View>
             <View style={styles.budgetInfo}>
-              <TextInput
-                keyboardType="number-pad"
-                value={String(trip.budget)}
-                onChangeText={(value) => updateNumber('budget', value)}
-                style={styles.budgetAmount}
-              />
-              <Text style={styles.budgetCurrency}>{trip.currency || 'USD'} / person</Text>
+              <Text style={styles.budgetAmount}>VND: {formatBudget(totalEstimatedBudget)}</Text>
             </View>
           </View>
         </View>

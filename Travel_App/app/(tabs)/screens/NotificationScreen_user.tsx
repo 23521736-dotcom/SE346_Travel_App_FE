@@ -1,5 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
 import React, { useState } from "react";
 import {
   GestureResponderEvent,
@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { colors } from "../common/colors";
-import styles from "./NotificationScreen.styles";
+import styles from "./NotificationScreen_user.styles";
 
 type NotificationType =
   | "invited"
@@ -32,7 +32,7 @@ type BaseNotificationItem = {
 
 type InvitedNotification = BaseNotificationItem & {
   type: "invited";
-  username: string;
+  username: string; // người mời
   itineraryName: string;
   days: number;
 };
@@ -57,7 +57,7 @@ type LikeCommentNotification = BaseNotificationItem & {
 
 type UpdateDiaryNotification = BaseNotificationItem & {
   type: "update_diary";
-  username: string;
+  username: string; // người update
   itineraryName: string;
 };
 
@@ -77,11 +77,16 @@ type NotificationDisplay = {
   description: string;
 };
 
+type NotificationRoute = {
+  name: string;
+  params: Record<string, string | number | undefined>;
+};
+
 const notifications: NotificationItem[] = [
   {
     id: "invite-bali",
     type: "invited",
-    targetId: "itinerary-bali-2026",
+    targetId: "cmpsqyv8l00aju4906rljgnwv",
     username: "Alex",
     itineraryName: "Summer in Bali",
     days: 7,
@@ -91,15 +96,15 @@ const notifications: NotificationItem[] = [
   {
     id: "upcoming-da-nang",
     type: "upcoming",
-    targetId: "itinerary-da-nang-2026",
-    itineraryName: "Da Nang Escape",
+    targetId: "cmpsqyx3h00bcu4905w58awck",
+    itineraryName: "Cuối tuần khám phá ẩm thực Việt",
     days: 3,
     time: "1h ago",
   },
   {
     id: "promotion-hotel",
     type: "promotion",
-    targetId: "place-seaside-hotel",
+    targetId: "cmpsqudtc0001u490mv4nv7vj",
     placeName: "Seaside Hotel",
     discount: 25,
     time: "3h ago",
@@ -110,7 +115,7 @@ const notifications: NotificationItem[] = [
   {
     id: "review-like-hoi-an",
     type: "like_comment",
-    targetId: "place-hoi-an-ancient-town",
+    targetId: "cmpsquh4x000gu490plmy1t9y",
     placeName: "Hoi An Ancient Town",
     time: "5h ago",
   },
@@ -197,30 +202,41 @@ function getIconStyles(tone: IconTone) {
   };
 }
 
-function getNotificationRoute(item: NotificationItem) {
-  const id = item.targetId;
+function getNotificationRoute(item: NotificationItem): NotificationRoute {
+  const targetId = item.targetId;
 
   switch (item.type) {
     case "invited":
     case "upcoming":
       return {
-        pathname: "/screens/PlanningTrip" as const,
-        params: { id },
+        name: "PlanningTrip",
+        params: {
+          tripId: targetId,
+          title: item.itineraryName,
+        },
       };
     case "promotion":
       return {
-        pathname: "/screens/DetailLocationScreen" as const,
-        params: { id, placeId: id },
+        name: "Detail Location",
+        params: {
+          placeId: targetId,
+        },
       };
     case "like_comment":
       return {
-        pathname: "/screens/ViewReviewsScreen" as const,
-        params: { id, placeId: id, placeName: item.placeName },
+        name: "All Reviews",
+        params: {
+          placeId: targetId,
+          placeName: item.placeName,
+        },
       };
     case "update_diary":
       return {
-        pathname: "/screens/TripDiaryScreen" as const,
-        params: { id },
+        name: "Trip Diary",
+        params: {
+          diaryId: targetId,
+          title: item.itineraryName,
+        },
       };
   }
 }
@@ -234,16 +250,17 @@ function NotificationCard({
   onAccept: (id: string) => void;
   onDecline: (id: string) => void;
 }) {
-  const router = useRouter();
+  const navigation = useNavigation<any>();
   const display = getNotificationDisplay(item);
   const iconStyle = getIconStyles(display.iconTone);
 
   const handleCardPress = () => {
-    router.push(getNotificationRoute(item));
+    const route = getNotificationRoute(item);
+    navigation.navigate(route.name, route.params);
   };
 
   const handleAccept = (event: GestureResponderEvent) => {
-    event.stopPropagation();
+    event.stopPropagation(); //Nó chặn sự kiện bấm nút lan ra thẻ cha , vì mỗi card là 1 button 
     onAccept(item.id);
   };
 

@@ -11,44 +11,44 @@ const styles = StyleSheet.create({
   },
 
   container: { flex: 1, backgroundColor: '#F3F6FA' },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: 40 },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, paddingTop: 42, paddingBottom: 14 },
   headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#1a202c' },
-  scrollContent: { paddingHorizontal: 20, paddingBottom: 40 },
+  scrollContent: { paddingHorizontal: 16, paddingBottom: 56 },
 
-  card: { backgroundColor: '#fff', borderRadius: 24, padding: 20, marginBottom: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
-  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#2d3748' },
+  card: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginBottom: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+  cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  sectionTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#2d3748', marginRight: 12 },
   actionButtons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   modifyBtnText: { color: '#0EB4D3', fontWeight: 'bold', fontSize: 13 },
-  infoGrid: { flexDirection: 'row', marginBottom: 16 },
+  infoGrid: { flexDirection: 'row', columnGap: 14, marginBottom: 14 },
   infoCol: { flex: 1 },
   label: { fontSize: 12, color: '#a0aec0', marginBottom: 6, fontWeight: '600' },
-  iconRow: { flexDirection: 'row', alignItems: 'center' },
-  infoValue: { fontSize: 14, fontWeight: '700', color: '#2d3748' },
+  iconRow: { flexDirection: 'row', alignItems: 'center', columnGap: 7 },
+  infoValue: { flex: 1, fontSize: 14, fontWeight: '700', color: '#2d3748' },
   dateRangeText: {
     color: '#94A3B8',
     fontSize: 11,
     fontWeight: '600',
     marginTop: 5,
   },
-  bottomSettingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' },
+  bottomSettingsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', columnGap: 14, marginTop: 2 },
 
-  avatarGroup: { flexDirection: 'row', alignItems: 'center', paddingLeft: 0 },
+  avatarGroup: { flexDirection: 'row', alignItems: 'center', minHeight: 36, paddingLeft: 0, marginTop: 2 },
   avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: '#fff',
     backgroundColor: '#edf2f7',
   },
   avatarOverlap: {
-    marginLeft: -10,
+    marginLeft: -8,
   },
   avatarMore: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: '#fff',
     backgroundColor: '#0EB4D3',
@@ -64,19 +64,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#a0aec0',
     marginLeft: 8,
+    maxWidth: 120,
     fontStyle: 'italic',
   },
   avatarPlus: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#edf2f7', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff' },
-  budgetAmount: { fontSize: 18, fontWeight: 'bold', color: '#0EB4D3' },
+  budgetAmount: { fontSize: 17, fontWeight: 'bold', color: '#0EB4D3', textAlign: 'right' },
   budgetUnit: { fontSize: 12, color: '#a0aec0', fontWeight: 'normal' },
 
   dayHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff', // Giữ nền trắng
-    padding: 16,
-    borderRadius: 20,
-    marginBottom: 16,
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -99,13 +100,15 @@ const styles = StyleSheet.create({
   },
   dayBadgeText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
 
-  dayTitleCol: { flex: 1, marginLeft: 12 },
+  dayTitleCol: { flex: 1, marginLeft: 14, marginRight: 10 },
   dayTitle: { fontSize: 16, fontWeight: 'bold', color: '#2d3748' },
   daySubtitle: { fontSize: 13, color: '#a0aec0', marginTop: 2 },
 
   iconButton: {
-    width: 24,
+    width: 34,
+    height: 34,
     alignItems: 'center',
+    justifyContent: 'center',
   },
 
   section: {
@@ -253,24 +256,26 @@ const styles = StyleSheet.create({
   },
 
   timelineDay: {
-    marginBottom: 14,
+    marginBottom: 12,
   },
 
   dayHeaderExpanded: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 0,
-    paddingVertical: 10,
-    marginBottom: 4,
+    paddingVertical: 8,
+    paddingRight: 2,
+    marginBottom: 6,
   },
 
   dayHeaderCollapsed: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#E3F8FF',
-    padding: 17,
-    borderRadius: 20,
-    marginBottom: 12,
+    padding: 14,
+    paddingRight: 12,
+    borderRadius: 16,
+    marginBottom: 10,
     borderWidth: 1,
     borderColor: '#B9ECF8',
     shadowColor: '#0EB4D3',
@@ -324,9 +329,9 @@ const styles = StyleSheet.create({
 
   timelineWrap: {
     position: 'relative',
-    paddingLeft: 16,
-    marginLeft: 16,
-    paddingBottom: 8,
+    paddingLeft: 14,
+    marginLeft: 14,
+    paddingBottom: 6,
   },
 
   timelineLine: {
@@ -339,14 +344,15 @@ const styles = StyleSheet.create({
   },
 
   timelineItem: {
-    marginBottom: 18,
+    marginBottom: 14,
   },
 
   timeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
-    marginLeft: -16,
+    marginBottom: 8,
+    marginLeft: -14,
+    paddingRight: 8,
   },
 
   timelineDot: {
@@ -363,6 +369,7 @@ const styles = StyleSheet.create({
     color: '#0EB4D3',
     fontSize: 10,
     fontWeight: '900',
+    letterSpacing: 0.4,
   },
 
   timeText: {
@@ -372,10 +379,10 @@ const styles = StyleSheet.create({
   },
 
   timelineCard: {
-    marginLeft: 12,
+    marginLeft: 10,
     backgroundColor: '#fff',
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 14,
+    padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     shadowColor: '#000',
@@ -386,10 +393,10 @@ const styles = StyleSheet.create({
   },
 
   timelineImage: {
-    width: 76,
-    height: 76,
+    width: 70,
+    height: 70,
     borderRadius: 10,
-    marginRight: 14,
+    marginRight: 12,
   },
 
   timelineInfo: {
@@ -400,7 +407,7 @@ const styles = StyleSheet.create({
   timelineTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    columnGap: 6,
+    columnGap: 8,
   },
 
   timelineTitle: {
@@ -422,7 +429,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#FFF7ED',
     borderRadius: 6,
-    paddingHorizontal: 5,
+    paddingHorizontal: 6,
     paddingVertical: 2,
     columnGap: 2,
   },
