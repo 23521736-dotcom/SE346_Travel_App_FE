@@ -1,16 +1,11 @@
 import type { ApiOk, PlaceDetail, PlaceListItem } from './types';
 import { apiClient } from './client';
+import { normalizePlaceCategory } from '../placeCategories';
 
-const categoryQuery: Record<string, string> = {
-  Attractions: 'attractions',
-  Dining: 'dining',
-  Festivals: 'festivals',
-};
-
-export async function fetchPlaces(category: string): Promise<PlaceListItem[]> {
-  const q = categoryQuery[category] ?? 'attractions';
+export async function fetchPlaces(category?: string): Promise<PlaceListItem[]> {
+  const q = normalizePlaceCategory(category);
   const res = await apiClient.get<ApiOk<PlaceListItem[]>>('/places', {
-    params: { category: q, limit: 50 },
+    params: q ? { category: q, limit: 50 } : { limit: 50 },
   });
   return res.data.data;
 }

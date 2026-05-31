@@ -1,4 +1,4 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -13,11 +13,12 @@ import {
 } from 'react-native';
 import { addFavorite, fetchFavorites, removeFavorite } from '../../../lib/api/favorites';
 import type { PlaceDetail, PlaceListItem } from '../../../lib/api/types';
+import { normalizePlaceCategory, PLACE_CATEGORIES } from '../../../lib/placeCategories';
 import { colors } from '../common/colors';
 import { getApiErrorMessage } from '../context/AuthContext';
 import styles from "./SavedPlacesScreen.style";
 
-const FILTERS = ['All', 'Festivals', 'Dining', 'Attractions'];
+const FILTERS = [{ value: 'All', label: 'All' }, ...PLACE_CATEGORIES];
 
 function toPlaceDetail(place: PlaceListItem, isFavorite: boolean): PlaceDetail {
     const defaultReviewPictures = [
@@ -33,6 +34,7 @@ function toPlaceDetail(place: PlaceListItem, isFavorite: boolean): PlaceDetail {
         NumberOfRate: place.NumberOfRate,
         Image: place.image,
         Features: place.Features,
+        Category: place.Category,
         about: `${place.Name} is saved in your trip list. This destination is a good candidate for your itinerary with useful details, nearby experiences, and travel notes ready to review.`,
         priceLevel: null,
         Reviews: [
@@ -118,7 +120,7 @@ export default function SavedPlaces({ navigation }: any) {
     };
 
     const filteredPlaces = places.filter(place => {
-        const matchCategory = activeFilter === 'All' ? true : place.Features === activeFilter;
+        const matchCategory = activeFilter === 'All' ? true : normalizePlaceCategory(place.Category) === activeFilter;
         const searchText = searchQuery.toLowerCase();
         const matchSearch = place.Name.toLowerCase().includes(searchText) ||
             place.Located.toLowerCase().includes(searchText);
@@ -155,12 +157,12 @@ export default function SavedPlaces({ navigation }: any) {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filtersScroll}>
                     {FILTERS.map((filter) => (
                         <TouchableOpacity
-                            key={filter}
-                            onPress={() => setActiveFilter(filter)}
-                            style={[styles.filterChip, activeFilter === filter && styles.filterChipActive]}
+                            key={filter.value}
+                            onPress={() => setActiveFilter(filter.value)}
+                            style={[styles.filterChip, activeFilter === filter.value && styles.filterChipActive]}
                         >
-                            <Text style={[styles.filterText, activeFilter === filter && styles.filterTextActive]}>
-                                {filter}
+                            <Text style={[styles.filterText, activeFilter === filter.value && styles.filterTextActive]}>
+                                {filter.label}
                             </Text>
                         </TouchableOpacity>
                     ))}

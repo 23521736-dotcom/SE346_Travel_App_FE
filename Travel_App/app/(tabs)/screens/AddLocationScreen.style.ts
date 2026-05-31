@@ -62,7 +62,7 @@ export const styles = StyleSheet.create({
     padding: 16,
     borderWidth: 1,
     borderColor: colors.borderLight,
-    marginBottom: 24,
+    marginBottom: 20,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10 },
       android: { elevation: 2 },
@@ -75,6 +75,15 @@ export const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 4,
+    marginBottom: 8,
+  },
+  labelInRow: {
+    marginBottom: 0,
   },
   input: {
     backgroundColor: colors.background,

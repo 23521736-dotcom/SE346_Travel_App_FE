@@ -17,11 +17,16 @@ export type AuthResponse = {
 export type PlaceListItem = {
   Id: string;
   Name: string;
+  Location: string;
   Located: string;
   Rate: number;
   NumberOfRate: number;
   Features: string;
+  Image: string;
   image: string;
+  Images?: string[];
+  category?: string;
+  Category?: string;
 };
 
 export type PlaceReview = {
@@ -45,6 +50,9 @@ export type PlaceDetail = {
   priceLevel?: number | null;
   Reviews: PlaceReview[];
   isFavorite?: boolean;
+
+  category?: string;
+  Category?: string;
 };
 
 export type ReviewListItem = {

@@ -1,14 +1,17 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Alert, FlatList, Image, Pressable, Text, TextInput, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Alert, FlatList, Image, Pressable, ScrollView, Text, TextInput, View } from 'react-native';
 import { colors } from "../common/colors";
 import styles from './HomeScreen.styles';
 import { fetchPlaces } from '../../../lib/api/places';
 import { planTrip } from '../../../lib/api/ai';
 import type { PlaceListItem } from '../../../lib/api/types';
 import { getApiErrorMessage } from '../context/AuthContext';
+import { getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../lib/placeCategories';
 
 type Place = PlaceListItem;
+
+const FILTERS = [{ value: 'All', label: 'All' }, ...PLACE_CATEGORIES];
 
 const renderPlaceCard = (item: Place, navigation: any) => {
     //  const navigation = useNavigation<any>();
@@ -45,7 +48,7 @@ const renderPlaceCard = (item: Place, navigation: any) => {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <View style={{ borderWidth: 1, borderColor: '#BFF0DB', backgroundColor: '#e5f6ef', padding: 5, borderRadius: 10 }}>
                     <Text style={{ color: '#00875A', fontWeight: '600' }}>
-                        {item.Features}
+                        {getPlaceCategoryLabel(item.category)}
                     </Text>
                 </View>
 
@@ -60,7 +63,7 @@ const renderPlaceCard = (item: Place, navigation: any) => {
 };
 export default function HomeScreen({ navigation }: any) {
     const renderPlaceItem = ({ item }: { item: Place }) => renderPlaceCard(item, navigation);
-    const [activeCategory, setActiveCategory] = useState('Attractions');
+    const [activeCategory, setActiveCategory] = useState('All');
     const [places, setPlaces] = useState<Place[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
@@ -69,20 +72,28 @@ export default function HomeScreen({ navigation }: any) {
     const loadPlaces = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await fetchPlaces(activeCategory);
+            const data = await fetchPlaces();
             setPlaces(data);
         } catch {
             setPlaces([]);
         } finally {
             setLoading(false);
         }
-    }, [activeCategory]);
+    }, []);
 
     useEffect(() => {
         loadPlaces();
     }, [loadPlaces]);
 
-    const handlePlanWithAi = async () => {
+    const filteredPlaces = places.filter(place => {
+        const matchCategory = activeCategory === 'All' ? true : normalizePlaceCategory(place.category) === activeCategory;
+        const searchText = searchQuery.toLowerCase();
+        const matchSearch = place.Name.toLowerCase().includes(searchText) ||
+            place.Located.toLowerCase().includes(searchText);
+        return matchCategory && matchSearch;
+    });
+
+    const handlePlanWithAi = useCallback(async () => {
         const q = searchQuery.trim() || 'weekend trip';
         setAiLoading(true);
         try {
@@ -96,12 +107,11 @@ export default function HomeScreen({ navigation }: any) {
         } finally {
             setAiLoading(false);
         }
-    };
+    }, [searchQuery]);
 
-    const renderHeader = () => {
-        return (
+    const listHeader = useMemo(() => (
             <View style={styles.container}>
-                <View style={{ flexDirection: 'column' }}>
+                <View style={{ flexDirection: 'column', marginBottom: -15}}>
                     <Text style={{ color: colors.textSecondary }}> Location</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Ionicons name="location-sharp" size={18} color={colors.primary} />
@@ -129,51 +139,38 @@ export default function HomeScreen({ navigation }: any) {
                     </View>
                 </View>
 
-                <View style={{ flexDirection: 'row', columnGap: 10, marginHorizontal: 5 }}>
-                    <Pressable
-                        style={[styles.button, { flex: 1, height: 50, padding: 10 },
-                        { backgroundColor: activeCategory === 'Attractions' ? colors.primary : colors.primaryLight }
-                        ]}
-                        onPress={() => setActiveCategory('Attractions')}>
-                        <View style={styles.containerCategoryButton}>
-                            <Image source={require('../../../assets/images/camera-icon.png')}
-                                style={{ width: 25, height: 25, marginRight: 2 }}>
-                            </Image>
-                            <Text style={[styles.categoryButtonText, { color: 'black', fontSize: 15 }]}>
-                                Attractions
-                            </Text>
-                        </View>
-                    </Pressable>
-
-                    <Pressable
-                        style={[styles.button, { flex: 1, height: 50 },
-                        { backgroundColor: activeCategory === 'Dining' ? colors.primary : colors.primaryLight }
-                        ]}
-                        onPress={() => setActiveCategory('Dining')}>
-                        <View style={styles.containerCategoryButton}>
-                            <Image source={require('../../../assets/images/dining-icon.png')}
-                                style={{ width: 25, height: 25, marginRight: 2 }}>
-                            </Image>
-                            <Text style={[styles.categoryButtonText, { color: 'black', fontSize: 15 }]}>
-                                Dining
-                            </Text>
-                        </View>
-                    </Pressable>
-
-                    <Pressable
-                        style={[styles.button, { flex: 1, height: 50 },
-                        { backgroundColor: activeCategory === 'Festivals' ? colors.primary : colors.primaryLight }]}
-                        onPress={() => setActiveCategory('Festivals')}>
-                        <View style={styles.containerCategoryButton}>
-                            <Image source={require('../../../assets/images/festival-icon.png')}
-                                style={{ width: 25, height: 25, marginRight: 2 }}>
-                            </Image>
-                            <Text style={[styles.categoryButtonText, { color: 'black', fontSize: 15 }]}>
-                                Festivals
-                            </Text>
-                        </View>
-                    </Pressable>
-                </View>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ columnGap: 10, marginHorizontal: 5, marginBottom : 5}}
+                >
+                    {FILTERS.map((item) => (
+                        <Pressable
+                            key={item.value}
+                            style={[styles.button, { height: 50, width: 130, paddingHorizontal: 12 },
+                            { backgroundColor: activeCategory === item.value ? colors.primary : colors.primaryLight }
+                            ]}
+                            onPress={() => setActiveCategory(item.value)}>
+                            <View style={styles.containerCategoryButton}>
+                                <Ionicons
+                                    name={
+                                        item.value === 'All' ? 'map-outline' :
+                                        item.value === 'DINING' ? 'restaurant-outline' :
+                                        item.value === 'FESTIVALS' ? 'calendar-outline' :
+                                        item.value === 'STAYS' ? 'bed-outline' :
+                                        item.value === 'SHOPPING' ? 'bag-outline' :
+                                        'camera-outline'
+                                    }
+                                    size={22}
+                                    color="black"
+                                />
+                                <Text style={[styles.categoryButtonText, { color: 'black', fontSize: 15 }]}>
+                                    {item.label}
+                                </Text>
+                            </View>
+                        </Pressable>
+                    ))}
+                </ScrollView>
                 <View
                     style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
                     <Pressable
@@ -204,8 +201,8 @@ export default function HomeScreen({ navigation }: any) {
                     </Text>
                 </View>
             </View>
-        )
-    }
+    ), [activeCategory, aiLoading, handlePlanWithAi, searchQuery]);
+
     if (loading && places.length === 0) {
         return (
             <View style={[styles.background, { justifyContent: 'center', alignItems: 'center', marginTop: 35 }]}>
@@ -218,10 +215,10 @@ export default function HomeScreen({ navigation }: any) {
         <View style={[styles.background, { justifyContent: 'center', marginTop: 35 }]}>
             <View style={styles.container}>
                 <FlatList
-                    data={places}
+                    data={filteredPlaces}
                     renderItem={renderPlaceItem}
                     keyExtractor={(item) => item.Id}
-                    ListHeaderComponent={renderHeader}
+                    ListHeaderComponent={listHeader}
                     showsVerticalScrollIndicator={false}
                     refreshing={loading}
                     onRefresh={loadPlaces}

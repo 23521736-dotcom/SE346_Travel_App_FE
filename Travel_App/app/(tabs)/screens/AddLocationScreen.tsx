@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
-import * as ImagePicker from 'expo-image-picker';
 import { formatDate } from '@/app/service/PromotionShedule';
-import React, { useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,123 +17,265 @@ import {
 import { colors } from '../common/colors';
 import PromotionCard from "../components/PromotionCard";
 import PromotionEditor from '../components/PromotionEditor';
-import { styles } from './AddLocationScreen.style';
-import { createOwnerPlace } from '../../../lib/api/owner';
-import { uploadPlaceCover } from '../../../lib/api/uploads';
 import type { PromotionItem } from '../types/promotion';
-import { getApiErrorMessage } from '../context/AuthContext';
+import { styles } from './AddLocationScreen.style';
+import { getApiErrorMessage } from '../../../lib/api/client';
+import {
+  createOwnerPlace,
+  createPromotion,
+  deletePromotion,
+  fetchOwnerPlace,
+  togglePromotion,
+  updateOwnerPlace,
+  updatePromotion,
+} from '../../../lib/api/owner';
+import type { OwnerPlace } from '../../../lib/api/owner';
+import { uploadPlaceCover } from '../../../lib/api/uploads';
+import { DEFAULT_PLACE_CATEGORY, getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../lib/placeCategories';
 
-const DEFAULT_COVER =
-  'https://i.pinimg.com/1200x/28/31/da/2831da0f8a4b18fde25867ef90e66207.jpg';
-
-const AddLocationScreen = ({ navigation }: any) => {
-  const [activeCategory, setActiveCategory] = useState('Restaurant');
+const AddLocationScreen = ({ navigation, route }: any) => {
+  const placeParam = route?.params?.place as OwnerPlace | undefined;
+  const placeId = route?.params?.placeId ?? placeParam?.Id;
+  const [placeName, setPlaceName] = useState(placeParam?.Name ?? '');
+  const [region, setRegion] = useState(placeParam?.Location ?? '');
+  const [description, setDescription] = useState('');
+  const [activeCategory, setActiveCategory] = useState('DINING');
+  const [coverImageUrl, setCoverImageUrl] = useState(placeParam?.Image ?? '');
+  const [imageUrls, setImageUrls] = useState<string[]>(placeParam?.Images ?? []);
   const [isAdding, setIsAdding] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const [promotions, setPromotions] = useState<PromotionItem[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [placeName, setPlaceName] = useState('');
-  const [description, setDescription] = useState('');
-  const [region, setRegion] = useState('Vietnam');
-  const [preview, setPreview] = useState<string>('');
-  const [saving, setSaving] = useState(false);
 
-  const handleToggle = (id: string) => {
+  useEffect(() => {
+    if (!placeId) return;
+
+    let isMounted = true;
+
+    const loadPlace = async () => {
+      if (placeParam) {
+        setPlaceName(placeParam.Name ?? '');
+        setRegion(placeParam.Location ?? '');
+        setCoverImageUrl(placeParam.Image ?? '');
+        setImageUrls(placeParam.Images ?? []);
+        setPromotions([]);
+      }
+
+      try {
+        const detail = await fetchOwnerPlace(placeId);
+        if (!isMounted) return;
+
+        setPlaceName(detail.Name ?? '');
+        setRegion(detail.Location ?? '');
+        setActiveCategory(normalizePlaceCategory(detail.category) ?? DEFAULT_PLACE_CATEGORY);
+        setDescription(detail.about ?? '');
+        setCoverImageUrl(detail.Image ?? '');
+        setImageUrls(detail.Images ?? []);
+        setPromotions(detail.promotions ?? []);
+      } catch {
+        if (!isMounted || !placeParam) return;
+        setPlaceName(placeParam.Name ?? '');
+        setRegion(placeParam.Location ?? '');
+        setCoverImageUrl(placeParam.Image ?? '');
+        setImageUrls(placeParam.Images ?? []);
+      }
+    };
+
+    loadPlace();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [placeId, placeParam]);
+
+  const handleToggle = async (id: string) => {
+    const current = promotions.find((promo) => promo.id === id);
+    if (!current) return;
+
     setPromotions(prevPromos =>
       prevPromos.map(promo =>
         promo.id === id ? { ...promo, isActive: !promo.isActive } : promo
       )
     );
+
+    if (!placeId || id.startsWith('temp-')) return;
+
+    try {
+      const updated = await togglePromotion(id);
+      setPromotions(prevPromos => prevPromos.map(promo => promo.id === id ? updated : promo));
+    } catch (err) {
+      setPromotions(prevPromos =>
+        prevPromos.map(promo => promo.id === id ? current : promo)
+      );
+      Alert.alert('Loi', getApiErrorMessage(err));
+    }
   };
 
-  const handleSavePromo = (id: string | null, newData: Partial<PromotionItem>) => {
-    if (id) {
-      setPromotions(prev => prev.map(p => p.id === id ? { ...p, ...newData } : p));
-      setEditingId(null);
-    } else {
-      const newPromo: PromotionItem = {
-        id: Date.now().toString(),
-        title: newData.title || '',
-        isActive: true,
-        schedule: newData.schedule!,
-      };
-      setPromotions([newPromo, ...promotions]);
+  const handleSave = async (id: string | null, newData: Partial<PromotionItem>) => {
+    if (!newData.title || !newData.schedule) return;
+
+    const body = {
+      title: newData.title,
+      isActive: newData.isActive ?? promotions.find((promo) => promo.id === id)?.isActive ?? true,
+      schedule: newData.schedule,
+    };
+
+    try {
+      if (id) {
+        if (placeId && !id.startsWith('temp-')) {
+          const updated = await updatePromotion(id, body);
+          setPromotions(prev => prev.map(p => p.id === id ? updated : p));
+        } else {
+          setPromotions(prev => prev.map(p => p.id === id ? { ...p, ...body } : p));
+        }
+        setEditingId(null);
+        return;
+      }
+
+      if (placeId) {
+        const created = await createPromotion(placeId, { ...body, isActive: true });
+        setPromotions(prev => [created, ...prev]);
+      } else {
+        const newPromo: PromotionItem = {
+          id: `temp-${Date.now()}`,
+          title: body.title,
+          schedule: body.schedule,
+          isActive: true,
+        };
+        setPromotions(prev => [newPromo, ...prev]);
+      }
       setIsAdding(false);
+    } catch (err) {
+      Alert.alert('Loi', getApiErrorMessage(err));
     }
   };
 
   const handleDelete = (id: string) => {
-    setPromotions(promotions.filter(item => item.id !== id));
-  };
+    const removeLocal = () => {
+      setPromotions(prev => prev.filter(item => item.id !== id));
+      setEditingId(null);
+    };
 
-  const handleImageChange = async () => {
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Loi', 'Can quyen truy cap thu vien anh');
+    if (!placeId || id.startsWith('temp-')) {
+      removeLocal();
       return;
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 0.8,
-    });
-    if (!result.canceled) {
-      setPreview(result.assets[0].uri);
+
+    Alert.alert('Delete promotion', 'Are you sure you want to delete this promotion?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await deletePromotion(id);
+            removeLocal();
+          } catch (err) {
+            Alert.alert('Loi', getApiErrorMessage(err));
+          }
+        },
+      },
+    ]);
+  };
+
+  const handlePickCover = async () => {
+    try {
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission required', 'Please allow photo access to upload a cover image.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        //allowsEditing: true,
+        quality: 0.85,
+      });
+
+      if (result.canceled) return;
+
+      setIsUploading(true);
+      const publicUrl = await uploadPlaceCover(result.assets[0].uri);
+      setCoverImageUrl(publicUrl);
+      setImageUrls(prev => Array.from(new Set([publicUrl, ...prev])));
+    } catch (err) {
+      Alert.alert('Loi', getApiErrorMessage(err));
+    } finally {
+      setIsUploading(false);
     }
+  };
+
+  const handleReset = () => {
+    setPlaceName(placeParam?.Name ?? '');
+    setRegion(placeParam?.Location ?? '');
+    setDescription('');
+    setActiveCategory('DINING');
+    setCoverImageUrl(placeParam?.Image ?? '');
+    setImageUrls(placeParam?.Images ?? []);
+    setPromotions([]);
+    setEditingId(null);
+    setIsAdding(false);
   };
 
   const handlePublish = async () => {
-    if (!placeName.trim()) {
-      Alert.alert('Loi', 'Vui long nhap ten dia diem');
+    const name = placeName.trim();
+    const placeRegion = region.trim();
+    const about = description.trim();
+    const coverUrl = coverImageUrl.trim();
+
+    if (!name || !placeRegion || !activeCategory) {
+      Alert.alert('Missing information', 'Please enter place name, region, and category.');
       return;
     }
-    setSaving(true);
+
+    if (!coverUrl) {
+      Alert.alert('Missing cover image', 'Please upload or enter a cover image URL.');
+      return;
+    }
+
+    setIsSaving(true);
     try {
-      let coverImageUrl = DEFAULT_COVER;
-      if (preview) {
-        try {
-          coverImageUrl = await uploadPlaceCover(preview);
-        } catch (err) {
-          const msg = getApiErrorMessage(err);
-          if (msg === 'STORAGE_UNAVAILABLE') {
-            Alert.alert(
-              'Upload chua san sang',
-              'Kiem tra SUPABASE_SERVICE_ROLE_KEY (eyJ...) va chay: npm run storage:verify'
-            );
-          }
-          coverImageUrl = DEFAULT_COVER;
-        }
-      }
-      await createOwnerPlace({
-        name: placeName.trim(),
-        region: region.trim() || 'Vietnam',
+      const payload = {
+        name,
+        region: placeRegion,
         category: activeCategory,
-        about: description.trim(),
-        coverImageUrl,
+        about,
+        coverImageUrl: coverUrl,
+        imageUrls: Array.from(new Set([coverUrl, ...imageUrls.filter(Boolean)])),
         featureLabel: 'Open Now',
-        promotions: promotions.map((p) => ({
-          title: p.title,
-          isActive: p.isActive,
-          schedule: p.schedule,
-        })),
-      });
-      Alert.alert('Thanh cong', 'Da tao dia diem moi', [
-        { text: 'OK', onPress: () => navigation.goBack() },
+      };
+
+      if (placeId) {
+        await updateOwnerPlace(placeId, payload);
+      } else {
+        await createOwnerPlace({
+          ...payload,
+          promotions: promotions.map((promo) => ({
+            title: promo.title,
+            isActive: promo.isActive,
+            schedule: promo.schedule,
+          })),
+        });
+      }
+
+      Alert.alert('Success', placeId ? 'Location updated.' : 'Location published.', [
+        {
+          text: 'OK',
+          onPress: () => {
+            if (navigation.canGoBack?.()) {
+              navigation.goBack();
+            } else {
+              navigation.popToTop?.();
+            }
+          },
+        },
       ]);
     } catch (err) {
       Alert.alert('Loi', getApiErrorMessage(err));
     } finally {
-      setSaving(false);
+      setIsSaving(false);
     }
-  };
-
-  const resetForm = () => {
-    setPlaceName('');
-    setDescription('');
-    setRegion('Vietnam');
-    setPreview('');
-    setPromotions([]);
-    setActiveCategory('Restaurant');
   };
 
   return (
@@ -141,11 +283,19 @@ const AddLocationScreen = ({ navigation }: any) => {
       <StatusBar barStyle="dark-content" />
 
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          onPress={() => {
+            if (navigation.canGoBack?.()) {
+              navigation.goBack();
+            } else {
+              navigation.popToTop?.();
+            }
+          }}
+        >
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Add New Location</Text>
-        <TouchableOpacity onPress={resetForm}>
+        <Text style={styles.headerTitle}>Location Details</Text>
+        <TouchableOpacity onPress={handleReset}>
           <Text style={styles.resetText}>Reset</Text>
         </TouchableOpacity>
       </View>
@@ -172,7 +322,10 @@ const AddLocationScreen = ({ navigation }: any) => {
             onChangeText={setPlaceName}
           />
 
-          <Text style={styles.label}>Region / City</Text>
+          <View style={styles.labelRow}>
+            <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+            <Text style={[styles.label, styles.labelInRow]}>Region / City</Text>
+          </View>
           <TextInput
             style={styles.input}
             placeholder="e.g. Kyoto, Japan"
@@ -183,14 +336,14 @@ const AddLocationScreen = ({ navigation }: any) => {
 
           <Text style={styles.label}>Category</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipScroll}>
-            {['Restaurant', 'Hotel', 'Attraction', 'Cafe'].map((cat) => (
+            {PLACE_CATEGORIES.map((cat) => (
               <TouchableOpacity
-                key={cat}
-                onPress={() => setActiveCategory(cat)}
-                style={[styles.chip, activeCategory === cat && styles.chipActive]}
+                key={cat.value}
+                onPress={() => setActiveCategory(cat.value)}
+                style={[styles.chip, activeCategory === cat.value && styles.chipActive]}
               >
-                <Text style={[styles.chipText, activeCategory === cat && styles.chipTextActive]}>
-                  {cat === 'Restaurant' && '+ '} {cat}
+                <Text style={[styles.chipText, activeCategory === cat.value && styles.chipTextActive]}>
+                  {getPlaceCategoryLabel(cat.value)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -210,32 +363,48 @@ const AddLocationScreen = ({ navigation }: any) => {
 
         <Text style={styles.sectionTitle}>Location & Media</Text>
         <View style={styles.card}>
-          <TouchableOpacity
-            style={[styles.uploadBox, { marginTop: 0 }]}
-            onPress={handleImageChange}
-          >
-            {preview ? (
-              <Image source={{ uri: preview }} style={{ width: '100%', height: 120, borderRadius: 8 }} />
-            ) : (
-              <>
-                <View style={{ backgroundColor: colors.primaryLight, padding: 10, borderRadius: 30, marginBottom: 8 }}>
-                  <Ionicons name="cloud-upload" size={24} color={colors.primary} />
-                </View>
-                <Text style={{ fontWeight: 'bold', fontSize: 14 }}>Tap to upload panorama</Text>
-                <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 4 }}>Supports JPG, PNG (Max 5MB)</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          {/* <Text style={styles.label}>Pin Location</Text>
+          <View style={styles.mapContainer}>
+            <Image
+              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCT5oVzTfOwQWzcT6Atu7B0q--_Q46lzBnpoi5Ynl6t-jFeH_G0ddDJ2l3wkMx7ijFvl1pBfPloXeD3wytn487HTubcPPtWVbVWWuQ-2D9jjeeXK0dKYbyaevqcVY7kQUnaehCgek8p8BWfaGgYFfvwLvOEB5QeGLNemG6C-1uF3R7ApCE7cnP24Sdeb1Q34QTWc8DYR62RqIUpy6JVYpaFRVghXmCEopKS14rWn3x7KPZxnFl9mhPa4lCdGMLvf7rM3vlasLaSoo_c' }}
+              style={styles.mapImage}
+            />
+            <TouchableOpacity style={styles.setPinButton}>
+              <Ionicons name="location" size={18} color={colors.primary} />
+              <Text style={{ color: colors.primary, fontWeight: 'bold', marginLeft: 4 }}>Set Pin</Text>
+            </TouchableOpacity>
+          </View> */}
 
-          <TouchableOpacity style={styles.button} onPress={handlePublish} disabled={saving}>
-            {saving ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <Text style={styles.buttonText}>Save & Publish Location </Text>
-                <Ionicons name="arrow-forward" size={20} color="white" />
-              </View>
-            )}
+          <Text style={styles.label}>Cover Image URL</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="https://example.com/place.jpg"
+            placeholderTextColor={colors.textMuted}
+            value={coverImageUrl}
+            onChangeText={setCoverImageUrl}
+            autoCapitalize="none"
+          />
+
+          {coverImageUrl.length > 0 && (
+            <Image source={{ uri: coverImageUrl }} style={[styles.mapContainer, { width: '100%' }]} />
+          )}
+
+          <TouchableOpacity
+            style={[styles.uploadBox, { marginTop: 20 }]}
+            onPress={handlePickCover}
+            disabled={isUploading}
+          >
+            <View style={{ backgroundColor: colors.primaryLight, padding: 10, borderRadius: 30, marginBottom: 8 }}>
+              {isUploading ? (
+                <ActivityIndicator size="small" color={colors.primary} />
+              ) : (
+                <Ionicons name="cloud-upload" size={24} color={colors.primary} />
+              )}
+            </View>
+            <Text style={{ fontWeight: 'bold', fontSize: 14 }}>
+              {isUploading ? 'Uploading...' : 'Tap to upload cover'}
+            </Text>
+            <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 4 }}>Supports JPG, PNG (Max 10MB)</Text>
           </TouchableOpacity>
         </View>
 
@@ -248,7 +417,7 @@ const AddLocationScreen = ({ navigation }: any) => {
             <PromotionEditor
               key={item.id}
               initialData={item}
-              onSave={(data) => handleSavePromo(item.id, data)}
+              onSave={(data) => void handleSave(item.id, data)}
               onCancel={() => setEditingId(null)}
             />
           ) : (
@@ -265,29 +434,48 @@ const AddLocationScreen = ({ navigation }: any) => {
         {!isAdding && (
           <View style={[styles.uploadBox, { padding: 16, borderStyle: 'dashed' }]}>
             <Text style={{ fontSize: 12, color: colors.textSecondary }}>Want to boost visitors?</Text>
-            <TouchableOpacity onPress={() => { setIsAdding(true); setEditingId(null); }}>
+            <TouchableOpacity onPress={() => {
+              setIsAdding(true);
+              setEditingId(null);
+            }}>
               <Text style={[styles.linkText, { fontWeight: 'bold' }]}>Create a seasonal offer</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {isAdding && (
-          <PromotionEditor
-            initialData={{
-              title: '',
-              schedule: {
-                startDate: formatDate(new Date()),
-                endDate: formatDate(new Date()),
-                days: ['M'],
-                startTime: '8:00 AM',
-                endTime: '5:00 PM',
-                specificTime: false,
-              }
-            }}
-            onSave={(data) => handleSavePromo(null, data)}
-            onCancel={() => setIsAdding(false)}
-          />
+          <View>
+            <PromotionEditor
+              initialData={{
+                title: '',
+                schedule: {
+                  startDate: formatDate(new Date()),
+                  endDate: formatDate(new Date()),
+                  days: ['M'],
+                  startTime: '8:00 AM',
+                  endTime: '5:00 PM',
+                  specificTime: false,
+                }
+              }}
+              onSave={(data) => void handleSave(null, data)}
+              onCancel={() => setIsAdding(false)}
+            />
+          </View>
         )}
+
+        
+         <TouchableOpacity style={styles.button} onPress={handlePublish} disabled={isSaving || isUploading}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Text style={styles.buttonText}>
+                {isSaving ? 'Saving...' : placeId ? 'Save Location' : 'Save & Publish Location '}
+              </Text>
+              {isSaving ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Ionicons name="arrow-forward" size={20} color="white" />
+              )}
+          </View>
+        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );

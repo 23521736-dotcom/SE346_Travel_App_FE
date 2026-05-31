@@ -17,7 +17,7 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
 
   const [title, setTitle] = useState(initialData?.title || '');
   const [startDate, setStartDate] = useState(initialData?.schedule?.startDate || '');
-  const [endDate, setEndDate] = useState(initialData?.schedule?.startDate || '');
+  const [endDate, setEndDate] = useState(initialData?.schedule?.endDate || '');
   const [endTime, setEndTime] = useState(initialData?.schedule?.endTime || '');
   const [startTime, setStartTime] = useState(initialData?.schedule?.startTime || '');
   const [selectedDays, setSelectedDays] = useState(initialData?.schedule?.days || []);
@@ -115,7 +115,7 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
     setStartTime('');
     setEndTime('')
     setSelectedDays([]);
-    setSpecificTime('');
+    setSpecificTime(false);
     onCancel();
   }
 

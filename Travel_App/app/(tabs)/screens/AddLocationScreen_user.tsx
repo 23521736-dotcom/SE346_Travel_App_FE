@@ -12,6 +12,7 @@ import {
     View,
 } from 'react-native';
 import styles from './AddLocationScreen_user.style';
+import { getPlaceCategoryLabel, PLACE_CATEGORIES } from '../../../lib/placeCategories';
 
 interface LocationItem {
     id: string;
@@ -28,7 +29,7 @@ const SEARCH_DATA: LocationItem[] = [
     {
         id: '1',
         title: 'Senso-ji Temple',
-        category: 'Attractions',
+        category: 'ATTRACTIONS',
         location: 'Asakusa',
         rating: '4.8',
         reviews: '12.4k reviews',
@@ -38,7 +39,7 @@ const SEARCH_DATA: LocationItem[] = [
     {
         id: '2',
         title: 'Tokyo Skytree',
-        category: 'Attractions',
+        category: 'ATTRACTIONS',
         location: 'Sumida',
         rating: '4.7',
         reviews: '15k reviews',
@@ -48,7 +49,7 @@ const SEARCH_DATA: LocationItem[] = [
     {
         id: '3',
         title: 'Sumida River Fireworks',
-        category: 'Festivals',
+        category: 'FESTIVALS',
         location: 'Sumida River',
         rating: '4.9',
         reviews: '5k reviews',
@@ -58,7 +59,7 @@ const SEARCH_DATA: LocationItem[] = [
     {
         id: '4',
         title: 'Sanja Matsuri',
-        category: 'Festivals',
+        category: 'FESTIVALS',
         location: 'Asakusa',
         rating: '4.8',
         reviews: '8.2k reviews',
@@ -68,7 +69,7 @@ const SEARCH_DATA: LocationItem[] = [
     {
         id: '5',
         title: 'Tsukiji Outer Market',
-        category: 'Dining',
+        category: 'DINING',
         location: 'Chuo',
         rating: '4.7',
         reviews: '20k reviews',
@@ -78,33 +79,53 @@ const SEARCH_DATA: LocationItem[] = [
     {
         id: '6',
         title: 'Ichiran Ramen',
-        category: 'Dining',
+        category: 'DINING',
         location: 'Shibuya',
         rating: '4.9',
         reviews: '30k reviews',
         description: 'Famous for tonkotsu ramen and unique solo dining booths for full flavor focus.',
         imageUrl: 'https://images.unsplash.com/photo-1557872943-16a5ac26437e?q=80&w=1000&auto=format&fit=crop',
     },
+    {
+        id: '7',
+        title: 'Hotel The Celestine Tokyo Shiba',
+        category: 'STAYS',
+        location: 'Minato',
+        rating: '4.6',
+        reviews: '7.4k reviews',
+        description: 'A calm city stay with easy access to Tokyo Tower, gardens, and central transit.',
+        imageUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop',
+    },
+    {
+        id: '8',
+        title: 'Nakamise Shopping Street',
+        category: 'SHOPPING',
+        location: 'Asakusa',
+        rating: '4.5',
+        reviews: '18k reviews',
+        description: 'A classic shopping street for souvenirs, snacks, crafts, and festival-style browsing.',
+        imageUrl: 'https://images.unsplash.com/photo-1554797589-7241bb691973?q=80&w=1000&auto=format&fit=crop',
+    },
 ];
 
 const SAVED_DESTINATIONS = [
-    { id: '1', name: 'Gion Matsuri', rating: '4.9', reviews: '15k', address: 'Kyoto', category: 'Festivals', image: 'https://images.unsplash.com/photo-1574236170882-b6ab7bfdc7b1?auto=format&fit=crop&w=200&q=80' },
-    { id: '2', name: 'Nebuta Matsuri', rating: '4.8', reviews: '8k', address: 'Aomori', category: 'Festivals', image: 'https://images.unsplash.com/photo-1698205244501-c81729b8ccf6?auto=format&fit=crop&w=200&q=80' },
-    { id: '3', name: 'Ichiran Ramen', rating: '4.7', reviews: '40k', address: 'Osaka', category: 'Dining', image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=200&q=80' },
-    { id: '4', name: 'Sukiyabashi Jiro', rating: '4.9', reviews: '12k', address: 'Tokyo', category: 'Dining', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=200&q=80' },
-    { id: '5', name: 'Shibuya Crossing', rating: '4.8', reviews: '24k', address: 'Tokyo', category: 'Attractions', image: 'https://images.unsplash.com/photo-1542931287-023b922fa89b?auto=format&fit=crop&w=200&q=80' },
-    { id: '6', name: 'Ghibli Museum', rating: '4.9', reviews: '12k', address: 'Tokyo', category: 'Attractions', image: 'https://images.unsplash.com/photo-1578469550956-0e16b69c6a3d?auto=format&fit=crop&w=200&q=80' },
-    { id: '7', name: 'Ueno Park', rating: '4.6', reviews: '18k', address: 'Tokyo', category: 'Attractions', image: 'https://images.unsplash.com/photo-1551641506-ee5bf4cb45f1?auto=format&fit=crop&w=200&q=80' },
-    { id: '8', name: 'Senso-ji Temple', rating: '4.7', reviews: '30k', address: 'Tokyo', category: 'Attractions', image: 'https://images.unsplash.com/photo-1590559899731-a38283bce4c1?auto=format&fit=crop&w=200&q=80' },
+    { id: '1', name: 'Gion Matsuri', rating: '4.9', reviews: '15k', address: 'Kyoto', category: 'FESTIVALS', image: 'https://images.unsplash.com/photo-1574236170882-b6ab7bfdc7b1?auto=format&fit=crop&w=200&q=80' },
+    { id: '2', name: 'Nebuta Matsuri', rating: '4.8', reviews: '8k', address: 'Aomori', category: 'FESTIVALS', image: 'https://images.unsplash.com/photo-1698205244501-c81729b8ccf6?auto=format&fit=crop&w=200&q=80' },
+    { id: '3', name: 'Ichiran Ramen', rating: '4.7', reviews: '40k', address: 'Osaka', category: 'DINING', image: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=200&q=80' },
+    { id: '4', name: 'Sukiyabashi Jiro', rating: '4.9', reviews: '12k', address: 'Tokyo', category: 'DINING', image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?auto=format&fit=crop&w=200&q=80' },
+    { id: '5', name: 'Shibuya Crossing', rating: '4.8', reviews: '24k', address: 'Tokyo', category: 'ATTRACTIONS', image: 'https://images.unsplash.com/photo-1542931287-023b922fa89b?auto=format&fit=crop&w=200&q=80' },
+    { id: '6', name: 'Ghibli Museum', rating: '4.9', reviews: '12k', address: 'Tokyo', category: 'ATTRACTIONS', image: 'https://images.unsplash.com/photo-1578469550956-0e16b69c6a3d?auto=format&fit=crop&w=200&q=80' },
+    { id: '7', name: 'Hotel The Celestine Tokyo Shiba', rating: '4.6', reviews: '7k', address: 'Tokyo', category: 'STAYS', image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=200&q=80' },
+    { id: '8', name: 'Nakamise Shopping Street', rating: '4.5', reviews: '18k', address: 'Tokyo', category: 'SHOPPING', image: 'https://images.unsplash.com/photo-1554797589-7241bb691973?auto=format&fit=crop&w=200&q=80' },
 ];
 
-const FILTERS = ['All Sights', 'Festivals', 'Dining', 'Attractions'];
-const SAVED_FILTERS = ['Festivals', 'Dining', 'Attractions'];
+const FILTERS = [{ value: 'All Sights', label: 'All Sights' }, ...PLACE_CATEGORIES];
+const SAVED_FILTERS = PLACE_CATEGORIES;
 
 export default function AddLocationScreen_user({ navigation, route }: any) {
     const [searchQuery, setSearchQuery] = useState('');
     const [submittedQuery, setSubmittedQuery] = useState('');
-    const [activeFilter, setActiveFilter] = useState('Festivals');
+    const [activeFilter, setActiveFilter] = useState('FESTIVALS');
     const [activeSearchFilter, setActiveSearchFilter] = useState('All Sights');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
     const dayTitle = route?.params?.dayTitle;
@@ -145,7 +166,7 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                 <View style={styles.resultImageContainer}>
                     <Image source={{ uri: item.imageUrl }} style={styles.resultCardImage} />
                     <View style={styles.resultCategoryBadge}>
-                        <Text style={styles.resultCategoryBadgeText}>{item.category}</Text>
+                        <Text style={styles.resultCategoryBadgeText}>{getPlaceCategoryLabel(item.category)}</Text>
                     </View>
                 </View>
 
@@ -205,16 +226,16 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                         horizontal
                         showsHorizontalScrollIndicator={false}
                         data={FILTERS}
-                        keyExtractor={(item) => item}
+                        keyExtractor={(item) => item.value}
                         renderItem={({ item }) => {
-                            const isActive = item === activeSearchFilter;
+                            const isActive = item.value === activeSearchFilter;
 
                             return (
                                 <Pressable
                                     style={[styles.resultFilterPill, isActive && styles.resultFilterPillActive]}
-                                    onPress={() => setActiveSearchFilter(item)}
+                                    onPress={() => setActiveSearchFilter(item.value)}
                                 >
-                                    <Text style={[styles.resultFilterText, isActive && styles.resultFilterTextActive]}>{item}</Text>
+                                    <Text style={[styles.resultFilterText, isActive && styles.resultFilterTextActive]}>{item.label}</Text>
                                 </Pressable>
                             );
                         }}
@@ -280,12 +301,12 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
                     {SAVED_FILTERS.map((filter) => (
                         <TouchableOpacity
-                            key={filter}
-                            style={[styles.filterChip, activeFilter === filter && styles.filterChipActive]}
-                            onPress={() => setActiveFilter(filter)}
+                            key={filter.value}
+                            style={[styles.filterChip, activeFilter === filter.value && styles.filterChipActive]}
+                            onPress={() => setActiveFilter(filter.value)}
                         >
-                            <Text style={[styles.filterChipText, activeFilter === filter && styles.filterChipTextActive]}>
-                                {filter}
+                            <Text style={[styles.filterChipText, activeFilter === filter.value && styles.filterChipTextActive]}>
+                                {filter.label}
                             </Text>
                         </TouchableOpacity>
                     ))}
