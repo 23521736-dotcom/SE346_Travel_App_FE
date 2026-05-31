@@ -1,4 +1,4 @@
-import { Feather, Ionicons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { addFavorite, fetchFavorites, removeFavorite } from '../../../lib/api/favorites';
 import type { PlaceDetail, PlaceListItem } from '../../../lib/api/types';
+import { getPrimaryCategory, matchesPlaceCategory } from '../common/placeCategory';
 import { colors } from '../common/colors';
 import { getApiErrorMessage } from '../context/AuthContext';
 import styles from "./SavedPlacesScreen.style";
@@ -126,7 +127,7 @@ export default function SavedPlaces({ navigation }: any) {
     };
 
     const filteredPlaces = places.filter(place => {
-        const matchCategory = activeFilter === 'All' ? true : place.Features === activeFilter;
+        const matchCategory = matchesPlaceCategory(getPrimaryCategory(place.Features || place.featureLabel), activeFilter);
         const searchText = searchQuery.toLowerCase();
         const matchSearch = place.Name.toLowerCase().includes(searchText) ||
             place.Located.toLowerCase().includes(searchText);

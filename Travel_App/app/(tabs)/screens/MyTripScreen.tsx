@@ -11,12 +11,15 @@ import {
   View,
 } from "react-native";
 import { getApiErrorMessage } from "../../../lib/api/client";
-import { ApiTrip, fetchMyTrips } from "../../../lib/api/trips";
+import { ApiTrip, deleteTrip, fetchMyTrips, mapApiTripToDraft } from "../../../lib/api/trips";
 import { colors } from "../common/colors";
 import {
+  Collaborator,
   getTripDraft,
   ItineraryDay,
   normalizeTripDays,
+  removeTripDraft,
+  subscribeTripDeletes,
   subscribeTripDrafts,
   TripData,
   upsertTripDraft,
@@ -31,6 +34,7 @@ type Trip = {
   endDate?: string;
   image: string;
   avatars?: string[];
+  members?: Collaborator[];
   extraCount?: number;
   collaboratorLabel?: string;
   status?: "hold";
@@ -66,45 +70,6 @@ function formatApiDateRange(startDate?: string, endDate?: string, fallback?: str
   return "Choose your travel dates";
 }
 
-function formatApiFullDate(value?: string) {
-  if (!value) {
-    return "Date not set";
-  }
-
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function toNumber(value: unknown, fallback = 0) {
-  const numberValue = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(numberValue) ? numberValue : fallback;
-}
-
-function formatMoney(value: unknown) {
-  if (value === null || value === undefined || value === "") {
-    return "0";
-  }
-
-  if (typeof value === "number") {
-    return String(value);
-  }
-
-  const numericValue = Number(value);
-  if (Number.isFinite(numericValue)) {
-    return String(numericValue);
-  }
-
-  return String(value);
-}
-
 function getCostValue(cost: string) {
   return Number(cost.replace(/[^0-9.]/g, '')) || 0;
 }
@@ -119,10 +84,6 @@ function getTripTotalBudget(days?: ItineraryDay[]) {
 
 function formatVnd(value: number) {
   return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-}
-
-function formatActivityTime(period?: string | null, scheduledTime?: string | null) {
-  return scheduledTime || period || "Time not set";
 }
 
 function isPastTrip(trip: Trip) {
@@ -140,62 +101,32 @@ function isPastTrip(trip: Trip) {
 }
 
 function mapApiTrip(apiTrip: ApiTrip): Trip {
-  const id = String(apiTrip.id ?? apiTrip.Id ?? apiTrip.tripId ?? apiTrip.trip_id ?? "");
-  const startDate = apiTrip.startDate ?? apiTrip.StartDate ?? apiTrip.start_date;
-  const endDate = apiTrip.endDate ?? apiTrip.EndDate ?? apiTrip.end_date;
+  const draft = normalizeTripDays(mapApiTripToDraft(apiTrip) as TripData);
+  const id = String(draft.id ?? "");
+  const startDate = draft.startDate;
+  const endDate = draft.endDate;
   const members = apiTrip.members ?? apiTrip.Members ?? apiTrip.collaborators ?? [];
-  const itinerary = apiTrip.itineraryData ?? apiTrip.itinerary ?? apiTrip.days;
   const status = apiTrip.status ?? apiTrip.Status;
-  const hotelName = apiTrip.currentHotel?.name ?? apiTrip.hotel ?? apiTrip.Hotel ?? "Not selected";
-  const coverImage =
-    apiTrip.image ??
-    apiTrip.Image ??
-    apiTrip.coverImageUrl ??
-    apiTrip.currentHotel?.place?.coverImageUrl ??
-    defaultTripImage;
-
-  const itineraryData = itinerary?.map((day, index) => ({
-    dayId: String(day.dayId ?? day.DayId ?? day.id ?? `day_${day.dayNumber ?? index + 1}`),
-    title: day.title ?? day.Title ?? `Day ${day.dayNumber ?? index + 1}`,
-    date: formatApiFullDate(day.date ?? day.Date),
-    locations: day.activities?.length
-      ? day.activities.map((activity, activityIndex) => ({
-        id: String(activity.id ?? activity.placeId ?? `${index + 1}-${activityIndex + 1}`),
-        name: activity.title ?? activity.place?.name ?? "Selected activity",
-        rating: String(activity.rating ?? activity.place?.averageRating ?? "0"),
-        image: activity.imageUrl ?? activity.place?.coverImageUrl ?? defaultTripImage,
-        time: formatActivityTime(activity.period, activity.scheduledTime),
-        period: activity.period ?? undefined,
-        cost: formatMoney(activity.estimatedCost),
-      }))
-      : (day.locations ?? day.Locations ?? []).map((location, locationIndex) => ({
-        id: String(location.id ?? location.Id ?? location.placeId ?? `${index + 1}-${locationIndex + 1}`),
-        name: location.name ?? location.Name ?? "Selected location",
-        rating: String(location.rating ?? location.Rate ?? "0"),
-        image: location.image ?? location.Image ?? defaultTripImage,
-        time: location.time ?? location.Time ?? "Time not set",
-        cost: formatMoney(location.cost ?? location.Cost),
-      })),
-  }));
 
   return {
     id,
-    title: apiTrip.title ?? apiTrip.Title ?? apiTrip.name ?? apiTrip.Name ?? apiTrip.destination ?? "Untitled Trip",
-    date: formatApiDateRange(startDate, endDate, apiTrip.date ?? apiTrip.Date),
+    title: draft.title,
+    date: formatApiDateRange(startDate, endDate, draft.date),
     startDate,
     endDate,
-    image: coverImage,
+    image: draft.image || defaultTripImage,
     avatars: members
       .map((member) => member.avatar ?? member.avatarUrl)
       .filter((avatar): avatar is string => Boolean(avatar)),
+    members: draft.members,
     collaboratorLabel: members.length ? `${members.length} Collab${members.length > 1 ? "s" : ""}` : undefined,
     status: status?.toLowerCase() === "hold" ? "hold" : undefined,
     muted: status?.toLowerCase() === "hold",
-    hotel: hotelName,
-    duration: toNumber(apiTrip.durationDays ?? apiTrip.duration ?? apiTrip.Duration, 1),
-    budget: getTripTotalBudget(itineraryData),
-    currency: apiTrip.currency ?? apiTrip.Currency ?? "USD",
-    itineraryData,
+    hotel: draft.hotel,
+    duration: draft.duration,
+    budget: draft.budget,
+    currency: draft.currency ?? "USD",
+    itineraryData: draft.itineraryData,
   };
 }
 
@@ -218,7 +149,9 @@ function toTripData(trip: Trip): TripData {
     budget: getTripTotalBudget(trip.itineraryData),
     currency: trip.currency || "USD",
     members:
-      trip.avatars?.map((avatar, index) => ({
+      trip.members?.length
+        ? trip.members
+        : trip.avatars?.map((avatar, index) => ({
         id: `${trip.id}-member-${index}`,
         name: `Member ${index + 1}`,
         avatar,
@@ -227,11 +160,27 @@ function toTripData(trip: Trip): TripData {
   });
 }
 
-function TripCard({ trip, onPress }: { trip: Trip; onPress?: () => void }) {
+function TripCard({
+  trip,
+  onPress,
+  onDelete,
+  isDeleting,
+}: {
+  trip: Trip;
+  onPress?: () => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
+}) {
   return (
     <Pressable
       onPress={onPress}
-      style={[styles.tripCard, trip.muted && styles.tripCardMuted]}
+      disabled={isDeleting}
+      style={({ pressed }) => [
+        styles.tripCard,
+        trip.muted && styles.tripCardMuted,
+        pressed && styles.tripCardPressed,
+        isDeleting && styles.tripCardDeleting,
+      ]}
     >
       <ImageBackground
         source={{ uri: trip.image }}
@@ -275,6 +224,27 @@ function TripCard({ trip, onPress }: { trip: Trip; onPress?: () => void }) {
         )}
       </View>
 
+      {onDelete ? (
+        <Pressable
+          onPress={(event) => {
+            event.stopPropagation();
+            onDelete();
+          }}
+          disabled={isDeleting}
+          style={({ pressed }) => [
+            styles.deleteTripButton,
+            pressed && styles.buttonPressed,
+            isDeleting && styles.deleteTripButtonDisabled,
+          ]}
+        >
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={colors.danger} />
+          ) : (
+            <Ionicons name="trash-outline" size={18} color={colors.danger} />
+          )}
+        </Pressable>
+      ) : null}
+
     </Pressable>
   );
 }
@@ -284,6 +254,7 @@ export default function MyTripScreen({ navigation }: any) {
   const [pastTripList, setPastTripList] = useState<Trip[]>([]);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
   const [openingTripId, setOpeningTripId] = useState<string | null>(null);
+  const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
   const [tripLoadError, setTripLoadError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<"Upcoming" | "Past">(
     "Upcoming"
@@ -334,41 +305,7 @@ export default function MyTripScreen({ navigation }: any) {
   useFocusEffect(loadTrips);
 
   useEffect(() => {
-    let isMounted = true;
-
-    async function loadTrips() {
-      setIsLoadingTrips(true);
-      setTripLoadError(null);
-
-      try {
-        const apiTrips = await fetchMyTrips();
-        if (!isMounted) {
-          return;
-        }
-
-        const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
-        setUpcomingTripList(mappedTrips.filter((trip) => !isPastTrip(trip)));
-        setPastTripList(mappedTrips.filter(isPastTrip));
-      } catch (error) {
-        if (isMounted) {
-          setTripLoadError(getApiErrorMessage(error));
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingTrips(false);
-        }
-      }
-    }
-
-    loadTrips();
-
-    return () => {
-      isMounted = false;
-    };
-  }, []);
-
-  useEffect(() => {
-    return subscribeTripDrafts((updatedTrip) => {
+    const unsubscribeDrafts = subscribeTripDrafts((updatedTrip) => {
       const applyTripUpdate = (trip: Trip) =>
         trip.id === updatedTrip.id
           ? {
@@ -383,6 +320,7 @@ export default function MyTripScreen({ navigation }: any) {
             budget: updatedTrip.budget,
             currency: updatedTrip.currency,
             avatars: updatedTrip.members.map((member) => member.avatar),
+            members: updatedTrip.members,
             itineraryData: updatedTrip.itineraryData,
           }
           : trip;
@@ -390,6 +328,16 @@ export default function MyTripScreen({ navigation }: any) {
       setUpcomingTripList((current) => current.map(applyTripUpdate));
       setPastTripList((current) => current.map(applyTripUpdate));
     });
+
+    const unsubscribeDeletes = subscribeTripDeletes((tripId) => {
+      setUpcomingTripList((current) => current.filter((trip) => trip.id !== tripId));
+      setPastTripList((current) => current.filter((trip) => trip.id !== tripId));
+    });
+
+    return () => {
+      unsubscribeDrafts();
+      unsubscribeDeletes();
+    };
   }, []);
 
   const planTrip = () => {
@@ -444,6 +392,41 @@ export default function MyTripScreen({ navigation }: any) {
     } finally {
       setOpeningTripId(null);
     }
+  };
+
+  const deleteTripFromList = async (trip: Trip) => {
+    if (!trip.id || deletingTripId) {
+      return;
+    }
+
+    setDeletingTripId(trip.id);
+    try {
+      await deleteTrip(trip.id);
+      removeTripDraft(trip.id);
+      setUpcomingTripList((current) => current.filter((item) => item.id !== trip.id));
+      setPastTripList((current) => current.filter((item) => item.id !== trip.id));
+    } catch (error) {
+      Alert.alert("Cannot delete trip", getApiErrorMessage(error));
+    } finally {
+      setDeletingTripId(null);
+    }
+  };
+
+  const confirmDeleteTrip = (trip: Trip) => {
+    Alert.alert(
+      "Delete trip",
+      `Delete "${trip.title}"? This cannot be undone.`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            void deleteTripFromList(trip);
+          },
+        },
+      ]
+    );
   };
 
   return (
@@ -562,7 +545,9 @@ export default function MyTripScreen({ navigation }: any) {
             <TripCard
               key={trip.id}
               trip={trip}
-              onPress={openingTripId ? undefined : () => openTrip(trip)}
+              onPress={openingTripId || deletingTripId ? undefined : () => openTrip(trip)}
+              onDelete={() => confirmDeleteTrip(trip)}
+              isDeleting={deletingTripId === trip.id}
             />
           ))}
         </View>

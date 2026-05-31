@@ -1,11 +1,13 @@
 export type Collaborator = {
   id: string;
+  userId?: string | number;
   name: string;
   avatar: string;
 };
 
 export type ScheduleLocation = {
   id: string;
+  placeId?: string;
   name: string;
   rating: string;
   image: string;
@@ -38,6 +40,7 @@ export type TripData = {
 
 const tripDrafts: Record<string, TripData> = {};
 const listeners = new Set<(trip: TripData) => void>();
+const deleteListeners = new Set<(tripId: string) => void>();
 
 export function formatTripDate(date: Date) {
   return date.toLocaleDateString('en-US', {
@@ -123,9 +126,25 @@ export function upsertTripDraft(trip: TripData) {
   listeners.forEach((listener) => listener(normalizedTrip));
 }
 
+export function removeTripDraft(tripId?: string) {
+  if (!tripId) {
+    return;
+  }
+
+  delete tripDrafts[tripId];
+  deleteListeners.forEach((listener) => listener(tripId));
+}
+
 export function subscribeTripDrafts(listener: (trip: TripData) => void) {
   listeners.add(listener);
   return () => {
     listeners.delete(listener);
+  };
+}
+
+export function subscribeTripDeletes(listener: (tripId: string) => void) {
+  deleteListeners.add(listener);
+  return () => {
+    deleteListeners.delete(listener);
   };
 }

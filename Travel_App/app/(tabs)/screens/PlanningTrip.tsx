@@ -1,6 +1,8 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
 import React, { useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   LayoutAnimation, Platform,
   Pressable, SafeAreaView, ScrollView,
@@ -13,8 +15,11 @@ import {
   normalizeTripDays,
   parseTripDate,
   TripData,
+  removeTripDraft,
   upsertTripDraft,
 } from "../store/tripDraftStore";
+import { getApiErrorMessage } from '../../../lib/api/client';
+import { deleteTrip } from '../../../lib/api/trips';
 import styles from "./PlanningTrip.styles";
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -106,6 +111,7 @@ function formatBudget(value: number) {
 export default function PlanningTrip({ navigation, route }: any) {
   const routeTrip = route?.params?.tripData as TripData | undefined;
   const [expandedDays, setExpandedDays] = useState<number[]>([1]);
+  const [isDeletingTrip, setIsDeletingTrip] = useState(false);
   const [trip, setTrip] = useState<TripData>(normalizeTripDays({
     ...defaultTrip,
     ...routeTrip,
@@ -154,6 +160,53 @@ export default function PlanningTrip({ navigation, route }: any) {
     0
   ) ?? 0;
 
+  const openEditTrip = () => {
+    if (isDeletingTrip) {
+      return;
+    }
+
+    navigation.navigate('EditingTrip', { tripData: trip });
+  };
+
+  const deleteCurrentTrip = async () => {
+    if (!trip.id || isDeletingTrip) {
+      return;
+    }
+
+    setIsDeletingTrip(true);
+    try {
+      await deleteTrip(trip.id);
+      removeTripDraft(trip.id);
+      navigation.navigate('Main', { screen: 'My Trip' });
+    } catch (error) {
+      Alert.alert('Cannot delete trip', getApiErrorMessage(error));
+    } finally {
+      setIsDeletingTrip(false);
+    }
+  };
+
+  const confirmDeleteTrip = () => {
+    if (!trip.id) {
+      Alert.alert('Cannot delete trip', 'This trip has not been saved yet.');
+      return;
+    }
+
+    Alert.alert(
+      'Delete trip',
+      `Delete "${trip.title}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: () => {
+            void deleteCurrentTrip();
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       {/* 1. HEADER */}
@@ -170,7 +223,18 @@ export default function PlanningTrip({ navigation, route }: any) {
         <Text style={styles.headerTitle}>Trip Planning</Text>
 
         {/* View trống để cân bằng không gian, giữ cho text nằm chính giữa */}
-        <View style={styles.iconButton} />
+        <Pressable
+          onPress={openEditTrip}
+          disabled={isDeletingTrip}
+          style={({ pressed }) => [
+            styles.headerEditButton,
+            pressed && styles.buttonPressed,
+            isDeletingTrip && styles.actionButtonDisabled,
+          ]}
+        >
+          <Feather name="edit-2" size={16} color="#0EB4D3" />
+          <Text style={styles.headerEditText}>Edit</Text>
+        </Pressable>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -179,11 +243,34 @@ export default function PlanningTrip({ navigation, route }: any) {
             <Text style={styles.sectionTitle}>{trip.title}</Text>
             <View style={styles.actionButtons}>
               <Pressable
-                onPress={() => {
-                  navigation.navigate('EditingTrip', { tripData: trip });
-                }}
+                onPress={openEditTrip}
+                disabled={isDeletingTrip}
+                style={({ pressed }) => [
+                  styles.actionPill,
+                  pressed && styles.buttonPressed,
+                  isDeletingTrip && styles.actionButtonDisabled,
+                ]}
               >
+                <Feather name="edit-2" size={14} color="#0EB4D3" />
                 <Text style={styles.modifyBtnText}>Modify</Text>
+              </Pressable>
+              <Pressable
+                onPress={confirmDeleteTrip}
+                disabled={isDeletingTrip}
+                style={({ pressed }) => [
+                  styles.actionPillDanger,
+                  pressed && styles.buttonPressed,
+                  isDeletingTrip && styles.actionButtonDisabled,
+                ]}
+              >
+                {isDeletingTrip ? (
+                  <ActivityIndicator size="small" color="#E53935" />
+                ) : (
+                  <Feather name="trash-2" size={14} color="#E53935" />
+                )}
+                <Text style={styles.deleteTripText}>
+                  {isDeletingTrip ? 'Deleting' : 'Delete'}
+                </Text>
               </Pressable>
             </View>
           </View>

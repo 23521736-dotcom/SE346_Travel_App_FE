@@ -310,6 +310,7 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
         mode="date"
+        minimumDate={new Date(new Date().setHours(0, 0, 0, 0))}
         onConfirm={handleConfirm}
         onCancel={() => setDatePickerVisibility(false)}
       />

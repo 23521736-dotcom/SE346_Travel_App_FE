@@ -92,6 +92,9 @@ export async function getAccessToken(): Promise<string | null> {
 
 export function getApiErrorMessage(err: unknown): string {
   if (err instanceof AxiosError) {
+    if (err.code === 'ERR_CANCELED' || err.code === 'ECONNABORTED' || err.message.toLowerCase().includes('timeout')) {
+      return 'Save request timed out. Please check that the backend is running, then try again.';
+    }
     const data = err.response?.data as any;
     if (data) {
       if (typeof data === 'string') return data;
@@ -105,6 +108,11 @@ export function getApiErrorMessage(err: unknown): string {
         const first = data.errors[0];
         if (typeof first === 'string') return first;
         if (first && typeof first.msg === 'string') return first.msg;
+      }
+      if (data.issues?.fieldErrors) {
+        const firstField = Object.keys(data.issues.fieldErrors)[0];
+        const firstMessage = firstField ? data.issues.fieldErrors[firstField]?.[0] : null;
+        if (firstMessage) return `${firstField}: ${firstMessage}`;
       }
       try {
         return JSON.stringify(data);
