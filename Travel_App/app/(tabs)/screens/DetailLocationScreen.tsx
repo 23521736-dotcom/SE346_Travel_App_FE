@@ -15,6 +15,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
     const [place, setPlace] = useState<PlaceDetail | null>(fallbackPlace || null);
     const [loading, setLoading] = useState(Boolean(placeId));
     const [isLiked, setIsLiked] = useState(Boolean(fallbackPlace?.isFavorite));
+    const [imageIndex, setImageIndex] = useState(0);
 
     const loadPlace = useCallback(async () => {
         if (!placeId) {
@@ -38,6 +39,10 @@ export default function DetailLocationScreen({ navigation, route }: any) {
     useEffect(() => {
         loadPlace();
     }, [loadPlace]);
+
+    useEffect(() => {
+        setImageIndex(0);
+    }, [place?.Id]);
 
     const toggleFavorite = async () => {
         if (!placeId) return;
@@ -81,16 +86,75 @@ export default function DetailLocationScreen({ navigation, route }: any) {
     }
 
     const firstReview = place.Reviews[0];
+    const apiImages = Array.isArray((place as any).Images) ? (place as any).Images.filter(Boolean) : [];
+    const normalizedImages = Array.isArray(place.images) ? place.images.filter(Boolean) : [];
+    const placeImages = apiImages.length > 0
+        ? apiImages
+        : normalizedImages.length > 0
+            ? normalizedImages
+            : [(place as any).image || place.Image].filter(Boolean);
+    const currentImage = placeImages[imageIndex] || placeImages[0];
+    const hasMultipleImages = placeImages.length > 1;
+    const showPreviousImage = () => {
+        if (!hasMultipleImages) return;
+        setImageIndex(prev => (prev === 0 ? placeImages.length - 1 : prev - 1));
+    };
+    const showNextImage = () => {
+        if (!hasMultipleImages) return;
+        setImageIndex(prev => (prev + 1) % placeImages.length);
+    };
 
     return (
         <View style={{ flex: 1, justifyContent: 'center', backgroundColor: '#FFFFFF', marginVertical: 40 }}>
             <ScrollView style={[styles.container, { margin: 0 }]}>
                 <View style={{ margin: 0, position: 'relative' }}>
                     <View style={[styles.imageFrame, { height: 350, borderRadius: 0, borderWidth: 0 }]}>
-                        <Image
-                            source={{ uri: place.Image }}
-                            style={{ width: "100%", height: "100%" }} />
+                        {currentImage ? (
+                            <Image
+                                source={{ uri: currentImage }}
+                                style={{ width: "100%", height: "100%" }} />
+                        ) : (
+                            <View style={{ width: "100%", height: "100%", alignItems: 'center', justifyContent: 'center', backgroundColor: '#E5E7EB' }}>
+                                <Ionicons name="image-outline" size={42} color="#9CA3AF" />
+                            </View>
+                        )}
                     </View>
+                    {hasMultipleImages && (
+                        <>
+                            <Pressable
+                                style={{
+                                    position: 'absolute',
+                                    left: 15,
+                                    top: 155,
+                                    zIndex: 1,
+                                    backgroundColor: 'rgba(0,0,0,0.35)',
+                                    borderRadius: 22,
+                                    width: 44,
+                                    height: 44,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                                onPress={showPreviousImage}>
+                                <Ionicons name="chevron-back" size={26} color="white" />
+                            </Pressable>
+                            <Pressable
+                                style={{
+                                    position: 'absolute',
+                                    right: 15,
+                                    top: 155,
+                                    zIndex: 1,
+                                    backgroundColor: 'rgba(0,0,0,0.35)',
+                                    borderRadius: 22,
+                                    width: 44,
+                                    height: 44,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                }}
+                                onPress={showNextImage}>
+                                <Ionicons name="chevron-forward" size={26} color="white" />
+                            </Pressable>
+                        </>
+                    )}
                     <Pressable style={styles.roundButton}
                         onPress={() => navigation.goBack()}>
                         <Ionicons name="chevron-back" size={25}

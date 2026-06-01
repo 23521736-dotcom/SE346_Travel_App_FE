@@ -17,7 +17,7 @@ import {
 import { colors } from '../common/colors';
 import PromotionCard from "../components/PromotionCard";
 import PromotionEditor from '../components/PromotionEditor';
-import type { PromotionItem } from '../types/promotion';
+import type { PromotionItem } from '@/lib/types/promotion';
 import { styles } from './AddLocationScreen.style';
 import { getApiErrorMessage } from '../../../lib/api/client';
 import {
@@ -33,15 +33,22 @@ import type { OwnerPlace } from '../../../lib/api/owner';
 import { uploadPlaceCover } from '../../../lib/api/uploads';
 import { DEFAULT_PLACE_CATEGORY, getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../lib/placeCategories';
 
+const normalizeImages = (mainImage?: string, images?: string[]) => {
+  return Array.from(new Set([mainImage, ...(images ?? [])].filter(Boolean) as string[]));
+};
+
+const getOwnerPlaceImage = (place?: OwnerPlace) => place?.Image ?? place?.image ?? '';
+
 const AddLocationScreen = ({ navigation, route }: any) => {
   const placeParam = route?.params?.place as OwnerPlace | undefined;
   const placeId = route?.params?.placeId ?? placeParam?.Id;
+  const initialImage = getOwnerPlaceImage(placeParam);
   const [placeName, setPlaceName] = useState(placeParam?.Name ?? '');
   const [region, setRegion] = useState(placeParam?.Location ?? '');
   const [description, setDescription] = useState('');
   const [activeCategory, setActiveCategory] = useState('DINING');
-  const [coverImageUrl, setCoverImageUrl] = useState(placeParam?.Image ?? '');
-  const [imageUrls, setImageUrls] = useState<string[]>(placeParam?.Images ?? []);
+  const [coverImageUrl, setCoverImageUrl] = useState(initialImage);
+  const [imageUrls, setImageUrls] = useState<string[]>(normalizeImages(initialImage, placeParam?.Images));
   const [isAdding, setIsAdding] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -55,10 +62,11 @@ const AddLocationScreen = ({ navigation, route }: any) => {
 
     const loadPlace = async () => {
       if (placeParam) {
+        const paramImage = getOwnerPlaceImage(placeParam);
         setPlaceName(placeParam.Name ?? '');
         setRegion(placeParam.Location ?? '');
-        setCoverImageUrl(placeParam.Image ?? '');
-        setImageUrls(placeParam.Images ?? []);
+        setCoverImageUrl(paramImage);
+        setImageUrls(normalizeImages(paramImage, placeParam.Images));
         setPromotions([]);
       }
 
@@ -70,15 +78,16 @@ const AddLocationScreen = ({ navigation, route }: any) => {
         setRegion(detail.Location ?? '');
         setActiveCategory(normalizePlaceCategory(detail.category) ?? DEFAULT_PLACE_CATEGORY);
         setDescription(detail.about ?? '');
-        setCoverImageUrl(detail.Image ?? '');
-        setImageUrls(detail.Images ?? []);
+        setCoverImageUrl(getOwnerPlaceImage(detail));
+        setImageUrls(normalizeImages(getOwnerPlaceImage(detail), detail.Images));
         setPromotions(detail.promotions ?? []);
       } catch {
         if (!isMounted || !placeParam) return;
+        const paramImage = getOwnerPlaceImage(placeParam);
         setPlaceName(placeParam.Name ?? '');
         setRegion(placeParam.Location ?? '');
-        setCoverImageUrl(placeParam.Image ?? '');
-        setImageUrls(placeParam.Images ?? []);
+        setCoverImageUrl(paramImage);
+        setImageUrls(normalizeImages(paramImage, placeParam.Images));
       }
     };
 
@@ -183,12 +192,13 @@ const AddLocationScreen = ({ navigation, route }: any) => {
     try {
       const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!permission.granted) {
-        Alert.alert('Permission required', 'Please allow photo access to upload a cover image.');
+        Alert.alert('Permission required', 'Please allow photo access to upload images.');
         return;
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsMultipleSelection: true,
         //allowsEditing: true,
         quality: 0.85,
       });
@@ -196,9 +206,11 @@ const AddLocationScreen = ({ navigation, route }: any) => {
       if (result.canceled) return;
 
       setIsUploading(true);
-      const publicUrl = await uploadPlaceCover(result.assets[0].uri);
-      setCoverImageUrl(publicUrl);
-      setImageUrls(prev => Array.from(new Set([publicUrl, ...prev])));
+      const uploadedUrls = await Promise.all(
+        result.assets.map((asset) => uploadPlaceCover(asset.uri))
+      );
+      setImageUrls(prev => Array.from(new Set([...prev, ...uploadedUrls])));
+      setCoverImageUrl(prev => prev || uploadedUrls[0] || '');
     } catch (err) {
       Alert.alert('Loi', getApiErrorMessage(err));
     } finally {
@@ -207,30 +219,46 @@ const AddLocationScreen = ({ navigation, route }: any) => {
   };
 
   const handleReset = () => {
+    const paramImage = getOwnerPlaceImage(placeParam);
     setPlaceName(placeParam?.Name ?? '');
     setRegion(placeParam?.Location ?? '');
     setDescription('');
     setActiveCategory('DINING');
-    setCoverImageUrl(placeParam?.Image ?? '');
-    setImageUrls(placeParam?.Images ?? []);
+    setCoverImageUrl(paramImage);
+    setImageUrls(normalizeImages(paramImage, placeParam?.Images));
     setPromotions([]);
     setEditingId(null);
     setIsAdding(false);
+  };
+
+  const handleSetMainImage = (uri: string) => {
+    setCoverImageUrl(uri);
+  };
+
+  const handleRemoveImage = (uri: string) => {
+    setImageUrls(prev => {
+      const next = prev.filter(item => item !== uri);
+      if (coverImageUrl === uri) {
+        setCoverImageUrl(next[0] ?? '');
+      }
+      return next;
+    });
   };
 
   const handlePublish = async () => {
     const name = placeName.trim();
     const placeRegion = region.trim();
     const about = description.trim();
-    const coverUrl = coverImageUrl.trim();
+    const images = normalizeImages(coverImageUrl.trim(), imageUrls.map(item => item.trim()));
+    const coverUrl = coverImageUrl.trim() || images[0] || '';
 
     if (!name || !placeRegion || !activeCategory) {
       Alert.alert('Missing information', 'Please enter place name, region, and category.');
       return;
     }
 
-    if (!coverUrl) {
-      Alert.alert('Missing cover image', 'Please upload or enter a cover image URL.');
+    if (images.length === 0) {
+      Alert.alert('Missing images', 'Please add at least one image before saving.');
       return;
     }
 
@@ -242,7 +270,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
         category: activeCategory,
         about,
         coverImageUrl: coverUrl,
-        imageUrls: Array.from(new Set([coverUrl, ...imageUrls.filter(Boolean)])),
+        imageUrls: images,
         featureLabel: 'Open Now',
       };
 
@@ -375,20 +403,6 @@ const AddLocationScreen = ({ navigation, route }: any) => {
             </TouchableOpacity>
           </View> */}
 
-          <Text style={styles.label}>Cover Image URL</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="https://example.com/place.jpg"
-            placeholderTextColor={colors.textMuted}
-            value={coverImageUrl}
-            onChangeText={setCoverImageUrl}
-            autoCapitalize="none"
-          />
-
-          {coverImageUrl.length > 0 && (
-            <Image source={{ uri: coverImageUrl }} style={[styles.mapContainer, { width: '100%' }]} />
-          )}
-
           <TouchableOpacity
             style={[styles.uploadBox, { marginTop: 20 }]}
             onPress={handlePickCover}
@@ -402,10 +416,68 @@ const AddLocationScreen = ({ navigation, route }: any) => {
               )}
             </View>
             <Text style={{ fontWeight: 'bold', fontSize: 14 }}>
-              {isUploading ? 'Uploading...' : 'Tap to upload cover'}
+              {isUploading ? 'Uploading...' : 'Tap to add images'}
             </Text>
             <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 4 }}>Supports JPG, PNG (Max 10MB)</Text>
           </TouchableOpacity>
+
+          {imageUrls.length > 0 && (
+            <View style={{ marginTop: 16 }}>
+              <Text style={styles.label}>Selected Images</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                {imageUrls.map((uri) => {
+                  const isMain = uri === coverImageUrl;
+                  return (
+                    <TouchableOpacity
+                      key={uri}
+                      onPress={() => handleSetMainImage(uri)}
+                      style={{
+                        width: 110,
+                        height: 90,
+                        borderRadius: 12,
+                        borderWidth: isMain ? 3 : 1,
+                        borderColor: isMain ? colors.primary : colors.borderLight,
+                        marginRight: 10,
+                        overflow: 'hidden',
+                        backgroundColor: colors.background,
+                      }}
+                    >
+                      <Image source={{ uri }} style={{ width: '100%', height: '100%' }} />
+                      {isMain && (
+                        <View style={{
+                          position: 'absolute',
+                          left: 6,
+                          top: 6,
+                          backgroundColor: colors.primary,
+                          borderRadius: 10,
+                          paddingHorizontal: 8,
+                          paddingVertical: 2,
+                        }}>
+                          <Text style={{ color: colors.textOnPrimary, fontSize: 10, fontWeight: '700' }}>Main</Text>
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        onPress={() => handleRemoveImage(uri)}
+                        style={{
+                          position: 'absolute',
+                          right: 6,
+                          top: 6,
+                          backgroundColor: 'rgba(0,0,0,0.55)',
+                          borderRadius: 12,
+                          width: 24,
+                          height: 24,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
+                      >
+                        <Ionicons name="close" size={16} color="white" />
+                      </TouchableOpacity>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
         </View>
 
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>

@@ -1,4 +1,4 @@
-import type { PromotionItem } from '../../app/(tabs)/types/promotion';
+import type { PromotionItem } from '../types/promotion';
 import type { ApiOk, PlaceListItem } from './types';
 import { apiClient } from './client';
 
