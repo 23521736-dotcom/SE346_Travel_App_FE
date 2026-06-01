@@ -44,6 +44,15 @@ const styles = StyleSheet.create({
     columnGap: 8,
   },
 
+  primaryIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primary,
+  },
+
   title: {
     color: colors.primaryDark,
     fontSize: 20,
@@ -118,7 +127,31 @@ const styles = StyleSheet.create({
     color: "#0B1C30",
     fontSize: 24,
     fontWeight: "800",
+  },
+
+  sectionHeaderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    columnGap: 12,
     marginBottom: 18,
+  },
+
+  addEntryButton: {
+    minHeight: 38,
+    borderRadius: 19,
+    paddingHorizontal: 13,
+    backgroundColor: colors.primary,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    columnGap: 6,
+  },
+
+  addEntryText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: "800",
   },
 
   timelineWrap: {
@@ -182,6 +215,21 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     columnGap: 12,
     marginBottom: 12,
+  },
+
+  cardActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    columnGap: 8,
+  },
+
+  iconButtonDanger: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.dangerSoft,
   },
 
   placeName: {
@@ -275,7 +323,75 @@ const styles = StyleSheet.create({
     color: "#3E4850",
     fontSize: 16,
     lineHeight: 24,
-    fontStyle: "italic",
+  },
+
+  stateBox: {
+    minHeight: 120,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    rowGap: 10,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+
+  stateText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    fontWeight: "700",
+  },
+
+  errorBox: {
+    borderRadius: 12,
+    padding: 12,
+    backgroundColor: colors.dangerSoft,
+  },
+
+  errorText: {
+    color: colors.danger,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  emptyBox: {
+    borderRadius: 18,
+    padding: 22,
+    alignItems: "center",
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+
+  emptyTitle: {
+    color: colors.textPrimary,
+    fontSize: 18,
+    fontWeight: "900",
+    marginTop: 10,
+  },
+
+  emptyText: {
+    color: colors.textSecondary,
+    fontSize: 14,
+    lineHeight: 20,
+    textAlign: "center",
+    marginTop: 6,
+  },
+
+  emptyButton: {
+    minHeight: 42,
+    borderRadius: 21,
+    paddingHorizontal: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.primary,
+    marginTop: 16,
+  },
+
+  emptyButtonText: {
+    color: colors.white,
+    fontSize: 14,
+    fontWeight: "800",
   },
 
   ctaWrap: {

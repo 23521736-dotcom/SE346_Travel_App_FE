@@ -43,6 +43,8 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
+    flexDirection: "row",
+    columnGap: 6,
     backgroundColor: colors.primary,
     paddingHorizontal: 12,
   },
@@ -190,6 +192,36 @@ const styles = StyleSheet.create({
     padding: 16,
   },
 
+  inputLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: "800",
+    marginBottom: 7,
+    marginTop: 12,
+  },
+
+  singleLineInput: {
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 14,
+    color: colors.textPrimary,
+    fontSize: 15,
+    fontWeight: "600",
+  },
+
+  webDateInputWrap: {
+    minHeight: 48,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+    backgroundColor: "#F8FAFC",
+    paddingHorizontal: 14,
+    justifyContent: "center",
+  },
+
   captionHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -228,6 +260,10 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.16,
     shadowRadius: 12,
     elevation: 5,
+  },
+
+  saveButtonDisabled: {
+    opacity: 0.62,
   },
 
   saveButtonText: {
