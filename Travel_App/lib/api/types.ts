@@ -30,6 +30,8 @@ export type ApiFavoritePlaceItem = {
   NumberOfRate?: number;
   Features?: string;
   image?: string;
+  category?: string;
+  Category?: string;
 };
 
 export type PlaceListItem = {
@@ -149,6 +151,7 @@ export function normalizePlaceListItem(raw: ApiFavoritePlaceItem): PlaceListItem
   const featureLabel = firstString(raw.featureLabel, raw.Features);
   const coverImageUrl = firstString(raw.coverImageUrl, raw.image);
   const images = firstArray<string>(raw.images);
+  const category = firstString(raw.category, raw.Category);
 
   return {
     id,
@@ -161,11 +164,15 @@ export function normalizePlaceListItem(raw: ApiFavoritePlaceItem): PlaceListItem
     images: images.length > 0 ? images : coverImageUrl ? [coverImageUrl] : [],
     Id: id,
     Name: name,
+    Location: region,
     Located: region,
     Rate: averageRating,
     NumberOfRate: ratingCount,
     Features: featureLabel,
+    Image: coverImageUrl,
     image: coverImageUrl,
+    category,
+    Category: category,
   };
 }
 

@@ -146,7 +146,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
     if (!entries.length) {
       return tripDate || "Start writing memories for this trip";
     }
-    return `${entries.length} ${entries.length === 1 ? "memory" : "memories"} saved${tripDate ? ` • ${tripDate}` : ""}`;
+    return `${entries.length} ${entries.length === 1 ? "memory" : "memories"} saved${tripDate ? ` - ${tripDate}` : ""}`;
   }, [entries.length, tripDate]);
 
   const loadDiary = useCallback(() => {
@@ -250,14 +250,14 @@ export default function TripDiaryScreen({ navigation, route }: any) {
           <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
             <Ionicons name="arrow-back" size={24} color={colors.primaryDark} />
           </Pressable>
-          <Text style={styles.title}>Nhật ký hành trình</Text>
+          <Text style={styles.title}>Trip Diary</Text>
         </View>
 
-        <View style={styles.headerActions}>
+        {/* <View style={styles.headerActions}>
           <Pressable hitSlop={8} style={styles.primaryIconButton} onPress={() => openEditor()}>
             <Ionicons name="add" size={23} color={colors.white} />
           </Pressable>
-        </View>
+        </View> */}
       </View>
 
       <ScrollView
@@ -268,7 +268,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
           <Image source={{ uri: heroImage }} style={styles.heroImage} />
           <View style={styles.heroOverlay}>
             <Pressable style={styles.playButton} onPress={() => openEditor()}>
-              <Ionicons name="create" size={30} color={colors.white} />
+              <Ionicons name="play" size={30} color={colors.white} />
             </Pressable>
           </View>
           <View style={styles.heroTextWrap}>
@@ -279,17 +279,17 @@ export default function TripDiaryScreen({ navigation, route }: any) {
 
         <View>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Kỷ niệm đã ghi</Text>
+            <Text style={styles.sectionTitle}>Saved Memories</Text>
             <Pressable style={styles.addEntryButton} onPress={() => openEditor()}>
               <Ionicons name="add" size={18} color={colors.white} />
-              <Text style={styles.addEntryText}>Viết nhật ký</Text>
+              <Text style={styles.addEntryText}>Write Diary</Text>
             </Pressable>
           </View>
 
           {isLoading ? (
             <View style={styles.stateBox}>
               <ActivityIndicator color={colors.primary} />
-              <Text style={styles.stateText}>Đang tải nhật ký...</Text>
+              <Text style={styles.stateText}>Loading diary...</Text>
             </View>
           ) : null}
 
@@ -302,10 +302,10 @@ export default function TripDiaryScreen({ navigation, route }: any) {
           {!isLoading && !entries.length && !errorMessage ? (
             <View style={styles.emptyBox}>
               <MaterialCommunityIcons name="notebook-plus-outline" size={42} color={colors.primary} />
-              <Text style={styles.emptyTitle}>Chưa có nhật ký</Text>
-              <Text style={styles.emptyText}>Lưu lại cảm xúc, ảnh và những khoảnh khắc đáng nhớ của chuyến đi này.</Text>
+              <Text style={styles.emptyTitle}>No diary entries yet</Text>
+              <Text style={styles.emptyText}>Save the feelings, photos, and memorable moments from this trip.</Text>
               <Pressable style={styles.emptyButton} onPress={() => openEditor()}>
-                <Text style={styles.emptyButtonText}>Viết mục đầu tiên</Text>
+                <Text style={styles.emptyButtonText}>Write First Entry</Text>
               </Pressable>
             </View>
           ) : null}
@@ -325,6 +325,16 @@ export default function TripDiaryScreen({ navigation, route }: any) {
               ))}
             </View>
           ) : null}
+        </View>
+
+        <View style={styles.ctaWrap}>
+          <Pressable style={styles.ctaButton}>
+            <MaterialCommunityIcons name="movie-open-play" size={22} color={colors.white} />
+            <Text style={styles.ctaText}>Create Memory Video</Text>
+          </Pressable>
+          <Text style={styles.helperText}>
+            Create a short movie from your favorite photos and videos.
+          </Text>
         </View>
       </ScrollView>
     </View>

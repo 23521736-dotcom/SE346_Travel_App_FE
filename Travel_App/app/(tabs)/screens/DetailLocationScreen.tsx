@@ -54,12 +54,12 @@ export default function DetailLocationScreen({ navigation, route }: any) {
         }
     };
 
-    const openWriteReview = () => {
-        navigation.navigate('Write Review', {
-            placeId: place?.Id ?? placeId,
-            placeName: place?.Name,
-        });
-    };
+    // const openWriteReview = () => {
+    //     navigation.navigate('Write Review', {
+    //         placeId: place?.Id ?? placeId,
+    //         placeName: place?.Name,
+    //     });
+    // };
 
     if (loading) {
         return (
@@ -112,7 +112,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                     </Pressable>
                 </View>
 
-                <View style={{ flexDirection: 'row', columnGap: 10, marginHorizontal: 15, marginTop: 12 }}>
+                {/* <View style={{ flexDirection: 'row', columnGap: 10, marginHorizontal: 15, marginTop: 12 }}>
                     <Pressable
                         onPress={openWriteReview}
                         style={({ pressed }) => [
@@ -147,7 +147,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                     >
                         <Text style={{ color: '#00B4D8', fontWeight: '700' }}>See Reviews</Text>
                     </Pressable>
-                </View>
+                </View> */}
 
                 <View style={{ borderRadius: 20, backgroundColor: '#FFFFFF', marginTop: -20 }}>
                     <View style={{ flexDirection: 'column', margin: 15 }}>

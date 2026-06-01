@@ -192,6 +192,10 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  timelineCardDeleting: {
+    opacity: 0.58,
+  },
+
   timelineDot: {
     position: "absolute",
     left: -25,

@@ -6,6 +6,7 @@ import {
   Switch,
   Image,
   ImageSourcePropType,
+  ScrollView,
 } from 'react-native';
 import styles from './ProfileScreen.styles';
 import { useAuth } from '../context/AuthContext';
@@ -67,7 +68,11 @@ export default function ProfileScreen({ navigation }: any) {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.content}
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.headerContainer}>
           <View style={styles.avatarContainer}>
             <Image
@@ -122,7 +127,7 @@ export default function ProfileScreen({ navigation }: any) {
           />
           <Text style={styles.logoutText}>Logout</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </View>
   );
 }
