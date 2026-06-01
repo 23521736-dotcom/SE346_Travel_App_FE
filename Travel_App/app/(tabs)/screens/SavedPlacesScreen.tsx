@@ -27,6 +27,14 @@ function toPlaceDetail(place: PlaceListItem, isFavorite: boolean): PlaceDetail {
     ];
 
     return {
+        id: place.id,
+        name: place.name,
+        region: place.region,
+        averageRating: place.averageRating,
+        ratingCount: place.ratingCount,
+        featureLabel: place.featureLabel,
+        coverImageUrl: place.coverImageUrl,
+        images: place.images,
         Id: place.Id,
         Name: place.Name,
         Location: place.Located,
@@ -215,16 +223,28 @@ export default function SavedPlaces({ navigation }: any) {
                                             <Ionicons name="location-outline" size={14} color="#6b7280" />
                                             <Text style={styles.locationText}>{place.Located}</Text>
                                         </View>
-                                        <TouchableOpacity
-                                            onPress={() =>
-                                                navigation.navigate('Detail Location', {
-                                                    placeId: place.Id,
-                                                    placeData: toPlaceDetail(place, isSaved),
-                                                })
-                                            }
-                                        >
-                                            <Text style={styles.detailText}>Detail</Text>
-                                        </TouchableOpacity>
+                                        <View style={{ flexDirection: 'row', columnGap: 14, alignItems: 'center' }}>
+                                            <TouchableOpacity
+                                                onPress={() =>
+                                                    navigation.navigate('Write Review', {
+                                                        placeId: place.Id,
+                                                        placeName: place.Name,
+                                                    })
+                                                }
+                                            >
+                                                <Text style={styles.detailText}>Review</Text>
+                                            </TouchableOpacity>
+                                            <TouchableOpacity
+                                                onPress={() =>
+                                                    navigation.navigate('Detail Location', {
+                                                        placeId: place.Id,
+                                                        placeData: toPlaceDetail(place, isSaved),
+                                                    })
+                                                }
+                                            >
+                                                <Text style={styles.detailText}>Detail</Text>
+                                            </TouchableOpacity>
+                                        </View>
                                     </View>
                                 </View>
                             </TouchableOpacity>

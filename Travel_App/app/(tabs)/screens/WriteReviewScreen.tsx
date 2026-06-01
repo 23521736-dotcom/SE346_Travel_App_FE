@@ -16,7 +16,7 @@ import {
 } from 'react-native';
 import { createReview, updateReview } from '../../../lib/api/reviews';
 import type { ReviewListItem } from '../../../lib/api/types';
-import { uploadReviewImage } from '../../../lib/api/uploads';
+import { uploadReviewImages, type UploadImageInput } from '../../../lib/api/uploads';
 import { colors } from '../common/colors';
 import { RatingStartBar } from '../components/Rating';
 import { getApiErrorMessage } from '../context/AuthContext';
@@ -24,7 +24,14 @@ import styles from './WriteReviewScreen.styles';
 
 const ratingLabels = ['Very bad', 'Bad', 'Okay', 'Good', 'Excellent'];
 
-const isRemoteImage = (uri: string) => /^https?:\/\//i.test(uri);
+type LocalReviewImage = UploadImageInput;
+
+const normalizeInitialImages = (imageUrls: string[] = []): LocalReviewImage[] => {
+  return imageUrls.map((uri) => ({
+    uri,
+    isRemote: /^https?:\/\//i.test(uri),
+  }));
+};
 
 export default function WriteReviewScreen({ navigation, route }: any) {
   const placeId = route.params?.placeId as string | undefined;
@@ -33,11 +40,11 @@ export default function WriteReviewScreen({ navigation, route }: any) {
   const isEditing = Boolean(editingReview?.id);
   const [rating, setRating] = useState(editingReview?.Rate ?? 0);
   const [reviewText, setReviewText] = useState(editingReview?.content ?? '');
-  const [pendingImages, setPendingImages] = useState<string[]>(editingReview?.images ?? []);
+  const [pendingImages, setPendingImages] = useState<LocalReviewImage[]>(normalizeInitialImages(editingReview?.images));
   const [submitting, setSubmitting] = useState(false);
 
   const handlePickImage = async () => {
-    if (pendingImages.length >= 5) return;
+    if (pendingImages.length >= 10) return;
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
@@ -51,7 +58,15 @@ export default function WriteReviewScreen({ navigation, route }: any) {
     });
 
     if (!result.canceled) {
-      setPendingImages((prev) => [...prev, result.assets[0].uri].slice(0, 5));
+      const asset = result.assets[0];
+      setPendingImages((prev) => [
+        ...prev,
+        {
+          uri: asset.uri,
+          fileName: asset.fileName,
+          mimeType: asset.mimeType,
+        },
+      ].slice(0, 10));
     }
   };
 
@@ -73,25 +88,19 @@ export default function WriteReviewScreen({ navigation, route }: any) {
 
     setSubmitting(true);
     try {
-      const imageUrls: string[] = [];
-      for (const uri of pendingImages) {
-        if (isRemoteImage(uri)) {
-          imageUrls.push(uri);
-          continue;
+      let imageUrls: string[] = [];
+      try {
+        imageUrls = await uploadReviewImages(pendingImages);
+      } catch (err) {
+        const msg = getApiErrorMessage(err);
+        if (msg === 'STORAGE_UNAVAILABLE') {
+          Alert.alert(
+            'Upload chua san sang',
+            'Can service_role key (eyJ...) trong .env BE. Chay: npm run storage:verify'
+          );
+          return;
         }
-
-        try {
-          const url = await uploadReviewImage(uri);
-          imageUrls.push(url);
-        } catch (err) {
-          const msg = getApiErrorMessage(err);
-          if (msg === 'STORAGE_UNAVAILABLE' && imageUrls.length === 0) {
-            Alert.alert(
-              'Upload chua san sang',
-              'Can service_role key (eyJ...) trong .env BE. Chay: npm run storage:verify'
-            );
-          }
-        }
+        throw err;
       }
 
       if (isEditing && editingReview) {
@@ -170,22 +179,22 @@ export default function WriteReviewScreen({ navigation, route }: any) {
         <View style={styles.section}>
           <View style={styles.photoHeader}>
             <Text style={styles.sectionTitle}>Add photos</Text>
-            <Text style={styles.photoCount}>{pendingImages.length}/5</Text>
+            <Text style={styles.photoCount}>{pendingImages.length}/10</Text>
           </View>
 
           <View style={styles.photoGrid}>
             <TouchableOpacity
-              style={[styles.addPhotoButton, pendingImages.length >= 5 && styles.disabledPhotoButton]}
+              style={[styles.addPhotoButton, pendingImages.length >= 10 && styles.disabledPhotoButton]}
               onPress={handlePickImage}
-              disabled={pendingImages.length >= 5}
+              disabled={pendingImages.length >= 10}
             >
               <Ionicons name="camera-outline" size={26} color={colors.primary} />
               <Text style={styles.addPhotoText}>Upload</Text>
             </TouchableOpacity>
 
-            {pendingImages.map((uri, idx) => (
-              <View key={`${uri}-${idx}`} style={styles.photoItem}>
-                <Image source={{ uri }} style={styles.photoImage} />
+            {pendingImages.map((item, idx) => (
+              <View key={`${item.uri}-${idx}`} style={styles.photoItem}>
+                <Image source={{ uri: item.uri }} style={styles.photoImage} />
                 <TouchableOpacity
                   style={styles.removePhotoButton}
                   onPress={() => setPendingImages((prev) => prev.filter((_, i) => i !== idx))}

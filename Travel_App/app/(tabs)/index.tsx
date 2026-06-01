@@ -5,7 +5,12 @@ import EditProfileScreen from './screens/EditProfileScreen';
 import EditTripDiaryScreen from './screens/EditTripDiaryScreen';
 import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
+import ForgotPasswordScreen_email from './screens/ForgotPasswordScreen_email';
+import ForgotPasswordScreen_OTP from './screens/ForgotPasswordScreen_OTP';
+import ForgotPasswordScreen_resetPw from './screens/ForgotPasswordScreen_resetPw';
 import LogoutScreen from './screens/LogoutScreen';
+import TermsOfServiceScreen from './screens/TermsOfServiceScreen';
+import PrivacyPolicyScreen from './screens/PrivacyPolicyScreen';
 import MyTripScreen from './screens/MyTripScreen';
 import NotificationScreenUser from './screens/NotificationScreen_user';
 import OwnerManagementScreen from './screens/OwnerManagementScreen';
@@ -27,6 +32,7 @@ import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from './common/colors';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { forgotPassword } from '@/lib/api/auth';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -49,6 +55,7 @@ const MainTabs = () => {
       <Tab.Screen
         name="Saved Places"
         component={SavedPlacesScreen}
+
         options={{
           headerShown: false,
           tabBarIcon: ({ color, size }) => (
@@ -162,6 +169,10 @@ const RootNavigation = () => {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
+        <Stack.Screen name="Terms of Service" component={TermsOfServiceScreen} />
+        <Stack.Screen name="ForgotPassword_email" component={ForgotPasswordScreen_email} />
+        <Stack.Screen name="ForgotPassword_OTP" component={ForgotPasswordScreen_OTP} />
+        <Stack.Screen name="ForgotPassword_resetPw" component={ForgotPasswordScreen_resetPw} />
       </Stack.Navigator>
     );
   }
@@ -182,6 +193,16 @@ const RootNavigation = () => {
       <Stack.Screen
         name="Log Out"
         component={LogoutScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Privacy Policy"
+        component={PrivacyPolicyScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Terms of Service"
+        component={TermsOfServiceScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen
@@ -215,18 +236,18 @@ const RootNavigation = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
-          name="EditingTrip"
-          component={EditingTripScreen}
-          options={{ headerShown: false }} />
-        <Stack.Screen
-          name="AddLocation_user"
-          component={AddLocationScreen_user}
-          options={{ headerShown: false }} />
-        <Stack.Screen
-          name="AddCollaborators"
-          component={AddCollaboratorsScreen}
-          options={{ headerShown: false }} />
-        <Stack.Screen
+        name="EditingTrip"
+        component={EditingTripScreen}
+        options={{ headerShown: false }} />
+      <Stack.Screen
+        name="AddLocation_user"
+        component={AddLocationScreen_user}
+        options={{ headerShown: false }} />
+      <Stack.Screen
+        name="AddCollaborators"
+        component={AddCollaboratorsScreen}
+        options={{ headerShown: false }} />
+      <Stack.Screen
         name="Trip Diary"
         component={TripDiaryScreen}
         options={{ headerShown: false }}
@@ -239,6 +260,16 @@ const RootNavigation = () => {
       <Stack.Screen
         name="Log Out"
         component={LogoutScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Privacy Policy"
+        component={PrivacyPolicyScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Terms of Service"
+        component={TermsOfServiceScreen}
         options={{ headerShown: false }}
       />
       <Stack.Screen

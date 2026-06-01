@@ -368,8 +368,16 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
 
+  tripCardPressed: {
+    transform: [{ scale: 0.99 }],
+  },
+
   tripCardMuted: {
     opacity: 0.72,
+  },
+
+  tripCardDeleting: {
+    opacity: 0.66,
   },
 
   tripImage: {
@@ -439,6 +447,19 @@ const styles = StyleSheet.create({
 
   tripActions: {
     rowGap: 8,
+  },
+
+  deleteTripButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: colors.dangerSoft,
+  },
+
+  deleteTripButtonDisabled: {
+    opacity: 0.72,
   },
 
   holdBadge: {

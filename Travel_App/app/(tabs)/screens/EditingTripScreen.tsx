@@ -1,10 +1,14 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import React, { useCallback, useEffect, useState } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {
+  ActivityIndicator,
   Image,
   ImageBackground,
   Alert,
+  Modal,
+  Platform,
   SafeAreaView,
   ScrollView,
   Text,
@@ -12,10 +16,13 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { ItineraryDay, normalizeTripDays, TripData, upsertTripDraft } from '../store/tripDraftStore';
+import { getApiErrorMessage } from '../../../lib/api/client';
+import { mapApiTripToDraft, upsertTripToBackend } from '../../../lib/api/trips';
+import { getTripDraft, ItineraryDay, normalizeTripDays, TripData, upsertTripDraft } from '../store/tripDraftStore';
 import styles from './EditingTripScreen.style';
 
 type DateInputType = 'start' | 'end';
+const WebDateInput = 'input' as any;
 
 const defaultTrip: TripData = {
   title: 'New Trip',
@@ -32,6 +39,34 @@ function formatDate(date: Date) {
     day: 'numeric',
     year: 'numeric',
   });
+}
+
+function toStartOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function getTodayDate() {
+  return toStartOfDay(new Date());
+}
+
+function toWebDateValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function fromWebDateValue(value: string) {
+  if (!value) {
+    return null;
+  }
+
+  const [year, month, day] = value.split('-').map(Number);
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return new Date(year, month - 1, day);
 }
 
 function parseDate(value?: string) {
@@ -118,11 +153,24 @@ export default function EditingTripScreen({ navigation, route }: any) {
   const [startDate, setStartDate] = useState<Date | null>(parseDate(incomingTrip.startDate));
   const [endDate, setEndDate] = useState<Date | null>(parseDate(incomingTrip.endDate));
   const [activeDateInput, setActiveDateInput] = useState<DateInputType | null>(null);
+  const [webPickerDate, setWebPickerDate] = useState<Date>(parseDate(incomingTrip.startDate) ?? new Date());
   const [trip, setTrip] = useState<TripData>(incomingTrip);
+  const [isSavingTrip, setIsSavingTrip] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const itineraryData = trip.itineraryData?.length
     ? trip.itineraryData
     : buildEmptyDays(trip.duration, startDate);
   const totalEstimatedBudget = getTripTotalBudget(itineraryData);
+
+  const syncTripState = useCallback((nextTrip: TripData | undefined) => {
+    if (!nextTrip) {
+      return;
+    }
+
+    setTrip(nextTrip);
+    setStartDate(parseDate(nextTrip.startDate));
+    setEndDate(parseDate(nextTrip.endDate));
+  }, []);
 
   const updateText = (field: 'title' | 'hotel', value: string) => {
     setTrip((current) => ({
@@ -133,47 +181,114 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
   useEffect(() => {
     if (route?.params?.tripData) {
-      setTrip(route.params.tripData);
+      syncTripState(route.params.tripData);
     }
-  }, [route?.params?.tripData]);
+  }, [route?.params?.tripData, syncTripState]);
+
+  useFocusEffect(
+    useCallback(() => {
+      const activeTripId = (route?.params?.tripData as TripData | undefined)?.id ?? trip.id;
+
+      if (!activeTripId) {
+        return undefined;
+      }
+
+      const draft = getTripDraft(activeTripId);
+      if (draft) {
+        syncTripState(draft);
+      }
+
+      return undefined;
+    }, [route?.params?.tripData, trip.id, syncTripState])
+  );
+
+  useEffect(() => {
+    if (!activeDateInput) {
+      return;
+    }
+
+    setWebPickerDate(
+      activeDateInput === 'end'
+        ? endDate || startDate || new Date()
+        : startDate || new Date()
+    );
+  }, [activeDateInput, endDate, startDate]);
+
+  const getMinimumSelectableDate = useCallback((inputType: DateInputType | null) => {
+    const today = getTodayDate();
+
+    if (inputType === 'start') {
+      return today;
+    }
+
+    if (inputType === 'end') {
+      if (!startDate) {
+        return today;
+      }
+
+      const normalizedStartDate = toStartOfDay(startDate);
+      return normalizedStartDate > today ? normalizedStartDate : today;
+    }
+
+    return today;
+  }, [startDate]);
+
+  const openDatePicker = (type: DateInputType) => {
+    setWebPickerDate(
+      type === 'end'
+        ? endDate || startDate || new Date()
+        : startDate || new Date()
+    );
+    setActiveDateInput(type);
+  };
 
   const closeDatePicker = () => {
     setActiveDateInput(null);
   };
 
   const handleConfirmDate = (date: Date) => {
+    const normalizedDate = toStartOfDay(date);
+    const today = getTodayDate();
+
     if (activeDateInput === 'start') {
-      if (endDate && date > endDate) {
+      if (normalizedDate < today) {
+        Alert.alert('Invalid date', 'Start date cannot be before today.');
+        closeDatePicker();
+        return;
+      }
+
+      if (endDate && normalizedDate > toStartOfDay(endDate)) {
         Alert.alert('Invalid date', 'Start date cannot be after end date.');
         closeDatePicker();
         return;
       }
 
-      setStartDate(date);
-      const nextDuration = getTripDayCount(date, endDate);
+      setStartDate(normalizedDate);
+      const nextDuration = getTripDayCount(normalizedDate, endDate);
       setTrip((current) => ({
         ...current,
-        startDate: date.toISOString(),
+        startDate: normalizedDate.toISOString(),
         duration: nextDuration,
-        date: endDate ? `${formatDate(date)} - ${formatDate(endDate)}` : formatDate(date),
-        itineraryData: updateDayDates(current.itineraryData, nextDuration, date),
+        date: endDate ? `${formatDate(normalizedDate)} - ${formatDate(endDate)}` : formatDate(normalizedDate),
+        itineraryData: updateDayDates(current.itineraryData, nextDuration, normalizedDate),
       }));
     }
 
     if (activeDateInput === 'end') {
-      if (startDate && date < startDate) {
+      const minimumEndDate = getMinimumSelectableDate('end');
+      if (normalizedDate < minimumEndDate) {
         Alert.alert('Invalid date', 'End date cannot be before start date.');
         closeDatePicker();
         return;
       }
 
-      setEndDate(date);
-      const nextDuration = getTripDayCount(startDate, date);
+      setEndDate(normalizedDate);
+      const nextDuration = getTripDayCount(startDate, normalizedDate);
       setTrip((current) => ({
         ...current,
-        endDate: date.toISOString(),
+        endDate: normalizedDate.toISOString(),
         duration: nextDuration,
-        date: startDate ? `${formatDate(startDate)} - ${formatDate(date)}` : formatDate(date),
+        date: startDate ? `${formatDate(startDate)} - ${formatDate(normalizedDate)}` : formatDate(normalizedDate),
         itineraryData: updateDayDates(current.itineraryData, nextDuration, startDate),
       }));
     }
@@ -184,7 +299,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
   const deleteLocation = (dayId: string, locationId: string) => {
     setTrip((current) => ({
       ...current,
-      itineraryData: itineraryData.map((day) =>
+      itineraryData: (current.itineraryData || []).map((day) =>
         day.dayId === dayId
           ? {
               ...day,
@@ -195,19 +310,45 @@ export default function EditingTripScreen({ navigation, route }: any) {
     }));
   };
 
-  const saveTrip = () => {
+  const saveTrip = async () => {
+    if (isSavingTrip) {
+      return;
+    }
+
     const updatedTrip = normalizeTripDays({
       ...trip,
       budget: totalEstimatedBudget,
       itineraryData,
     });
 
-    upsertTripDraft(updatedTrip);
-    navigation.navigate({
-      name: 'PlanningTrip',
-      params: { updatedTrip },
-      merge: true,
-    });
+    setIsSavingTrip(true);
+    setSaveError(null);
+    try {
+      const savedTrip = await upsertTripToBackend(
+        updatedTrip as Record<string, unknown>,
+        updatedTrip.id
+      );
+      const persistedTrip = normalizeTripDays({
+        ...updatedTrip,
+        ...mapApiTripToDraft(savedTrip),
+      } as TripData);
+
+      if (persistedTrip.id) {
+        upsertTripDraft(persistedTrip);
+      }
+      navigation.navigate({
+        name: 'PlanningTrip',
+        params: { updatedTrip: persistedTrip },
+        merge: true,
+      });
+    } catch (error) {
+      const message = getApiErrorMessage(error);
+      setSaveError(message);
+      console.error('Save trip failed', error);
+      Alert.alert('Unable to save trip', message);
+    } finally {
+      setIsSavingTrip(false);
+    }
   };
 
   return (
@@ -221,8 +362,17 @@ export default function EditingTripScreen({ navigation, route }: any) {
             <Feather name="chevron-left" size={24} color="#333" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Editing Itinerary</Text>
-          <TouchableOpacity onPress={saveTrip}>
-            <Text style={styles.addText}>Save</Text>
+          <TouchableOpacity
+            onPress={saveTrip}
+            disabled={isSavingTrip}
+            style={[styles.saveButton, isSavingTrip && styles.saveButtonDisabled]}
+          >
+            {isSavingTrip ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : null}
+            <Text style={styles.saveButtonText}>
+              {isSavingTrip ? 'Saving...' : 'Save'}
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -242,6 +392,11 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
         <View style={styles.section}>
           <Text style={styles.label}>Itinerary Name</Text>
+          {saveError ? (
+            <View style={{ marginBottom: 10, padding: 10, borderRadius: 8, backgroundColor: '#FEE2E2' }}>
+              <Text style={{ color: '#991B1B', fontWeight: '600' }}>{saveError}</Text>
+            </View>
+          ) : null}
           <View style={styles.inputBox}>
             <TextInput
               value={trip.title}
@@ -254,7 +409,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
           <View style={styles.datePickerRow}>
             <TouchableOpacity
               style={styles.datePickerButton}
-              onPress={() => setActiveDateInput('start')}
+              onPress={() => openDatePicker('start')}
             >
               <Feather name="calendar" size={18} color="#1E88E5" style={styles.inputIcon} />
               <View>
@@ -267,7 +422,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
             <TouchableOpacity
               style={styles.datePickerButton}
-              onPress={() => setActiveDateInput('end')}
+              onPress={() => openDatePicker('end')}
             >
               <Feather name="calendar" size={18} color="#1E88E5" style={styles.inputIcon} />
               <View>
@@ -338,6 +493,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
                 style={styles.addLocationBtn}
                 onPress={() =>
                   navigation.navigate('AddLocation_user', {
+                    tripData: trip,
                     tripId: trip.id,
                     tripTitle: trip.title,
                     dayId: day.dayId,
@@ -345,6 +501,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
                     dayDate: day.date,
                   })
                 }
+                disabled={isSavingTrip}
               >
                 <View style={styles.addLocationIconWrap}>
                   <Feather name="map-pin" size={15} color="#1E88E5" />
@@ -413,6 +570,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
                 tripData: trip,
               })
             }
+            disabled={isSavingTrip}
           >
             <View style={styles.addMemberIconBtn}>
               <Feather name="user-plus" size={16} color="#1E88E5" />
@@ -427,18 +585,106 @@ export default function EditingTripScreen({ navigation, route }: any) {
         <View style={{ height: 40 }} />
       </ScrollView>
 
-      <DateTimePickerModal
-        isVisible={Boolean(activeDateInput)}
-        mode="date"
-        date={
-          activeDateInput === 'end'
-            ? endDate || startDate || new Date()
-            : startDate || new Date()
-        }
-        minimumDate={activeDateInput === 'end' && startDate ? startDate : undefined}
-        onConfirm={handleConfirmDate}
-        onCancel={closeDatePicker}
-      />
+      {Platform.OS === 'web' ? (
+        <Modal
+          transparent
+          animationType="fade"
+          visible={Boolean(activeDateInput)}
+          onRequestClose={closeDatePicker}
+        >
+          <View
+            style={{
+              flex: 1,
+              backgroundColor: 'rgba(15, 23, 42, 0.45)',
+              justifyContent: 'center',
+              alignItems: 'center',
+              padding: 16,
+            }}
+          >
+            <View
+              style={{
+                width: '100%',
+                maxWidth: 420,
+                backgroundColor: '#FFF',
+                borderRadius: 20,
+                padding: 16,
+                shadowColor: '#000',
+                shadowOpacity: 0.18,
+                shadowRadius: 18,
+                shadowOffset: { width: 0, height: 10 },
+                elevation: 8,
+              }}
+            >
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#1E88E5', marginBottom: 12 }}>
+                {activeDateInput === 'start' ? 'Choose start date' : 'Choose end date'}
+              </Text>
+
+              <View
+                style={{
+                  backgroundColor: '#F4F7FB',
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: '#D8E2F0',
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                }}
+              >
+                <WebDateInput
+                  type="date"
+                  value={toWebDateValue(webPickerDate)}
+                  min={toWebDateValue(getMinimumSelectableDate(activeDateInput))}
+                  onChange={(event: any) => {
+                    const nextDate = fromWebDateValue(event?.target?.value || '');
+                    if (nextDate) {
+                      setWebPickerDate(nextDate);
+                    }
+                  }}
+                  style={{
+                    width: '100%',
+                    fontSize: 16,
+                    border: 'none',
+                    outline: 'none',
+                    backgroundColor: 'transparent',
+                    color: '#1f2937',
+                    minHeight: 34,
+                  }}
+                />
+              </View>
+
+              <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 }}>
+                <TouchableOpacity onPress={closeDatePicker} style={{ paddingVertical: 10, paddingHorizontal: 14 }}>
+                  <Text style={{ color: '#666', fontWeight: '600' }}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={() => handleConfirmDate(webPickerDate)}
+                  style={{
+                    marginLeft: 12,
+                    paddingVertical: 10,
+                    paddingHorizontal: 16,
+                    borderRadius: 10,
+                    backgroundColor: '#1E88E5',
+                  }}
+                >
+                  <Text style={{ color: '#FFF', fontWeight: '700' }}>Apply</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+      ) : (
+        <DateTimePickerModal
+          isVisible={Boolean(activeDateInput)}
+          mode="date"
+          date={
+            activeDateInput === 'end'
+              ? endDate || startDate || new Date()
+              : startDate || new Date()
+          }
+          minimumDate={getMinimumSelectableDate(activeDateInput)}
+          onConfirm={handleConfirmDate}
+          onCancel={closeDatePicker}
+        />
+      )}
     </SafeAreaView>
   );
 }

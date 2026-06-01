@@ -1,6 +1,7 @@
 import { Feather } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import {
+    Alert,
     Image,
     SafeAreaView,
     ScrollView,
@@ -9,8 +10,10 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import { Collaborator, TripData, upsertTripDraft } from '../store/tripDraftStore';
-import styles from './AddCollaboratorsScreen.style';
+import { getApiErrorMessage } from '../../../lib/api/client';
+import { mapApiTripToDraft, upsertTripToBackend } from '../../../lib/api/trips';
+import { Collaborator, normalizeTripDays, TripData, upsertTripDraft } from '../store/tripDraftStore';
+import screenStyles from './AddCollaboratorsScreen.style';
 
 // --- MOCK DATA TỔNG HỢP ---
 const allUsers = [
@@ -25,6 +28,7 @@ const allUsers = [
 export default function AddCollaboratorsScreen({ navigation, route }: any) {
     const trip = route?.params?.tripData as TripData | undefined;
     const [searchQuery, setSearchQuery] = useState('');
+    const [isSaving, setIsSaving] = useState(false);
 
     // State lưu trữ danh sách ID các user đã được bấm Add/Invite
     const [pendingUsers, setPendingUsers] = useState<Record<string, boolean>>(
@@ -43,30 +47,59 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
         }));
     };
 
-    const saveCollaborators = () => {
+    const saveCollaborators = async () => {
+        if (isSaving) {
+            return;
+        }
+
         if (!trip) {
             navigation.goBack();
             return;
         }
 
-        const members: Collaborator[] = allUsers
+        const selectedMockUsers: Collaborator[] = allUsers
             .filter((user) => pendingUsers[user.id])
             .map((user) => ({
                 id: user.id,
                 name: user.name,
                 avatar: user.avatar,
             }));
+        const selectedMockUserIds = new Set(selectedMockUsers.map((member) => member.id));
+        const existingSelectedMembers = (trip.members || []).filter(
+            (member) => pendingUsers[member.id] && !selectedMockUserIds.has(member.id)
+        );
+        const members: Collaborator[] = [...existingSelectedMembers, ...selectedMockUsers];
         const updatedTrip = {
             ...trip,
             members,
         };
 
-        upsertTripDraft(updatedTrip);
-        navigation.navigate({
-            name: 'EditingTrip',
-            params: { tripData: updatedTrip },
-            merge: true,
-        });
+        setIsSaving(true);
+        try {
+            const savedTrip = await upsertTripToBackend(
+                updatedTrip as Record<string, unknown>,
+                updatedTrip.id
+            );
+
+            const persistedTrip = normalizeTripDays({
+                ...updatedTrip,
+                ...mapApiTripToDraft(savedTrip),
+            } as TripData);
+
+            if (persistedTrip.id) {
+                upsertTripDraft(persistedTrip);
+            }
+
+            navigation.navigate({
+                name: 'EditingTrip',
+                params: { tripData: persistedTrip },
+                merge: true,
+            });
+        } catch (error) {
+            Alert.alert('Loi luu collaborators', getApiErrorMessage(error));
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     // Lọc dữ liệu dựa trên trạng thái
@@ -86,16 +119,16 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
         return (
             <TouchableOpacity
                 style={[
-                    styles.actionBtn,
-                    user.type === 'add' && !isPending ? styles.actionBtnOutline : null,
-                    isPending ? styles.cancelBtn : null
+                    screenStyles.actionBtn,
+                    user.type === 'add' && !isPending ? screenStyles.actionBtnOutline : null,
+                    isPending ? screenStyles.cancelBtn : null
                 ]}
                 onPress={() => toggleUserAction(user.id)}
             >
                 <Text style={[
-                    styles.actionBtnText,
-                    user.type === 'add' && !isPending ? styles.actionBtnTextOutline : null,
-                    isPending ? styles.cancelBtnText : null
+                    screenStyles.actionBtnText,
+                    user.type === 'add' && !isPending ? screenStyles.actionBtnTextOutline : null,
+                    isPending ? screenStyles.cancelBtnText : null
                 ]}>
                     {isPending ? 'Cancel' : 'Add'}
                 </Text>
@@ -104,25 +137,27 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
     };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.scrollContent}>
+        <SafeAreaView style={screenStyles.container}>
+            <View style={screenStyles.scrollContent}>
 
                 {/* HEADER */}
-                <View style={styles.header}>
+                <View style={screenStyles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()}>
                         <Feather name="arrow-left" size={24} color="#003A70" />
                     </TouchableOpacity>
-                    <Text style={styles.headerTitle}>Add Collaborators</Text>
-                    <TouchableOpacity onPress={saveCollaborators}>
-                        <Text style={styles.saveText}>Save</Text>
+                    <Text style={screenStyles.headerTitle}>Add Collaborators</Text>
+                    <TouchableOpacity onPress={saveCollaborators} disabled={isSaving}>
+                        <Text style={[screenStyles.saveText, isSaving && { opacity: 0.6 }]}> 
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* SEARCH BAR */}
-                <View style={styles.searchContainer}>
+                <View style={screenStyles.searchContainer}>
                     <Feather name="search" size={20} color="#8E9EAB" />
                     <TextInput
-                        style={[styles.searchInput, { outline: 'none' } as any]}
+                        style={[screenStyles.searchInput, { outline: 'none' } as any]}
                         placeholder="Search by name or email..."
                         placeholderTextColor="#8E9EAB"
                         value={searchQuery}
@@ -141,58 +176,58 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
                     {/* NẾU ĐANG CÓ TỪ KHÓA TÌM KIẾM -> HIỂN THỊ KẾT QUẢ TÌM KIẾM */}
                     {searchQuery.length > 0 ? (
                         <View>
-                            <Text style={styles.sectionTitle}>Search Results</Text>
+                            <Text style={screenStyles.sectionTitle}>Search Results</Text>
                             <View style={{ marginTop: 16 }}>
                                 {searchResults.length > 0 ? searchResults.map(user => (
-                                    <View key={user.id} style={styles.card}>
-                                        <Image source={{ uri: user.avatar }} style={styles.avatarLarge} />
-                                        <View style={styles.cardTextContainer}>
-                                            <Text style={styles.userName}>{user.name}</Text>
-                                            <Text style={styles.userEmail}>{user.email}</Text>
+                                    <View key={user.id} style={screenStyles.card}>
+                                        <Image source={{ uri: user.avatar }} style={screenStyles.avatarLarge} />
+                                        <View style={screenStyles.cardTextContainer}>
+                                            <Text style={screenStyles.userName}>{user.name}</Text>
+                                            <Text style={screenStyles.userEmail}>{user.email}</Text>
                                         </View>
                                         {renderActionButton(user)}
                                     </View>
                                 )) : (
-                                    <Text style={styles.noResultText}>No users found.</Text>
+                                    <Text style={screenStyles.noResultText}>No users found.</Text>
                                 )}
                             </View>
                         </View>
                     ) : (
                         <View>
                             {/* SUGGESTED SECTION */}
-                            <View style={styles.sectionHeader}>
-                                <Text style={styles.sectionTitle}>Suggested</Text>
+                            <View style={screenStyles.sectionHeader}>
+                                <Text style={screenStyles.sectionTitle}>Suggested</Text>
                             </View>
                             {suggestedUsers.map((user) => (
-                                <View key={user.id} style={styles.card}>
-                                    <Image source={{ uri: user.avatar }} style={styles.avatarLarge} />
-                                    <View style={styles.cardTextContainer}>
-                                        <Text style={styles.userName}>{user.name}</Text>
-                                        <Text style={styles.userEmail}>{user.email}</Text>
+                                <View key={user.id} style={screenStyles.card}>
+                                    <Image source={{ uri: user.avatar }} style={screenStyles.avatarLarge} />
+                                    <View style={screenStyles.cardTextContainer}>
+                                        <Text style={screenStyles.userName}>{user.name}</Text>
+                                        <Text style={screenStyles.userEmail}>{user.email}</Text>
                                     </View>
                                     {renderActionButton(user)}
                                 </View>
                             ))}
 
                             {/* RECENT COLLABORATORS */}
-                            <View style={[styles.sectionHeader, { marginTop: 24 }]}>
-                                <Text style={styles.sectionTitle}>Recent Collaborators</Text>
+                            <View style={[screenStyles.sectionHeader, { marginTop: 24 }]}>
+                                <Text style={screenStyles.sectionTitle}>Recent Collaborators</Text>
                             </View>
 
-                            <View style={styles.recentRow}>
+                            <View style={screenStyles.recentRow}>
                                 {recentCollaborators.map((user) => {
                                     const isPending = pendingUsers[user.id];
                                     return (
-                                        <View key={user.id} style={styles.recentItem}>
+                                        <View key={user.id} style={screenStyles.recentItem}>
                                             <View>
-                                                <Image source={{ uri: user.avatar }} style={styles.avatarMedium} />
-                                                {user.online && <View style={styles.onlineIndicator} />}
+                                                <Image source={{ uri: user.avatar }} style={screenStyles.avatarMedium} />
+                                                {user.online && <View style={screenStyles.onlineIndicator} />}
                                             </View>
-                                            <Text style={styles.recentName}>{user.name}</Text>
+                                            <Text style={screenStyles.recentName}>{user.name}</Text>
 
                                             {/* DẤU ADD DƯỚI RECENT COLLABORATORS */}
                                             <TouchableOpacity
-                                                style={[styles.recentAddIconBtn, isPending && styles.recentCancelIconBtn]}
+                                                style={[screenStyles.recentAddIconBtn, isPending && screenStyles.recentCancelIconBtn]}
                                                 onPress={() => toggleUserAction(user.id)}
                                             >
                                                 <Feather name={isPending ? "x" : "plus"} size={14} color={isPending ? "#707B81" : "#FFFFFF"} />

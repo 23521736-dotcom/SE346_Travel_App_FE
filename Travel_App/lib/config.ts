@@ -1,9 +1,17 @@
-const apiBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL;
+import Constants from 'expo-constants';
+import { Platform } from 'react-native';
 
-if (!apiBaseUrl) {
-  throw new Error('Missing EXPO_PUBLIC_API_BASE_URL');
+function defaultApiBaseUrl(): string {
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:8000';
+  }
+  return 'http://10.208.131.222:8000';
 }
 
-export const API_BASE_URL = apiBaseUrl.replace(/\/$/, '');
+export const API_BASE_URL =
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  (Constants.expoConfig?.extra?.apiBaseUrl as string | undefined) ||
+  process.env.EXPO_PUBLIC_API_BASE_URL ||
+  defaultApiBaseUrl();
 
 export const API_V1 = `${API_BASE_URL}/api/v1`;

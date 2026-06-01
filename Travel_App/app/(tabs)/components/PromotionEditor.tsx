@@ -1,4 +1,4 @@
-import { formatDate, getTimeValue } from '@/app/service/PromotionShedule';
+import { formatDate, getTimeValue } from '@/lib/service/PromotionShedule';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -310,6 +310,7 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
         mode="date"
+        minimumDate={new Date(new Date().setHours(0, 0, 0, 0))}
         onConfirm={handleConfirm}
         onCancel={() => setDatePickerVisibility(false)}
       />

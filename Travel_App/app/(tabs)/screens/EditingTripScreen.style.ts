@@ -220,6 +220,25 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         fontSize: 14,
     },
+    saveButton: {
+        minWidth: 82,
+        minHeight: 36,
+        borderRadius: 18,
+        paddingHorizontal: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        columnGap: 7,
+        backgroundColor: '#1E88E5',
+    },
+    saveButtonDisabled: {
+        opacity: 0.72,
+    },
+    saveButtonText: {
+        color: '#FFFFFF',
+        fontWeight: '800',
+        fontSize: 14,
+    },
     tagsContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
