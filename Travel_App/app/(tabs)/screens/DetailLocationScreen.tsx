@@ -4,15 +4,62 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { RatingStartBar } from '../components/Rating';
 import { PicturesContainer } from '../components/ReviewPicture';
-import { fetchPlaceDetail } from '../../../lib/api/places';
+import { fetchPlaceDetail, fetchPlacePromotions } from '../../../lib/api/places';
 import { addFavorite, removeFavorite } from '../../../lib/api/favorites';
 import type { PlaceDetail } from '../../../lib/api/types';
+import type { PromotionItem } from '../../../lib/types/promotion';
+import { getScheduleString } from '../../../lib/service/PromotionShedule';
 import { colors } from '../common/colors';
+
+const dayLabelMap: Record<string, string> = {
+    M: 'Mon',
+    T: 'Tue',
+    W: 'Wed',
+    Th: 'Thu',
+    F: 'Fri',
+    Sa: 'Sat',
+    S: 'Sun',
+};
+
+function getPromotionSchedule(promotion: PromotionItem) {
+    const schedule = promotion.schedule as Partial<PromotionItem['schedule']> | undefined;
+    if (!schedule || !Array.isArray(schedule.days)) {
+        return {
+            range: 'Schedule is not available yet.',
+            days: 'Schedule is not available yet.',
+            time: 'Schedule is not available yet.',
+            summary: 'Promotion schedule is not available yet.',
+        };
+    }
+
+    const fullSchedule = {
+        startDate: schedule.startDate || '',
+        endDate: schedule.endDate || '',
+        days: schedule.days,
+        startTime: schedule.startTime || '',
+        endTime: schedule.endTime || '',
+        specificTime: Boolean(schedule.specificTime),
+    };
+
+    return {
+        range: fullSchedule.startDate && fullSchedule.endDate
+            ? `${fullSchedule.startDate} - ${fullSchedule.endDate}`
+            : 'No date range',
+        days: fullSchedule.days.length > 0
+            ? fullSchedule.days.map((day) => dayLabelMap[day] || day).join(', ')
+            : 'Every day',
+        time: fullSchedule.specificTime
+            ? `${fullSchedule.startTime || 'Start time'} - ${fullSchedule.endTime || 'End time'}`
+            : 'All day',
+        summary: getScheduleString(fullSchedule),
+    };
+}
 
 export default function DetailLocationScreen({ navigation, route }: any) {
     const placeId = route.params?.placeId as string | undefined;
     const fallbackPlace = route.params?.placeData as PlaceDetail | undefined;
     const [place, setPlace] = useState<PlaceDetail | null>(fallbackPlace || null);
+    const [promotions, setPromotions] = useState<PromotionItem[]>([]);
     const [loading, setLoading] = useState(Boolean(placeId));
     const [isLiked, setIsLiked] = useState(Boolean(fallbackPlace?.isFavorite));
 
@@ -24,11 +71,16 @@ export default function DetailLocationScreen({ navigation, route }: any) {
 
         setLoading(true);
         try {
-            const data = await fetchPlaceDetail(placeId);
+            const [data, promotionData] = await Promise.all([
+                fetchPlaceDetail(placeId),
+                fetchPlacePromotions(placeId).catch(() => []),
+            ]);
             setPlace(data);
+            setPromotions(promotionData);
             setIsLiked(Boolean(data.isFavorite));
         } catch {
             setPlace(fallbackPlace || null);
+            setPromotions([]);
             setIsLiked(Boolean(fallbackPlace?.isFavorite));
         } finally {
             setLoading(false);
@@ -211,6 +263,59 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                 </View>
                             </View>
                         </ScrollView>
+
+                        {promotions.length > 0 && (
+                            <View style={styles.promotionsSection}>
+                                <Text style={styles.sectionTitle}>
+                                    Promotions
+                                </Text>
+                                {promotions.map((promotion) => (
+                                    <View key={promotion.id} style={styles.promotionCard}>
+                                        {(() => {
+                                            const schedule = getPromotionSchedule(promotion);
+
+                                            return (
+                                                <>
+                                                    <View style={styles.promotionHeader}>
+                                                        <View style={styles.promotionIcon}>
+                                                            <Ionicons name="pricetag" size={18} color="#00B4D8" />
+                                                        </View>
+                                                        <View style={styles.promotionContent}>
+                                                            <Text style={styles.promotionTitle}>
+                                                                {promotion.title}
+                                                            </Text>
+                                                            <View style={styles.promotionBadge}>
+                                                                <Text style={styles.promotionBadgeText}>
+                                                                    {promotion.isActive ? 'Active' : 'Inactive'}
+                                                                </Text>
+                                                            </View>
+                                                        </View>
+                                                    </View>
+
+                                                    <View style={styles.promotionInfoList}>
+                                                        <View style={styles.promotionInfoRow}>
+                                                            <Ionicons name="calendar-outline" size={16} color={colors.textMuted} />
+                                                            <Text style={styles.promotionInfoText}>{schedule.range}</Text>
+                                                        </View>
+                                                        <View style={styles.promotionInfoRow}>
+                                                            <Ionicons name="repeat-outline" size={16} color={colors.textMuted} />
+                                                            <Text style={styles.promotionInfoText}>{schedule.days}</Text>
+                                                        </View>
+                                                        <View style={styles.promotionInfoRow}>
+                                                            <Ionicons name="time-outline" size={16} color={colors.textMuted} />
+                                                            <Text style={styles.promotionInfoText}>{schedule.time}</Text>
+                                                        </View>
+                                                        <Text style={styles.promotionSchedule}>
+                                                            {schedule.summary}
+                                                        </Text>
+                                                    </View>
+                                                </>
+                                            );
+                                        })()}
+                                    </View>
+                                ))}
+                            </View>
+                        )}
 
                         <Text style={{ fontSize: 25, fontWeight: '700', marginTop: 10 }}>
                             About
