@@ -54,23 +54,41 @@ async function appendImageFile(
   } as unknown as Blob);
 }
 
+async function parseUploadResponse(res: Response, endpoint: string) {
+  const text = await res.text();
+  let json: any = null;
+
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    if (!res.ok || text.trim().startsWith('<')) {
+      throw new Error(`UPLOAD_ENDPOINT_NOT_FOUND: ${endpoint}`);
+    }
+
+    throw new Error('UPLOAD_INVALID_RESPONSE');
+  }
+
+  if (!res.ok || !json?.ok) {
+    throw new Error(json?.error || `UPLOAD_FAILED: ${endpoint}`);
+  }
+
+  return json.data.publicUrl as string;
+}
+
 export async function uploadPlaceCover(uri: string): Promise<string> {
   const token = await getAccessToken();
   const form = new FormData();
   await appendImageFile(form, 'file', { uri }, 'cover.jpg');
 
-  const res = await fetch(`${API_V1}/uploads/place-cover`, {
+  const endpoint = '/uploads/place-cover';
+  const res = await fetch(`${API_V1}${endpoint}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
     },
     body: form,
   });
-  const json = await res.json();
-  if (!res.ok || !json.ok) {
-    throw new Error(json.error || 'UPLOAD_FAILED');
-  }
-  return json.data.publicUrl as string;
+  return parseUploadResponse(res, endpoint);
 }
 
 export async function uploadReviewImage(uri: string): Promise<string> {
@@ -78,18 +96,15 @@ export async function uploadReviewImage(uri: string): Promise<string> {
   const form = new FormData();
   await appendImageFile(form, 'file', { uri }, 'review.jpg');
 
-  const res = await fetch(`${API_V1}/uploads/review-image`, {
+  const endpoint = '/uploads/review-image';
+  const res = await fetch(`${API_V1}${endpoint}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
     },
     body: form,
   });
-  const json = await res.json();
-  if (!res.ok || !json.ok) {
-    throw new Error(json.error || 'UPLOAD_FAILED');
-  }
-  return json.data.publicUrl as string;
+  return parseUploadResponse(res, endpoint);
 }
 
 export async function uploadReviewImages(images: UploadImageInput[]): Promise<string[]> {
@@ -121,18 +136,15 @@ export async function uploadDiaryImage(input: string | UploadImageInput): Promis
     'diary.jpg'
   );
 
-  const res = await fetch(`${API_V1}/uploads/diary-image`, {
+  const endpoint = '/uploads/diary-image';
+  const res = await fetch(`${API_V1}${endpoint}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
     },
     body: form,
   });
-  const json = await res.json();
-  if (!res.ok || !json.ok) {
-    throw new Error(json.error || 'UPLOAD_FAILED');
-  }
-  return json.data.publicUrl as string;
+  return parseUploadResponse(res, endpoint);
 }
 
 export async function uploadDiaryImages(images: UploadImageInput[]): Promise<string[]> {
@@ -158,16 +170,13 @@ export async function uploadAvatar(uri: string): Promise<string> {
   const form = new FormData();
   await appendImageFile(form, 'file', { uri }, 'avatar.jpg');
 
-  const res = await fetch(`${API_V1}/uploads/avatar`, {
+  const endpoint = '/uploads/avatar';
+  const res = await fetch(`${API_V1}${endpoint}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
     },
     body: form,
   });
-  const json = await res.json();
-  if (!res.ok || !json.ok) {
-    throw new Error(json.error || 'UPLOAD_FAILED');
-  }
-  return json.data.publicUrl as string;
+  return parseUploadResponse(res, endpoint);
 }

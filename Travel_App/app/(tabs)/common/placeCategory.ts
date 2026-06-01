@@ -1,3 +1,5 @@
+import { normalizePlaceCategory } from '../../../lib/placeCategories';
+
 export type PlaceCategory = 'Festivals' | 'Dining' | 'Attractions';
 
 const FESTIVAL_KEYWORDS = [
@@ -95,6 +97,13 @@ export function matchesPlaceCategory(value: string | undefined, filter: string) 
   const normalizedFilter = normalizeText(filter);
   if (normalizedFilter === 'all' || normalizedFilter === 'all sights' || !normalizedFilter) {
     return true;
+  }
+
+  const canonicalValue = normalizePlaceCategory(value);
+  const canonicalFilter = normalizePlaceCategory(filter);
+
+  if (canonicalFilter) {
+    return canonicalValue === canonicalFilter;
   }
 
   const categories = getPlaceCategories(value);

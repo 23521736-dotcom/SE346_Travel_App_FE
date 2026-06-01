@@ -33,6 +33,7 @@ type Trip = {
   startDate?: string;
   endDate?: string;
   image: string;
+  coverImageUrl?: string;
   avatars?: string[];
   members?: Collaborator[];
   extraCount?: number;
@@ -114,7 +115,8 @@ function mapApiTrip(apiTrip: ApiTrip): Trip {
     date: formatApiDateRange(startDate, endDate, draft.date),
     startDate,
     endDate,
-    image: draft.image || defaultTripImage,
+    image: draft.coverImageUrl || draft.image || defaultTripImage,
+    coverImageUrl: draft.coverImageUrl,
     avatars: members
       .map((member) => member.avatar ?? member.avatarUrl)
       .filter((avatar): avatar is string => Boolean(avatar)),
@@ -144,6 +146,7 @@ function toTripData(trip: Trip): TripData {
     startDate: trip.startDate,
     endDate: trip.endDate,
     image: trip.image,
+    coverImageUrl: trip.coverImageUrl || trip.image,
     hotel: trip.hotel || "Not selected",
     duration: trip.duration || 1,
     budget: getTripTotalBudget(trip.itineraryData),
@@ -231,6 +234,9 @@ function TripCard({
             onDelete();
           }}
           disabled={isDeleting}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${trip.title}`}
           style={({ pressed }) => [
             styles.deleteTripButton,
             pressed && styles.buttonPressed,
@@ -240,7 +246,7 @@ function TripCard({
           {isDeleting ? (
             <ActivityIndicator size="small" color={colors.danger} />
           ) : (
-            <Ionicons name="trash-outline" size={18} color={colors.danger} />
+            <Ionicons name="trash-bin-outline" size={17} color={colors.danger} />
           )}
         </Pressable>
       ) : null}
@@ -314,7 +320,8 @@ export default function MyTripScreen({ navigation }: any) {
             date: updatedTrip.date || trip.date,
             startDate: updatedTrip.startDate,
             endDate: updatedTrip.endDate,
-            image: updatedTrip.image || trip.image,
+            image: updatedTrip.coverImageUrl || updatedTrip.image || trip.image,
+            coverImageUrl: updatedTrip.coverImageUrl || updatedTrip.image || trip.coverImageUrl,
             hotel: updatedTrip.hotel,
             duration: updatedTrip.duration,
             budget: updatedTrip.budget,
