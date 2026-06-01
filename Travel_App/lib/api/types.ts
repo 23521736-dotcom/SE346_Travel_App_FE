@@ -23,6 +23,13 @@ export type ApiFavoritePlaceItem = {
   featureLabel?: string;
   coverImageUrl?: string;
   images?: string[];
+  priceLevel?: number | string | null;
+  price?: number | string | null;
+  cost?: number | string | null;
+  estimatedCost?: number | string | null;
+  Price?: number | string | null;
+  Cost?: number | string | null;
+  EstimatedCost?: number | string | null;
   Id?: string;
   Name?: string;
   Located?: string;
@@ -32,6 +39,7 @@ export type ApiFavoritePlaceItem = {
   image?: string;
   category?: string;
   Category?: string;
+  PriceLevel?: number | string | null;
 };
 
 export type PlaceListItem = {
@@ -55,6 +63,14 @@ export type PlaceListItem = {
   Images?: string[];
   category?: string;
   Category?: string;
+  priceLevel?: number | string | null;
+  PriceLevel?: number | string | null;
+  price?: number | string | null;
+  Price?: number | string | null;
+  cost?: number | string | null;
+  Cost?: number | string | null;
+  estimatedCost?: number | string | null;
+  EstimatedCost?: number | string | null;
 };
 
 export type PlaceReview = {
@@ -152,6 +168,16 @@ export function normalizePlaceListItem(raw: ApiFavoritePlaceItem): PlaceListItem
   const coverImageUrl = firstString(raw.coverImageUrl, raw.image);
   const images = firstArray<string>(raw.images);
   const category = firstString(raw.category, raw.Category);
+  const priceLevel = raw.priceLevel ?? raw.PriceLevel ?? null;
+  const price =
+    raw.price ??
+    raw.Price ??
+    raw.cost ??
+    raw.Cost ??
+    raw.estimatedCost ??
+    raw.EstimatedCost ??
+    priceLevel ??
+    null;
 
   return {
     id,
@@ -173,6 +199,12 @@ export function normalizePlaceListItem(raw: ApiFavoritePlaceItem): PlaceListItem
     image: coverImageUrl,
     category,
     Category: category,
+    priceLevel,
+    PriceLevel: priceLevel,
+    price,
+    Price: price,
+    cost: price,
+    Cost: price,
   };
 }
 

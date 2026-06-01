@@ -1,6 +1,7 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import React, { useCallback, useEffect, useState } from 'react';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {
   ActivityIndicator,
@@ -17,12 +18,28 @@ import {
   View,
 } from 'react-native';
 import { getApiErrorMessage } from '../../../lib/api/client';
-import { mapApiTripToDraft, upsertTripToBackend } from '../../../lib/api/trips';
-import { getTripDraft, ItineraryDay, normalizeTripDays, TripData, upsertTripDraft } from '../store/tripDraftStore';
+import {
+  addPlaceToTripDay,
+  mapApiTripToDraft,
+  removePlaceFromTripDay,
+  upsertTripToBackend,
+} from '../../../lib/api/trips';
+import {
+  getSchedulePeriodFromTime,
+  getTripDraft,
+  ItineraryDay,
+  normalizeTripDays,
+  removeTripDraft,
+  ScheduleLocation,
+  subscribeTripDrafts,
+  TripData,
+  upsertTripDraft,
+} from '../store/tripDraftStore';
 import styles from './EditingTripScreen.style';
 
 type DateInputType = 'start' | 'end';
 const WebDateInput = 'input' as any;
+const LOCAL_TRIP_ID_PREFIX = 'local_trip_';
 
 const defaultTrip: TripData = {
   title: 'New Trip',
@@ -117,7 +134,7 @@ function updateDayDates(days: ItineraryDay[] | undefined, duration: number, star
 
     return {
       dayId: existingDay?.dayId || `day_${index + 1}`,
-      title: `Day ${index + 1}`,
+      title: existingDay?.title || `Day ${index + 1}`,
       date: getDayDate(startDate, index + 1),
       locations: existingDay?.locations || [],
     };
@@ -141,6 +158,102 @@ function getTripTotalBudget(days: ItineraryDay[]) {
   );
 }
 
+function getLocationSelectionId(location: ScheduleLocation) {
+  return location.placeId || location.id;
+}
+
+function isLocalTripId(tripId?: string) {
+  return Boolean(tripId?.startsWith(LOCAL_TRIP_ID_PREFIX));
+}
+
+function isUnsetTime(value?: string) {
+  const normalized = String(value || '').trim().toLowerCase();
+  return !normalized || normalized === 'time not set';
+}
+
+function parseSingleTimeMinutes(value: string) {
+  const match = value.trim().match(/^(\d{1,2})(?::([0-5]\d))?\s*(AM|PM)?$/i);
+  if (!match) {
+    return null;
+  }
+
+  let hour = Number(match[1]);
+  const minute = match[2] ? Number(match[2]) : 0;
+  const meridiem = match[3]?.toUpperCase();
+
+  if (meridiem) {
+    if (hour < 1 || hour > 12) {
+      return null;
+    }
+
+    if (meridiem === 'PM' && hour < 12) {
+      hour += 12;
+    }
+
+    if (meridiem === 'AM' && hour === 12) {
+      hour = 0;
+    }
+  } else if (hour > 23) {
+    return null;
+  }
+
+  return hour * 60 + minute;
+}
+
+function parseTimeRange(value?: string) {
+  if (isUnsetTime(value)) {
+    return null;
+  }
+
+  const parts = String(value).split(/\s*[-–]\s*/);
+  if (parts.length > 2) {
+    return null;
+  }
+
+  const startMinutes = parseSingleTimeMinutes(parts[0]);
+  const endMinutes = parts[1] ? parseSingleTimeMinutes(parts[1]) : undefined;
+  if (startMinutes === null || endMinutes === null) {
+    return null;
+  }
+
+  if (endMinutes !== undefined && endMinutes < startMinutes) {
+    return null;
+  }
+
+  return { startMinutes, endMinutes };
+}
+
+function isValidTimeInput(value?: string) {
+  return isUnsetTime(value) || Boolean(parseTimeRange(value));
+}
+
+function getInvalidTimeLocationNames(days: ItineraryDay[]) {
+  return days
+    .flatMap((day) => day.locations)
+    .filter((location) => !isValidTimeInput(location.time))
+    .map((location) => location.name);
+}
+
+function buildAddPlaceBody(location: ScheduleLocation, sortOrder: number) {
+  return {
+    placeId: getLocationSelectionId(location),
+    title: location.name,
+    imageUrl: location.image || null,
+    period: getSchedulePeriodFromTime(location.time, location.period),
+    scheduledTime: location.time === 'Time not set' ? null : location.time,
+    estimatedCost: getCostValue(location.cost),
+    rating: Number(location.rating) || 0,
+    sortOrder,
+  };
+}
+
+function mergeApiTripIntoDraft(currentTrip: TripData, apiTrip: unknown) {
+  return normalizeTripDays({
+    ...currentTrip,
+    ...mapApiTripToDraft(apiTrip as Parameters<typeof mapApiTripToDraft>[0]),
+  } as TripData);
+}
+
 function formatBudget(value: number) {
   return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
@@ -155,7 +268,11 @@ export default function EditingTripScreen({ navigation, route }: any) {
   const [activeDateInput, setActiveDateInput] = useState<DateInputType | null>(null);
   const [webPickerDate, setWebPickerDate] = useState<Date>(parseDate(incomingTrip.startDate) ?? new Date());
   const [trip, setTrip] = useState<TripData>(incomingTrip);
+  const savedTripBaselineRef = useRef<TripData>(normalizeTripDays(incomingTrip));
+  const hasFocusedOnceRef = useRef(false);
+  const didSaveTripRef = useRef(false);
   const [isSavingTrip, setIsSavingTrip] = useState(false);
+  const [isPickingTripCover, setIsPickingTripCover] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const itineraryData = trip.itineraryData?.length
     ? trip.itineraryData
@@ -179,17 +296,104 @@ export default function EditingTripScreen({ navigation, route }: any) {
     }));
   };
 
+  const handlePickTripCover = async () => {
+    if (isPickingTripCover || isSavingTrip) {
+      return;
+    }
+
+    try {
+      setIsPickingTripCover(true);
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Permission required', 'Please allow photo access to choose a trip cover.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.85,
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      setSaveError(null);
+      const coverUrl = result.assets[0].uri;
+      const nextTrip = normalizeTripDays({
+        ...trip,
+        image: coverUrl,
+        coverImageUrl: coverUrl,
+      });
+
+      setTrip(nextTrip);
+      if (nextTrip.id) {
+        upsertTripDraft(nextTrip);
+      }
+    } catch (error) {
+      const message = getApiErrorMessage(error);
+      setSaveError(message);
+      Alert.alert('Unable to choose cover', message);
+    } finally {
+      setIsPickingTripCover(false);
+    }
+  };
+
+  const updateDayTitle = (dayId: string, value: string) => {
+    setTrip((current) => ({
+      ...current,
+      itineraryData: (current.itineraryData || itineraryData).map((day) =>
+        day.dayId === dayId ? { ...day, title: value } : day
+      ),
+    }));
+  };
+
+  const updateLocationTime = (dayId: string, locationId: string, value: string) => {
+    setSaveError(null);
+    setTrip((current) => {
+      const nextTrip = normalizeTripDays({
+        ...current,
+        itineraryData: (current.itineraryData || itineraryData).map((day) =>
+          day.dayId === dayId
+            ? {
+                ...day,
+                locations: day.locations.map((location) =>
+                  getLocationSelectionId(location) === locationId
+                    ? { ...location, time: value, period: getSchedulePeriodFromTime(value, location.period) }
+                    : location
+                ),
+              }
+            : day
+        ),
+      });
+
+      if (nextTrip.id) {
+        upsertTripDraft(nextTrip);
+      }
+
+      return nextTrip;
+    });
+  };
+
   useEffect(() => {
     if (route?.params?.tripData) {
-      syncTripState(route.params.tripData);
+      const normalizedTrip = normalizeTripDays(route.params.tripData);
+      syncTripState(normalizedTrip);
+      if (!route?.params?.draftOnly) {
+        savedTripBaselineRef.current = normalizedTrip;
+      }
     }
-  }, [route?.params?.tripData, syncTripState]);
+  }, [route?.params?.draftOnly, route?.params?.tripData, syncTripState]);
 
   useFocusEffect(
     useCallback(() => {
       const activeTripId = (route?.params?.tripData as TripData | undefined)?.id ?? trip.id;
+      const isFirstFocus = !hasFocusedOnceRef.current;
+      hasFocusedOnceRef.current = true;
 
-      if (!activeTripId) {
+      if (!activeTripId || (isFirstFocus && route?.params?.tripData && !route?.params?.draftOnly)) {
         return undefined;
       }
 
@@ -199,8 +403,30 @@ export default function EditingTripScreen({ navigation, route }: any) {
       }
 
       return undefined;
-    }, [route?.params?.tripData, trip.id, syncTripState])
+    }, [route?.params?.draftOnly, route?.params?.tripData, trip.id, syncTripState])
   );
+
+  useEffect(() => {
+    if (!trip.id) {
+      return undefined;
+    }
+
+    return subscribeTripDrafts((draft) => {
+      if (draft.id === trip.id) {
+        syncTripState(draft);
+      }
+    });
+  }, [syncTripState, trip.id]);
+
+  useEffect(() => {
+    const unsubscribe = navigation.addListener('beforeRemove', () => {
+      if (!didSaveTripRef.current) {
+        removeTripDraft(trip.id);
+      }
+    });
+
+    return unsubscribe;
+  }, [navigation, trip.id]);
 
   useEffect(() => {
     if (!activeDateInput) {
@@ -297,21 +523,37 @@ export default function EditingTripScreen({ navigation, route }: any) {
   };
 
   const deleteLocation = (dayId: string, locationId: string) => {
-    setTrip((current) => ({
-      ...current,
-      itineraryData: (current.itineraryData || []).map((day) =>
-        day.dayId === dayId
-          ? {
-              ...day,
-              locations: day.locations.filter((location) => location.id !== locationId),
-            }
-          : day
-      ),
-    }));
+    setTrip((current) => {
+      const nextTrip = normalizeTripDays({
+        ...current,
+        itineraryData: (current.itineraryData || []).map((day) =>
+          day.dayId === dayId
+            ? {
+                ...day,
+                locations: day.locations.filter((location) => getLocationSelectionId(location) !== locationId),
+              }
+            : day
+        ),
+      });
+
+      if (nextTrip.id) {
+        upsertTripDraft(nextTrip);
+      }
+
+      return nextTrip;
+    });
   };
 
   const saveTrip = async () => {
     if (isSavingTrip) {
+      return;
+    }
+
+    const invalidTimeLocationNames = getInvalidTimeLocationNames(itineraryData);
+    if (invalidTimeLocationNames.length) {
+      const message = `Invalid time: ${invalidTimeLocationNames.join(', ')}. Use HH:mm or HH:mm - HH:mm.`;
+      setSaveError(message);
+      Alert.alert('Invalid time', message);
       return;
     }
 
@@ -321,26 +563,95 @@ export default function EditingTripScreen({ navigation, route }: any) {
       itineraryData,
     });
 
+    if (!updatedTrip.id) {
+      const message = 'Trip chua san sang de luu.';
+      setSaveError(message);
+      Alert.alert('Unable to save trip', message);
+      return;
+    }
+
     setIsSavingTrip(true);
     setSaveError(null);
     try {
-      const savedTrip = await upsertTripToBackend(
-        updatedTrip as Record<string, unknown>,
-        updatedTrip.id
-      );
-      const persistedTrip = normalizeTripDays({
+      const localDraftId = isLocalTripId(updatedTrip.id) ? updatedTrip.id : undefined;
+      const backendTripId = localDraftId ? undefined : updatedTrip.id;
+      const baselineTrip = normalizeTripDays(savedTripBaselineRef.current);
+      const baselineDays = baselineTrip.itineraryData || [];
+      const updatedDays = updatedTrip.itineraryData || [];
+      const baselineDayMap = new Map(baselineDays.map((day) => [day.dayId, day]));
+      const tripPayloadForMetadata = {
         ...updatedTrip,
-        ...mapApiTripToDraft(savedTrip),
-      } as TripData);
+        itineraryData: updatedDays.map((day) => ({
+          ...day,
+          locations: baselineDayMap.get(day.dayId)?.locations || [],
+        })),
+      };
+
+      let savedTrip = await upsertTripToBackend(
+        tripPayloadForMetadata as Record<string, unknown>,
+        backendTripId
+      );
+
+      let persistedTrip = mergeApiTripIntoDraft(updatedTrip, savedTrip);
+      syncTripState(persistedTrip);
+      const persistedTripId = persistedTrip.id || updatedTrip.id;
+
+      const persistedDays = persistedTrip.itineraryData || [];
+      for (const [dayIndex, persistedDay] of persistedDays.entries()) {
+        const intendedDay = updatedDays[dayIndex];
+        if (!intendedDay) {
+          continue;
+        }
+
+        const baselineDay = baselineDayMap.get(persistedDay.dayId) ?? baselineDayMap.get(intendedDay.dayId);
+        const baselineIds = new Set((baselineDay?.locations || []).map(getLocationSelectionId));
+        const currentIds = new Set(intendedDay.locations.map(getLocationSelectionId));
+
+        const locationsToRemove = (baselineDay?.locations || []).filter(
+          (location) => !currentIds.has(getLocationSelectionId(location))
+        );
+        const locationsToAdd = intendedDay.locations.filter(
+          (location) => !baselineIds.has(getLocationSelectionId(location))
+        );
+
+        for (const location of locationsToRemove) {
+          savedTrip = await removePlaceFromTripDay(
+            String(persistedTripId),
+            persistedDay.dayId,
+            getLocationSelectionId(location)
+          );
+          persistedTrip = mergeApiTripIntoDraft(persistedTrip, savedTrip);
+          syncTripState(persistedTrip);
+        }
+
+        for (const location of locationsToAdd) {
+          savedTrip = await addPlaceToTripDay(
+            String(persistedTripId),
+            persistedDay.dayId,
+            buildAddPlaceBody(location, intendedDay.locations.indexOf(location) + 1)
+          );
+          persistedTrip = mergeApiTripIntoDraft(persistedTrip, savedTrip);
+          syncTripState(persistedTrip);
+        }
+      }
 
       if (persistedTrip.id) {
         upsertTripDraft(persistedTrip);
       }
-      navigation.navigate({
-        name: 'PlanningTrip',
-        params: { updatedTrip: persistedTrip },
-        merge: true,
-      });
+      if (localDraftId) {
+        removeTripDraft(localDraftId);
+      }
+      savedTripBaselineRef.current = persistedTrip;
+      didSaveTripRef.current = true;
+      if (typeof navigation.popTo === 'function') {
+        navigation.popTo('PlanningTrip', { updatedTrip: persistedTrip });
+      } else {
+        navigation.navigate({
+          name: 'PlanningTrip',
+          params: { updatedTrip: persistedTrip },
+          merge: true,
+        });
+      }
     } catch (error) {
       const message = getApiErrorMessage(error);
       setSaveError(message);
@@ -364,8 +675,8 @@ export default function EditingTripScreen({ navigation, route }: any) {
           <Text style={styles.headerTitle}>Editing Itinerary</Text>
           <TouchableOpacity
             onPress={saveTrip}
-            disabled={isSavingTrip}
-            style={[styles.saveButton, isSavingTrip && styles.saveButtonDisabled]}
+            disabled={isSavingTrip || isPickingTripCover}
+            style={[styles.saveButton, (isSavingTrip || isPickingTripCover) && styles.saveButtonDisabled]}
           >
             {isSavingTrip ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
@@ -379,6 +690,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
         <ImageBackground
           source={{
             uri:
+              trip.coverImageUrl ||
               trip.image ||
               'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=600&auto=format&fit=crop',
           }}
@@ -386,6 +698,20 @@ export default function EditingTripScreen({ navigation, route }: any) {
           imageStyle={{ borderRadius: 16 }}
         >
           <View style={styles.heroOverlay}>
+            <TouchableOpacity
+              style={[styles.changeCoverButton, isPickingTripCover && styles.changeCoverButtonDisabled]}
+              onPress={handlePickTripCover}
+              disabled={isPickingTripCover || isSavingTrip}
+            >
+              {isPickingTripCover ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <Feather name="camera" size={16} color="#FFFFFF" />
+              )}
+              <Text style={styles.changeCoverText}>
+                {isPickingTripCover ? 'Choosing...' : 'Change cover'}
+              </Text>
+            </TouchableOpacity>
             <Text style={styles.heroTitle}>{trip.title}</Text>
           </View>
         </ImageBackground>
@@ -454,46 +780,72 @@ export default function EditingTripScreen({ navigation, route }: any) {
           {itineraryData.map((day, index) => (
             <View key={day.dayId} style={styles.dayContainer}>
               <View style={styles.dayHeader}>
-                <Text style={styles.dayTitle}>{day.title}</Text>
+                <TextInput
+                  value={day.title}
+                  onChangeText={(value) => updateDayTitle(day.dayId, value)}
+                  style={styles.dayTitleInput}
+                  editable={!isSavingTrip}
+                />
               </View>
 
-              {day.locations.map((loc) => (
+              {day.locations.map((loc) => {
+                return (
                 <View key={loc.id} style={styles.itineraryCard}>
                   <Image source={{ uri: loc.image }} style={styles.itineraryImage} />
 
                   <View style={styles.itineraryInfo}>
-                    <Text style={styles.itineraryTitle}>{loc.name}</Text>
-                    <View style={styles.itineraryRatingRow}>
-                      <Ionicons name="star" size={12} color="#F97316" />
-                      <Text style={styles.itineraryRating}>{loc.rating}</Text>
+                    <View style={styles.itineraryTitleRow}>
+                      <Text numberOfLines={1} style={styles.itineraryTitle}>{loc.name}</Text>
+                      <View style={styles.itineraryRatingPill}>
+                        <Ionicons name="star" size={12} color="#F97316" />
+                        <Text style={styles.itineraryRating}>{loc.rating}</Text>
+                      </View>
+                    </View>
+                    <View style={styles.itineraryLocationRow}>
+                      <Ionicons name="location-outline" size={13} color="#64748B" />
+                      <Text numberOfLines={1} style={styles.itineraryLocation}>
+                        {loc.location || 'Location not set'}
+                      </Text>
                     </View>
 
                     <View style={styles.itineraryDetailsRow}>
-                      <View>
-                        <Text style={styles.detailLabel}>TIME</Text>
-                        <Text style={styles.detailValue}>{loc.time}</Text>
+                      <View style={styles.detailPill}>
+                        <Ionicons name="time-outline" size={13} color="#1E88E5" />
+                        <TextInput
+                          value={loc.time}
+                          onChangeText={(value) =>
+                            updateLocationTime(day.dayId, getLocationSelectionId(loc), value)
+                          }
+                          placeholder="Time not set"
+                          editable={!isSavingTrip}
+                          style={styles.timeInput}
+                        />
                       </View>
-                      <View style={{ marginLeft: 20 }}>
-                        <Text style={styles.detailLabel}>ESTIMATED BUDGET</Text>
-                        <Text style={styles.detailValue}>VND: {formatBudget(getCostValue(loc.cost))}</Text>
+                      <View style={styles.detailPill}>
+                        <Ionicons name="cash-outline" size={13} color="#0F766E" />
+                        <Text style={styles.budgetValue}>VND {formatBudget(getCostValue(loc.cost))}</Text>
                       </View>
                     </View>
                   </View>
 
                   <TouchableOpacity
                     style={styles.deleteBtn}
-                    onPress={() => deleteLocation(day.dayId, loc.id)}
+                    onPress={() => deleteLocation(day.dayId, getLocationSelectionId(loc))}
                   >
                     <Feather name="trash-2" size={20} color="#FF6B6B" />
                   </TouchableOpacity>
                 </View>
-              ))}
+                );
+              })}
 
               <TouchableOpacity
                 style={styles.addLocationBtn}
                 onPress={() =>
                   navigation.navigate('AddLocation_user', {
-                    tripData: trip,
+                    tripData: normalizeTripDays({
+                      ...trip,
+                      itineraryData,
+                    }),
                     tripId: trip.id,
                     tripTitle: trip.title,
                     dayId: day.dayId,

@@ -15,17 +15,18 @@ import {
 } from 'react-native';
 import { getApiErrorMessage } from '../../../lib/api/client';
 import { fetchFavorites } from '../../../lib/api/favorites';
+import { fetchPlaces } from '../../../lib/api/places';
 import type { PlaceListItem } from '../../../lib/api/types';
-import { mapApiTripToDraft, upsertTripToBackend } from '../../../lib/api/trips';
 import { getPrimaryCategory, matchesPlaceCategory } from '../common/placeCategory';
 import {
+    getSchedulePeriodFromTime,
     normalizeTripDays,
     ScheduleLocation,
     TripData,
     upsertTripDraft,
 } from '../store/tripDraftStore';
 import styles from './AddLocationScreen_user.style';
-import { getPlaceCategoryLabel, PLACE_CATEGORIES } from '../../../lib/placeCategories';
+import { getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../lib/placeCategories';
 
 type SavedPlaceItem = {
     id: string;
@@ -36,6 +37,7 @@ type SavedPlaceItem = {
     reviews: string;
     description: string;
     imageUrl: string;
+    cost: string;
 };
 
 // const FILTERS = ['All', 'Festivals', 'Dining', 'Attractions'];
@@ -45,35 +47,41 @@ function normalizeDayKey(value?: string) {
     return String(value || '').trim().toLowerCase().replace(/^day_/, '');
 }
 
-const SAVED_FILTERS = PLACE_CATEGORIES; 
+const DEFAULT_LOCATION_TIME = '10:00';
+const CATEGORY_FILTERS = PLACE_CATEGORIES;
+type LocationSource = 'All' | 'Saved';
+
+function getPlaceCost(place: PlaceListItem) {
+    const rawCost = place.cost ?? place.Cost ?? place.price ?? place.Price ?? place.priceLevel ?? place.PriceLevel;
+    const value = Number(String(rawCost ?? '').replace(/[^0-9.]/g, ''));
+    return Number.isFinite(value) ? String(value) : '0';
+}
+
+function formatVnd(value: string) {
+    const amount = Number(String(value).replace(/[^0-9.]/g, '')) || 0;
+    return String(Math.round(amount)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
 
 function getLocationSelectionId(location: ScheduleLocation) {
     return location.placeId || location.id;
 }
 
 function mapFavoritePlace(place: PlaceListItem): SavedPlaceItem {
+    const category =
+        normalizePlaceCategory(place.category || place.Category) ??
+        getPrimaryCategory(place.Features || place.featureLabel);
+
     return {
         id: place.Id || place.id,
         title: place.Name || place.name,
-        category: getPrimaryCategory(place.Features || place.featureLabel),
+        category,
         location: place.Located || place.region,
         rating: String(place.Rate ?? place.averageRating ?? 0),
         reviews: `${place.NumberOfRate ?? place.ratingCount ?? 0} reviews`,
         description: `${place.Name || place.name} in ${place.Located || place.region}`,
         imageUrl: place.image || place.coverImageUrl,
+        cost: getPlaceCost(place),
     };
-}
-
-function getCostValue(cost: string) {
-    return Number(cost.replace(/[^0-9.]/g, '')) || 0;
-}
-
-function getTripTotalBudget(days = [] as NonNullable<TripData['itineraryData']>) {
-    return days.reduce(
-        (tripSum, day) =>
-            tripSum + day.locations.reduce((daySum, location) => daySum + getCostValue(location.cost), 0),
-        0
-    );
 }
 
 export default function AddLocationScreen_user({ navigation, route }: any) {
@@ -81,15 +89,16 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
     const [submittedQuery, setSubmittedQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
     const [activeSearchFilter, setActiveSearchFilter] = useState('All');
+    const [locationSource, setLocationSource] = useState<LocationSource>('All');
     const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [allPlaces, setAllPlaces] = useState<SavedPlaceItem[]>([]);
     const [savedPlaces, setSavedPlaces] = useState<SavedPlaceItem[]>([]);
+    const [loadingAllPlaces, setLoadingAllPlaces] = useState(true);
     const [loadingSavedPlaces, setLoadingSavedPlaces] = useState(true);
-    const [savingSelection, setSavingSelection] = useState(false);
     const [saveError, setSaveError] = useState<string | null>(null);
     const dayTitle = route?.params?.dayTitle;
     const dayId = route?.params?.dayId as string | undefined;
     const routeTrip = (route?.params?.tripData as TripData | undefined) || undefined;
-    const tripId = route?.params?.tripId as string | undefined || routeTrip?.id;
     const isSearchMode = submittedQuery.trim().length > 0;
 
     const [tripSnapshot, setTripSnapshot] = useState<TripData | undefined>(routeTrip);
@@ -105,6 +114,19 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
         setSelectedItems(currentDay?.locations.map(getLocationSelectionId) || []);
     }, [currentDay]);
 
+    const loadAllPlaces = useCallback(async () => {
+        setLoadingAllPlaces(true);
+        try {
+            const data = await fetchPlaces();
+            setAllPlaces(data.map(mapFavoritePlace));
+        } catch (error) {
+            Alert.alert('Loi', getApiErrorMessage(error));
+            setAllPlaces([]);
+        } finally {
+            setLoadingAllPlaces(false);
+        }
+    }, []);
+
     const loadSavedPlaces = useCallback(async () => {
         setLoadingSavedPlaces(true);
         try {
@@ -119,13 +141,19 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
     }, []);
 
     useEffect(() => {
+        loadAllPlaces();
         loadSavedPlaces();
-    }, [loadSavedPlaces]);
+    }, [loadAllPlaces, loadSavedPlaces]);
+
+    const visiblePlaces = useMemo(
+        () => (locationSource === 'Saved' ? savedPlaces : allPlaces),
+        [allPlaces, locationSource, savedPlaces]
+    );
 
     const searchResults = useMemo(() => {
         const normalizedQuery = submittedQuery.trim().toLowerCase();
 
-        return savedPlaces.filter((item) => {
+        return visiblePlaces.filter((item) => {
             const matchesFilter = matchesPlaceCategory(item.category, activeSearchFilter);
             const matchesQuery =
                 item.title.toLowerCase().includes(normalizedQuery) ||
@@ -135,7 +163,7 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
 
             return matchesFilter && matchesQuery;
         });
-    }, [activeSearchFilter, savedPlaces, submittedQuery]);
+    }, [activeSearchFilter, submittedQuery, visiblePlaces]);
 
     const submitSearch = () => {
         setSubmittedQuery(searchQuery);
@@ -145,17 +173,17 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
         id: place.id,
         placeId: place.id,
         name: place.title,
+        location: place.location,
+        category: place.category,
+        description: place.description,
         rating: place.rating,
         image: place.imageUrl,
-        time: 'Time not set',
-        cost: '0',
+        time: DEFAULT_LOCATION_TIME,
+        period: getSchedulePeriodFromTime(DEFAULT_LOCATION_TIME),
+        cost: place.cost,
     });
 
-    const saveSelectedLocations = async () => {
-        if (savingSelection) {
-            return;
-        }
-
+    const toggleItem = (place: SavedPlaceItem) => {
         if (!tripSnapshot || !dayId) {
             const message = 'Trip chua san sang de cap nhat.';
             setSaveError(message);
@@ -163,92 +191,34 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
             return;
         }
 
-        setSavingSelection(true);
         setSaveError(null);
-        try {
-            const normalizedTrip = normalizeTripDays(tripSnapshot);
-            const activeDay = normalizedTrip.itineraryData?.find(
-                (day) => normalizeDayKey(day.dayId) === normalizeDayKey(dayId)
-            );
-            const currentLocations = activeDay?.locations || [];
-            const existingLocationMap = new Map(
-                currentLocations.map((location) => [getLocationSelectionId(location), location])
-            );
+        const normalizedTrip = normalizeTripDays(tripSnapshot);
+        const isSelected = selectedItems.includes(place.id);
 
-            const selectedLocations = selectedItems
-                .map((locationId) => {
-                    const existingLocation = existingLocationMap.get(locationId);
-                    if (existingLocation) {
-                        return existingLocation;
-                    }
-
-                    const selectedPlace = savedPlaces.find((place) => place.id === locationId);
-                    if (!selectedPlace) {
-                        return null;
-                    }
-
-                    return buildTripLocation(selectedPlace);
-                })
-                .filter((location): location is ScheduleLocation => Boolean(location));
-
-            // Keep locations that were already in the trip but not tied to saved-place IDs.
-            const untouchedLocations = currentLocations.filter(
-                (location) => !savedPlaces.some((place) => place.id === getLocationSelectionId(location))
-            );
-
-            const nextItineraryData = (normalizedTrip.itineraryData || []).map((day) => {
+        const nextTrip = normalizeTripDays({
+            ...normalizedTrip,
+            itineraryData: (normalizedTrip.itineraryData || []).map((day) => {
                 if (normalizeDayKey(day.dayId) !== normalizeDayKey(dayId)) {
                     return day;
                 }
 
                 return {
                     ...day,
-                    locations: [...untouchedLocations, ...selectedLocations],
+                    locations: isSelected
+                        ? day.locations.filter((location) => getLocationSelectionId(location) !== place.id)
+                        : [...day.locations, buildTripLocation(place)],
                 };
-            });
+            }),
+        });
 
-            const updatedTrip = normalizeTripDays({
-                ...normalizedTrip,
-                itineraryData: nextItineraryData,
-            });
-            updatedTrip.budget = getTripTotalBudget(updatedTrip.itineraryData);
-
-            const savedTrip = await upsertTripToBackend(
-                updatedTrip as Record<string, unknown>,
-                String(tripId || updatedTrip.id || '') || undefined
-            );
-
-            const persistedTrip = normalizeTripDays({
-                ...updatedTrip,
-                ...mapApiTripToDraft(savedTrip),
-            } as TripData);
-
-            if (persistedTrip.id) {
-                upsertTripDraft(persistedTrip);
-            }
-
-            setTripSnapshot(persistedTrip);
-            navigation.navigate({
-                name: 'EditingTrip',
-                params: { tripData: persistedTrip },
-                merge: true,
-            });
-        } catch (error) {
-            const message = getApiErrorMessage(error);
-            setSaveError(message);
-            console.error('Save trip locations failed', error);
-            Alert.alert('Loi luu trip', message);
-        } finally {
-            setSavingSelection(false);
+        if (nextTrip.id) {
+            upsertTripDraft(nextTrip);
         }
-    };
 
-    const toggleItem = (id: string) => {
-        setSelectedItems((current) =>
-            current.includes(id)
-                ? current.filter((itemId) => itemId !== id)
-                : [...current, id]
-        );
+        setTripSnapshot(nextTrip);
+        setSelectedItems((current) => (
+            isSelected ? current.filter((itemId) => itemId !== place.id) : [...current, place.id]
+        ));
     };
 
     const renderResultCard = ({ item }: { item: SavedPlaceItem }) => {
@@ -277,14 +247,18 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                         <Text style={styles.resultLocationText}>{item.location}</Text>
                     </View>
 
+                    <View style={styles.resultLocationRow}>
+                        <Ionicons name="cash-outline" size={14} color="#8a95a5" />
+                        <Text style={styles.resultLocationText}>VND: {formatVnd(item.cost)}</Text>
+                    </View>
+
                     <Text style={styles.resultDescription} numberOfLines={2}>{item.description}</Text>
 
                     <View style={styles.resultCardFooter}>
                         <Text style={styles.resultReviewsText}>{item.reviews}</Text>
                         <Pressable
                             style={[styles.resultAddButton, isSelected && styles.resultAddButtonSelected]}
-                            onPress={() => toggleItem(item.id)}
-                            disabled={savingSelection}
+                            onPress={() => toggleItem(item)}
                         >
                             <Feather name={isSelected ? 'check' : 'plus'} size={20} color="#fff" />
                         </Pressable>
@@ -310,21 +284,15 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                             onSubmitEditing={submitSearch}
                             placeholder="Search destination"
                             returnKeyType="search"
-                            editable={!savingSelection}
                         />
                     </View>
-                    <TouchableOpacity onPress={saveSelectedLocations} disabled={savingSelection}>
-                        <Text style={{ color: '#005f73', fontWeight: '700', opacity: savingSelection ? 0.5 : 1 }}>
-                            {savingSelection ? 'Saving...' : 'Save'}
-                        </Text>
-                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.resultFiltersContainer}>
                     <FlatList
                         horizontal
                         showsHorizontalScrollIndicator={false}
-                        data={SAVED_FILTERS}
+                        data={CATEGORY_FILTERS}
                         keyExtractor={(item) => item.value}
                         renderItem={({ item }) => {
                             const isActive = item.value === activeSearchFilter;
@@ -333,7 +301,6 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                                 <Pressable
                                     style={[styles.resultFilterPill, isActive && styles.resultFilterPillActive]}
                                     onPress={() => setActiveSearchFilter(item.value)}
-                                    disabled={savingSelection}
                                 >
                                     <Text style={[styles.resultFilterText, isActive && styles.resultFilterTextActive]}>{item.label}</Text>
                                 </Pressable>
@@ -373,17 +340,13 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
         <SafeAreaView style={styles.container}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()} disabled={savingSelection}>
+                    <TouchableOpacity onPress={() => navigation.goBack()}>
                         <Feather name="arrow-left" size={24} color="#003A70" />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>
                         {dayTitle ? `Add Destination - ${dayTitle}` : 'Add Destination'}
                     </Text>
-                    <TouchableOpacity onPress={saveSelectedLocations} disabled={savingSelection}>
-                        <Text style={{ color: '#006699', fontWeight: '700', opacity: savingSelection ? 0.5 : 1 }}>
-                            {savingSelection ? 'Saving...' : 'Save'}
-                        </Text>
-                    </TouchableOpacity>
+                    <View style={{ width: 24 }} />
                 </View>
 
                 <View style={styles.searchContainer}>
@@ -399,17 +362,15 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                         onSubmitEditing={submitSearch}
                         underlineColorAndroid="transparent"
                         returnKeyType="search"
-                        editable={!savingSelection}
                     />
                 </View>
 
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
-                    {SAVED_FILTERS.map((filter) => (
+                    {CATEGORY_FILTERS.map((filter) => (
                         <TouchableOpacity
                             key={filter.value}
                             style={[styles.filterChip, activeFilter === filter.value && styles.filterChipActive]}
                             onPress={() => setActiveFilter(filter.value)}
-                            disabled={savingSelection}
                         >
                             <Text style={[styles.filterChipText, activeFilter === filter.value && styles.filterChipTextActive]}>
                                 {filter.label}
@@ -418,11 +379,26 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                     ))}
                 </ScrollView>
 
-                <View style={styles.sectionHeader}>
-                    <View style={styles.sectionHeaderLeft}>
-                        <Feather name="bookmark" size={18} color="#003A70" />
-                        <Text style={styles.sectionTitle}>From Saved</Text>
-                    </View>
+                <View style={styles.sourceSwitch}>
+                    {(['All', 'Saved'] as LocationSource[]).map((source) => {
+                        const isActive = locationSource === source;
+                        return (
+                            <Pressable
+                                key={source}
+                                style={[styles.sourceSwitchButton, isActive && styles.sourceSwitchButtonActive]}
+                                onPress={() => setLocationSource(source)}
+                            >
+                                <Feather
+                                    name={source === 'All' ? 'map-pin' : 'bookmark'}
+                                    size={15}
+                                    color={isActive ? '#FFFFFF' : '#64748B'}
+                                />
+                                <Text style={[styles.sourceSwitchText, isActive && styles.sourceSwitchTextActive]}>
+                                    {source === 'All' ? 'All' : 'From Saved'}
+                                </Text>
+                            </Pressable>
+                        );
+                    })}
                 </View>
 
                 {saveError ? (
@@ -431,30 +407,33 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                     </View>
                 ) : null}
 
-                {loadingSavedPlaces ? (
+                {locationSource === 'All' && loadingAllPlaces || locationSource === 'Saved' && loadingSavedPlaces ? (
                     <View style={{ paddingVertical: 28 }}>
                         <ActivityIndicator size="small" color="#006699" />
                     </View>
-                ) : savedPlaces.filter((place) => matchesPlaceCategory(place.category, activeFilter)).map((place) => {
+                ) : visiblePlaces.filter((place) => matchesPlaceCategory(place.category, activeFilter)).map((place) => {
                     const isSelected = selectedItems.includes(place.id);
 
                     return (
                         <View key={place.id} style={styles.card}>
                             <Image source={{ uri: place.imageUrl }} style={styles.cardImg} />
                             <View style={styles.cardInfo}>
-                                <Text style={styles.placeName}>{place.title}</Text>
+                                <Text numberOfLines={1} style={styles.placeName}>{place.title}</Text>
                                 <View style={styles.ratingRow}>
                                     <FontAwesome name="star" size={12} color="#D4A373" />
-                                    <Text style={styles.ratingText}>
+                                    <Text numberOfLines={2} style={styles.ratingText}>
                                         {place.rating} ({place.reviews}) - {place.location}
                                     </Text>
+                                </View>
+                                <View style={styles.priceRow}>
+                                    <Ionicons name="cash-outline" size={13} color="#006699" />
+                                    <Text style={styles.priceText}>VND: {formatVnd(place.cost)}</Text>
                                 </View>
                             </View>
 
                             <TouchableOpacity
                                 style={[styles.addBtn, isSelected && styles.addedBtn]}
-                                onPress={() => toggleItem(place.id)}
-                                disabled={savingSelection}
+                                onPress={() => toggleItem(place)}
                             >
                                 <Feather name={isSelected ? 'x' : 'plus'} size={20} color="#FFFFFF" />
                             </TouchableOpacity>

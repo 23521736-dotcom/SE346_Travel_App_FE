@@ -450,12 +450,19 @@ const styles = StyleSheet.create({
   },
 
   deleteTripButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    borderWidth: 1,
+    borderColor: "rgba(229,57,53,0.18)",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: colors.dangerSoft,
+    backgroundColor: colors.surface,
+    shadowColor: colors.danger,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
   },
 
   deleteTripButtonDisabled: {
