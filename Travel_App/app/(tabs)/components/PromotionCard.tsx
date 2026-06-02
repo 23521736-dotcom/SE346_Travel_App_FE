@@ -1,10 +1,10 @@
 import { getScheduleString } from '@/lib/service/PromotionShedule';
+import { type PromotionItem } from '@/lib/types/promotion';
 import { Ionicons } from "@expo/vector-icons";
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import { colors } from "../common/colors";
-import { styles } from "../screens/AddLocationScreen.style";
-import { type PromotionItem } from '@/lib/types/promotion';
+import { styles } from "../screens/owner/AddLocationScreen.style";
 
 interface PromotionProps {
   item: PromotionItem;

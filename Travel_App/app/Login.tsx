@@ -1,1 +1,1 @@
-export { default } from './(tabs)/screens/LoginScreen';
+export { default } from './(tabs)/screens/auth/LoginScreen';

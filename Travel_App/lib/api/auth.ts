@@ -1,4 +1,4 @@
-import type { ApiOk, AuthResponse } from './types';
+import type { ApiOk, AuthResponse, RegisterRole } from './types';
 import { apiClient, setAccessToken } from './client';
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
@@ -10,12 +10,14 @@ export async function login(email: string, password: string): Promise<AuthRespon
 export async function register(
   email: string,
   password: string,
-  fullName?: string
+  fullName?: string,
+  role: RegisterRole = 'traveler'
 ): Promise<AuthResponse> {
   const res = await apiClient.post<ApiOk<AuthResponse>>('/auth/register', {
     email,
     password,
     fullName,
+    role,
   });
   await setAccessToken(res.data.data.accessToken);
   return res.data.data;

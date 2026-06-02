@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
 import DateTimePickerModal from "react-native-modal-datetime-picker"; // Import bộ chọn ngày
 import { colors } from '../common/colors';
-import { styles } from '../screens/AddLocationScreen.style';
+import { styles } from '../screens/owner/AddLocationScreen.style';
 import { PromotionEditorStyles } from './PromotionEditor.style';
 
 interface EditorProps {

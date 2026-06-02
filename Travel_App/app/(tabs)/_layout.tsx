@@ -28,8 +28,8 @@ export default function TabLayout() {
                 }}
             />
             <Tabs.Screen name="AuthStyles" options={{ href: null }} />
-            <Tabs.Screen name="screens/LoginScreen" options={{ href: null }} />
-            <Tabs.Screen name="screens/RegisterScreen" options={{ href: null }} />
+            <Tabs.Screen name="screens/auth/LoginScreen" options={{ href: null }} />
+            <Tabs.Screen name="screens/auth/RegisterScreen" options={{ href: null }} />
         </Tabs>
     );
 }

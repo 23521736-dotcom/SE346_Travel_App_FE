@@ -9,6 +9,8 @@ export type ApiUser = {
   role: string;
 };
 
+export type RegisterRole = 'traveler' | 'owner';
+
 export type AuthResponse = {
   accessToken: string;
   user: ApiUser;

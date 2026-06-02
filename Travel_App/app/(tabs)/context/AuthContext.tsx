@@ -1,9 +1,8 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useState } from 'react';
 import * as authApi from '../../../lib/api/auth';
 import { fetchMe } from '../../../lib/api/users';
-import { getAccessToken } from '../../../lib/api/client';
-import { getApiErrorMessage } from '../../../lib/api/client';
-import type { ApiUser } from '../../../lib/api/types';
+import { getAccessToken, getApiErrorMessage } from '../../../lib/api/client';
+import type { ApiUser, RegisterRole } from '../../../lib/api/types';
 
 export type UserType = {
   id: number;
@@ -20,7 +19,7 @@ interface AuthContextData {
   user: UserType | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, fullName?: string) => Promise<void>;
+  register: (email: string, password: string, fullName?: string, role?: RegisterRole) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 }
@@ -70,8 +69,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setUser(mapUser(apiUser));
   };
 
-  const register = async (email: string, password: string, fullName?: string) => {
-    const { user: apiUser } = await authApi.register(email, password, fullName);
+  const register = async (
+    email: string,
+    password: string,
+    fullName?: string,
+    role?: RegisterRole
+  ) => {
+    const { user: apiUser } = await authApi.register(email, password, fullName, role);
     setUser(mapUser(apiUser));
   };
 
