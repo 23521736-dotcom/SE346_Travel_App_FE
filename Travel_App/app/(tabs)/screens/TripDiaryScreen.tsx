@@ -29,12 +29,13 @@ function formatDiaryDate(value?: string) {
     return value;
   }
 
-  return date.toLocaleString("en-US", {
-    month: "short",
-    day: "numeric",
+  return date.toLocaleString("vi-VN", {
+    day: "2-digit",
+    month: "2-digit",
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    hour12: false,
   });
 }
 
@@ -54,7 +55,7 @@ function TimelineCard({
   const isTwoColumn = visibleImages.length === 2;
 
   return (
-    <View style={[styles.timelineCard, isDeleting && styles.timelineCardDeleting]}>
+    <ScrollView style={[styles.timelineCard, isDeleting && styles.timelineCardDeleting]}>
       <View style={styles.timelineDot} />
 
       <View style={styles.cardHeader}>
@@ -128,7 +129,7 @@ function TimelineCard({
       <View style={styles.quoteBox}>
         <Text style={styles.quoteText}>{entry.content}</Text>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -267,7 +268,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
         <View style={styles.heroCard}>
           <Image source={{ uri: heroImage }} style={styles.heroImage} />
           <View style={styles.heroOverlay}>
-            <Pressable style={styles.playButton} onPress={() => openEditor()}>
+            <Pressable style={styles.playButton} onPress={() => alert("Phát video")}>
               <Ionicons name="play" size={30} color={colors.white} />
             </Pressable>
           </View>

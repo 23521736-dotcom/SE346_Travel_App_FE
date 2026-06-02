@@ -29,6 +29,14 @@ export type ApiTripLocation = {
   placeId?: string | number;
   name?: string;
   Name?: string;
+  location?: string;
+  Location?: string;
+  region?: string;
+  Located?: string;
+  category?: string;
+  Category?: string;
+  description?: string;
+  Description?: string;
   rating?: string | number;
   Rate?: string | number;
   image?: string;
@@ -37,6 +45,12 @@ export type ApiTripLocation = {
   Time?: string;
   cost?: string | number;
   Cost?: string | number;
+  price?: string | number | null;
+  Price?: string | number | null;
+  priceLevel?: string | number | null;
+  PriceLevel?: string | number | null;
+  estimatedCost?: string | number | null;
+  EstimatedCost?: string | number | null;
 };
 
 export type ApiTripActivity = {
@@ -44,6 +58,9 @@ export type ApiTripActivity = {
   placeId?: string | number | null;
   title?: string | null;
   description?: string | null;
+  location?: string | null;
+  region?: string | null;
+  category?: string | null;
   imageUrl?: string | null;
   period?: string | null;
   scheduledTime?: string | null;
@@ -54,8 +71,15 @@ export type ApiTripActivity = {
     id?: string | number;
     name?: string;
     region?: string;
+    location?: string;
+    category?: string | null;
+    description?: string | null;
     coverImageUrl?: string | null;
     averageRating?: string | number | null;
+    priceLevel?: string | number | null;
+    price?: string | number | null;
+    cost?: string | number | null;
+    estimatedCost?: string | number | null;
   } | null;
 };
 
@@ -138,6 +162,9 @@ export type TripDraftLocation = {
   placeId?: string | number | null;
   name?: string;
   title?: string;
+  location?: string | null;
+  category?: string | null;
+  description?: string | null;
   rating?: string | number | null;
   image?: string | null;
   imageUrl?: string | null;
@@ -146,6 +173,17 @@ export type TripDraftLocation = {
   period?: string | null;
   cost?: string | number | null;
   estimatedCost?: string | number | null;
+};
+
+export type AddTripDayPlaceBody = {
+  placeId: string | number;
+  title?: string;
+  imageUrl?: string | null;
+  period?: string | null;
+  scheduledTime?: string | null;
+  estimatedCost?: string | number | null;
+  rating?: string | number | null;
+  sortOrder?: number | null;
 };
 
 export type TripDraftDay = {
@@ -297,10 +335,52 @@ function optionalNullableString(value: unknown) {
   return optionalString(value) ?? null;
 }
 
-function normalizePeriod(value: unknown) {
+function getTimeStartHour(value: unknown) {
+  const rawTime = String(value ?? '').split(/\s*[-–]\s*/)[0].trim();
+  const match = rawTime.match(/^(\d{1,2})(?::([0-5]\d))?\s*(AM|PM)?$/i);
+  if (!match) {
+    return null;
+  }
+
+  let hour = Number(match[1]);
+  const meridiem = match[3]?.toUpperCase();
+
+  if (meridiem) {
+    if (hour < 1 || hour > 12) {
+      return null;
+    }
+
+    if (meridiem === 'PM' && hour < 12) {
+      hour += 12;
+    }
+
+    if (meridiem === 'AM' && hour === 12) {
+      hour = 0;
+    }
+  } else if (hour > 23) {
+    return null;
+  }
+
+  return hour;
+}
+
+function normalizePeriod(value: unknown, time?: unknown) {
+  const hour = getTimeStartHour(time);
+  if (hour !== null) {
+    if (hour < 12) {
+      return 'MORNING';
+    }
+
+    if (hour < 18) {
+      return 'AFTERNOON';
+    }
+
+    return 'EVENING';
+  }
+
   const normalized = typeof value === 'string' ? value.trim().toUpperCase() : '';
   if (normalized === 'MORNING' || normalized === 'AFTERNOON' || normalized === 'EVENING' || normalized === 'NIGHT') {
-    return normalized;
+    return normalized === 'NIGHT' ? 'EVENING' : normalized;
   }
 
   if (normalized.includes('AFTERNOON') || normalized.includes('NOON')) {
@@ -324,6 +404,7 @@ function buildTripWritePayload(body: TripDraftPayload | Record<string, unknown>)
   const startDate = new Date(toIsoDate(trip.startDate, now) ?? now.toISOString());
   const endDate = new Date(toIsoDate(trip.endDate, startDate) ?? startDate.toISOString());
   const itineraryData = Array.isArray(trip.itineraryData) ? trip.itineraryData : [];
+  const coverImageUrl = optionalNullableString(trip.coverImageUrl ?? trip.image);
 
   return {
     title: String(trip.title || 'New Trip').trim(),
@@ -333,7 +414,8 @@ function buildTripWritePayload(body: TripDraftPayload | Record<string, unknown>)
     hotelPlaceId: optionalNullableString(trip.hotelPlaceId ?? trip.currentHotelPlaceId),
     startDate: startDate.toISOString(),
     endDate: endDate.toISOString(),
-    image: optionalNullableString(trip.image ?? trip.coverImageUrl),
+    image: coverImageUrl,
+    coverImageUrl,
     budget: toNumber(trip.budget),
     currency: trip.currency || 'VND',
     members: (trip.members || [])
@@ -354,7 +436,7 @@ function buildTripWritePayload(body: TripDraftPayload | Record<string, unknown>)
         placeId: optionalString(location.placeId),
         title: location.title || location.name || 'Selected location',
         imageUrl: optionalNullableString(location.imageUrl ?? location.image),
-        period: normalizePeriod(location.period),
+        period: normalizePeriod(location.period, location.scheduledTime ?? location.time),
         scheduledTime: location.scheduledTime ?? location.time ?? null,
         estimatedCost: toNumber(location.estimatedCost ?? location.cost),
         rating: toNumber(location.rating, 0),
@@ -438,6 +520,7 @@ export function mapApiTripToDraft(apiTrip: ApiTrip): TripDraftPayload {
     startDate,
     endDate,
     image,
+    coverImageUrl: apiTrip.coverImageUrl ?? image,
     hotel: apiTrip.currentHotel?.name ?? apiTrip.hotel ?? apiTrip.Hotel ?? 'Not selected',
     duration: apiTrip.durationDays ?? apiTrip.duration ?? apiTrip.Duration ?? 1,
     budget: apiTrip.budget ?? apiTrip.Budget ?? apiTrip.totalBudgetPerPerson ?? 0,
@@ -461,6 +544,28 @@ export function mapApiTripToDraft(apiTrip: ApiTrip): TripDraftPayload {
             id: String(activityData.id ?? locationData.id ?? locationData.Id ?? `${dayIndex + 1}-${activityIndex + 1}`),
             placeId: activityData.placeId ? String(activityData.placeId) : locationData.placeId ? String(locationData.placeId) : undefined,
             name: activityData.title ?? activityData.place?.name ?? locationData.name ?? locationData.Name ?? 'Selected location',
+            location:
+              activityData.location ??
+              activityData.region ??
+              activityData.place?.location ??
+              activityData.place?.region ??
+              locationData.location ??
+              locationData.Location ??
+              locationData.region ??
+              locationData.Located ??
+              'Location not set',
+            category:
+              activityData.category ??
+              activityData.place?.category ??
+              locationData.category ??
+              locationData.Category ??
+              undefined,
+            description:
+              activityData.description ??
+              activityData.place?.description ??
+              locationData.description ??
+              locationData.Description ??
+              undefined,
             rating: String(activityData.rating ?? activityData.place?.averageRating ?? locationData.rating ?? locationData.Rate ?? '0'),
             image:
               activityData.imageUrl ??
@@ -469,8 +574,23 @@ export function mapApiTripToDraft(apiTrip: ApiTrip): TripDraftPayload {
               locationData.Image ??
               defaultTripImage,
             time: formatActivityTime(activityData.period, activityData.scheduledTime ?? locationData.time ?? locationData.Time),
-            period: activityData.period ?? undefined,
-            cost: String(activityData.estimatedCost ?? locationData.cost ?? locationData.Cost ?? 0),
+            period: normalizePeriod(activityData.period, activityData.scheduledTime ?? locationData.time ?? locationData.Time),
+            cost: String(
+              activityData.estimatedCost ??
+              activityData.place?.estimatedCost ??
+              activityData.place?.cost ??
+              activityData.place?.price ??
+              activityData.place?.priceLevel ??
+              locationData.estimatedCost ??
+              locationData.EstimatedCost ??
+              locationData.cost ??
+              locationData.Cost ??
+              locationData.price ??
+              locationData.Price ??
+              locationData.priceLevel ??
+              locationData.PriceLevel ??
+              0
+            ),
           };
         }
       ),
@@ -508,6 +628,29 @@ export async function updateTrip(tripId: string, body: Record<string, unknown>):
 
 export async function deleteTrip(tripId: string): Promise<void> {
   await apiClient.delete<ApiOk<{ ok?: boolean }> | { ok?: boolean }>(`${TRIPS_PATH}/${tripId}`);
+}
+
+export async function addPlaceToTripDay(
+  tripId: string,
+  dayId: string,
+  body: AddTripDayPlaceBody
+): Promise<ApiTrip> {
+  const res = await apiClient.post<ApiOk<ApiTrip> | ApiTrip>(
+    `${TRIPS_PATH}/${tripId}/days/${dayId}/places`,
+    body
+  );
+  return unwrapTripPayload(res.data as ApiOk<ApiTrip> | ApiTrip);
+}
+
+export async function removePlaceFromTripDay(
+  tripId: string,
+  dayId: string,
+  placeId: string
+): Promise<ApiTrip> {
+  const res = await apiClient.delete<ApiOk<ApiTrip> | ApiTrip>(
+    `${TRIPS_PATH}/${tripId}/days/${dayId}/places/${placeId}`
+  );
+  return unwrapTripPayload(res.data as ApiOk<ApiTrip> | ApiTrip);
 }
 
 export async function upsertTripToBackend(

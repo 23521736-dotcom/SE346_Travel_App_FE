@@ -126,6 +126,7 @@ const styles = StyleSheet.create({
     color: colors.textPrimary,
     fontSize: 18,
     fontWeight: "800",
+    marginLeft: 10
   },
 
   sectionMeta: {
@@ -138,6 +139,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 10,
+    marginLeft: 10,
   },
 
   addPhotoTile: {
@@ -148,15 +150,26 @@ const styles = StyleSheet.create({
     borderStyle: "dashed",
     borderColor: colors.primary,
     backgroundColor: "#EFF9FE",
+    overflow: "hidden",
+  },
+
+  addPhotoContent: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
     alignItems: "center",
     justifyContent: "center",
     rowGap: 6,
+    paddingHorizontal: 6,
   },
 
   addPhotoText: {
     color: colors.primaryDark,
     fontSize: 12,
     fontWeight: "800",
+    lineHeight: 16,
+    textAlign: "center",
+    width: "100%",
   },
 
   photoTile: {

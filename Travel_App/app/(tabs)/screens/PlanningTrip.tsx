@@ -1,5 +1,5 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,8 +17,10 @@ import {
 } from '../../../lib/api/trips';
 import {
   formatTripDate,
+  getSchedulePeriodFromTime,
   normalizeTripDays,
   parseTripDate,
+  ScheduleLocation,
   TripData,
   removeTripDraft,
   upsertTripDraft,
@@ -41,6 +43,11 @@ const defaultTrip: TripData = {
 
 const fallbackAvatar =
   'https://i.pinimg.com/736x/4e/8b/d5/4e8bd59f0dc8b24bb4392615e7bc3b33.jpg';
+const LOCAL_TRIP_ID_PREFIX = 'local_trip_';
+
+function createLocalTripId() {
+  return `${LOCAL_TRIP_ID_PREFIX}${Date.now()}`;
+}
 
 function getDateRangeText(trip: TripData) {
   const startDate = parseTripDate(trip.startDate);
@@ -54,6 +61,11 @@ function getDateRangeText(trip: TripData) {
 }
 
 function getActivityPeriodLabel(period?: string, time?: string) {
+  const schedulePeriod = getSchedulePeriodFromTime(time, period);
+  if (schedulePeriod) {
+    return schedulePeriod;
+  }
+
   const normalizedPeriod = period?.trim().toLowerCase();
 
   if (normalizedPeriod?.includes('morning') || normalizedPeriod?.includes('sáng')) {
@@ -82,8 +94,8 @@ function getActivityPeriodLabel(period?: string, time?: string) {
     return 'MORNING';
   }
 
-  let hour = Number(hourMatch[1]);
-  const meridiem = hourMatch[2]?.toUpperCase();
+  let hour = Number(hourMatch![1]);
+  const meridiem = hourMatch![2]?.toUpperCase();
 
   if (meridiem === 'PM' && hour < 12) {
     hour += 12;
@@ -112,13 +124,92 @@ function formatBudget(value: number) {
   return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
 }
 
+function isUnsetTime(value?: string) {
+  const normalized = String(value || '').trim().toLowerCase();
+  return !normalized || normalized === 'time not set';
+}
+
+function parseSingleTimeMinutes(value: string) {
+  const match = value.trim().match(/^(\d{1,2})(?::([0-5]\d))?\s*(AM|PM)?$/i);
+  if (!match) {
+    return null;
+  }
+
+  let hour = Number(match[1]);
+  const minute = match[2] ? Number(match[2]) : 0;
+  const meridiem = match[3]?.toUpperCase();
+
+  if (meridiem) {
+    if (hour < 1 || hour > 12) {
+      return null;
+    }
+
+    if (meridiem === 'PM' && hour < 12) {
+      hour += 12;
+    }
+
+    if (meridiem === 'AM' && hour === 12) {
+      hour = 0;
+    }
+  } else if (hour > 23) {
+    return null;
+  }
+
+  return hour * 60 + minute;
+}
+
+function parseTimeRange(value?: string) {
+  if (isUnsetTime(value)) {
+    return null;
+  }
+
+  const parts = String(value).split(/\s*[-–]\s*/);
+  if (parts.length > 2) {
+    return null;
+  }
+
+  const startMinutes = parseSingleTimeMinutes(parts[0]);
+  const endMinutes = parts[1] ? parseSingleTimeMinutes(parts[1]) : undefined;
+  if (startMinutes === null || endMinutes === null) {
+    return null;
+  }
+
+  if (endMinutes !== undefined && endMinutes < startMinutes) {
+    return null;
+  }
+
+  return { startMinutes, endMinutes };
+}
+
+function getTimeSortValue(location: ScheduleLocation) {
+  const parsedTime = parseTimeRange(location.time);
+  return parsedTime?.startMinutes ?? Number.MAX_SAFE_INTEGER;
+}
+
+function sortLocationsByTime(locations: ScheduleLocation[]) {
+  return [...locations].sort((left, right) => getTimeSortValue(left) - getTimeSortValue(right));
+}
+
+function sortTripForPlanning(trip: TripData) {
+  const normalizedTrip = normalizeTripDays(trip);
+
+  return {
+    ...normalizedTrip,
+    itineraryData: normalizedTrip.itineraryData?.map((day) => ({
+      ...day,
+      locations: sortLocationsByTime(day.locations),
+    })),
+  };
+}
+
 export default function PlanningTrip({ navigation, route }: any) {
   const routeTrip = route?.params?.tripData as TripData | undefined;
   const routeTripId = route?.params?.tripId ? String(route.params.tripId) : undefined;
+  const localTripIdRef = useRef<string>(routeTrip?.id || createLocalTripId());
   const [expandedDays, setExpandedDays] = useState<number[]>([1]);
   const [isDeletingTrip, setIsDeletingTrip] = useState(false);
   const [isLoadingRouteTrip, setIsLoadingRouteTrip] = useState(Boolean(routeTripId && !routeTrip));
-  const [trip, setTrip] = useState<TripData>(normalizeTripDays({
+  const [trip, setTrip] = useState<TripData>(sortTripForPlanning({
     ...defaultTrip,
     ...routeTrip,
     title: routeTrip?.title || route?.params?.title || defaultTrip.title,
@@ -141,7 +232,7 @@ export default function PlanningTrip({ navigation, route }: any) {
         }
 
         const apiDraft = mapApiTripToDraft(apiTrip);
-        const draft = normalizeTripDays({
+        const draft = sortTripForPlanning({
           ...apiDraft,
           id: apiDraft.id === undefined ? undefined : String(apiDraft.id),
         } as TripData);
@@ -167,7 +258,7 @@ export default function PlanningTrip({ navigation, route }: any) {
 
   useEffect(() => {
     if (route?.params?.updatedTrip) {
-      const normalizedTrip = normalizeTripDays(route.params.updatedTrip);
+      const normalizedTrip = sortTripForPlanning(route.params.updatedTrip);
       setTrip(normalizedTrip);
       upsertTripDraft(normalizedTrip);
     }
@@ -175,7 +266,7 @@ export default function PlanningTrip({ navigation, route }: any) {
 
   useEffect(() => {
     if (routeTrip) {
-      setTrip((current) => normalizeTripDays({ ...current, ...routeTrip }));
+      setTrip((current) => sortTripForPlanning({ ...current, ...routeTrip }));
     }
   }, [routeTrip]);
 
@@ -212,7 +303,15 @@ export default function PlanningTrip({ navigation, route }: any) {
       return;
     }
 
-    navigation.navigate('EditingTrip', { tripData: trip });
+    const editableTrip = normalizeTripDays({
+      ...trip,
+      id: trip.id || localTripIdRef.current,
+    });
+
+    navigation.navigate('EditingTrip', {
+      tripData: editableTrip,
+      mode: trip.id ? route?.params?.mode : 'create',
+    });
   };
 
   const deleteCurrentTrip = async () => {
@@ -266,22 +365,10 @@ export default function PlanningTrip({ navigation, route }: any) {
           <Feather name="chevron-left" size={24} color="#333" />
         </TouchableOpacity>
 
-        {/* Tiêu đề ở giữa */}
         <Text style={styles.headerTitle}>Trip Planning</Text>
+        <View />
 
-        {/* View trống để cân bằng không gian, giữ cho text nằm chính giữa */}
-        <Pressable
-          onPress={openEditTrip}
-          disabled={isDeletingTrip || isLoadingRouteTrip}
-          style={({ pressed }) => [
-            styles.headerEditButton,
-            pressed && styles.buttonPressed,
-            (isDeletingTrip || isLoadingRouteTrip) && styles.actionButtonDisabled,
-          ]}
-        >
-          <Feather name="edit-2" size={16} color="#0EB4D3" />
-          <Text style={styles.headerEditText}>Edit</Text>
-        </Pressable>
+
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -388,14 +475,12 @@ export default function PlanningTrip({ navigation, route }: any) {
             {trip.itineraryData?.map((day, index) => {
               const dayId = index + 1;
               const isExpanded = expandedDays.includes(dayId);
+              const sortedLocations = sortLocationsByTime(day.locations);
               const totalCost = day.locations.reduce((sum, location) => {
                 const value = getCostValue(location.cost);
                 return sum + value;
               }, 0);
               const dayTitle = day.title || `Day ${dayId}`;
-              const collapsedTitle = day.locations.length
-                ? `${dayTitle}: ${day.locations[0].name}`
-                : dayTitle;
 
               return (
                 <View key={day.dayId} style={styles.timelineDay}>
@@ -411,7 +496,7 @@ export default function PlanningTrip({ navigation, route }: any) {
 
                     <View style={styles.dayTitleCol}>
                       <Text style={isExpanded ? styles.dayTitleExpanded : styles.dayTitleCollapsed}>
-                        {isExpanded ? dayTitle : collapsedTitle}
+                        {dayTitle}
                       </Text>
                       <Text style={styles.daySubtitle}>
                         {day.date} - {day.locations.length} Locations - VND: {formatBudget(totalCost)}
@@ -428,7 +513,7 @@ export default function PlanningTrip({ navigation, route }: any) {
                   {isExpanded ? (
                     <View style={styles.timelineWrap}>
                       <View style={styles.timelineLine} />
-                      {day.locations.map((loc, locIndex) => {
+                      {sortedLocations.map((loc) => {
                         const periodLabel = getActivityPeriodLabel(loc.period, loc.time);
 
                         return (
@@ -455,7 +540,7 @@ export default function PlanningTrip({ navigation, route }: any) {
                                   </View>
                                 </View>
                                 <Text numberOfLines={2} style={styles.timelineDescription}>
-                                  Peaceful place selected for this trip plan.
+                                  {loc.location || loc.description || 'Location not set'}
                                 </Text>
                                 <View style={styles.estimatePill}>
                                   <Text style={styles.estimateText}>VND: {formatBudget(getCostValue(loc.cost))}</Text>

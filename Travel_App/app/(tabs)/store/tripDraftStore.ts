@@ -9,6 +9,9 @@ export type ScheduleLocation = {
   id: string;
   placeId?: string;
   name: string;
+  location?: string;
+  category?: string;
+  description?: string;
   rating: string;
   image: string;
   time: string;
@@ -34,6 +37,7 @@ export type TripData = {
   startDate?: string;
   endDate?: string;
   image?: string;
+  coverImageUrl?: string;
   hotel: string;
   duration: number;
   budget: number;
@@ -45,6 +49,83 @@ export type TripData = {
 const tripDrafts: Record<string, TripData> = {};
 const listeners = new Set<(trip: TripData) => void>();
 const deleteListeners = new Set<(tripId: string) => void>();
+
+function normalizeSchedulePeriod(value?: string) {
+  const normalized = value?.trim().toUpperCase();
+
+  if (normalized === 'MORNING' || normalized?.includes('SANG') || normalized?.includes('SÁNG')) {
+    return 'MORNING';
+  }
+
+  if (
+    normalized === 'AFTERNOON' ||
+    normalized?.includes('NOON') ||
+    normalized?.includes('TRUA') ||
+    normalized?.includes('TRƯA') ||
+    normalized?.includes('CHIEU') ||
+    normalized?.includes('CHIỀU')
+  ) {
+    return 'AFTERNOON';
+  }
+
+  if (
+    normalized === 'EVENING' ||
+    normalized === 'NIGHT' ||
+    normalized?.includes('TOI') ||
+    normalized?.includes('TỐI')
+  ) {
+    return 'EVENING';
+  }
+
+  return undefined;
+}
+
+function getTimeStartHour(value?: string) {
+  const rawTime = String(value || '').split(/\s*[-–]\s*/)[0].trim();
+  const match = rawTime.match(/^(\d{1,2})(?::([0-5]\d))?\s*(AM|PM)?$/i);
+  if (!match) {
+    return null;
+  }
+
+  let hour = Number(match[1]);
+  const meridiem = match[3]?.toUpperCase();
+
+  if (meridiem) {
+    if (hour < 1 || hour > 12) {
+      return null;
+    }
+
+    if (meridiem === 'PM' && hour < 12) {
+      hour += 12;
+    }
+
+    if (meridiem === 'AM' && hour === 12) {
+      hour = 0;
+    }
+  } else if (hour > 23) {
+    return null;
+  }
+
+  return hour;
+}
+
+export function getSchedulePeriodFromTime(time?: string, fallbackPeriod?: string) {
+  const hour = getTimeStartHour(time);
+
+  if (hour !== null) {
+    if (hour < 12) {
+      return 'MORNING';
+    }
+
+    if (hour < 18) {
+      return 'AFTERNOON';
+    }
+
+    return 'EVENING';
+  }
+
+  return normalizeSchedulePeriod(fallbackPeriod) || 'MORNING';
+}
 
 export function formatTripDate(date: Date) {
   return date.toLocaleDateString('en-US', {
