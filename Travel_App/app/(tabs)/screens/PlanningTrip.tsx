@@ -11,6 +11,11 @@ import {
   UIManager, View
 } from 'react-native';
 import {
+  fetchTripById,
+  mapApiTripToDraft,
+  deleteTrip,
+} from '../../../lib/api/trips';
+import {
   formatTripDate,
   normalizeTripDays,
   parseTripDate,
@@ -19,7 +24,6 @@ import {
   upsertTripDraft,
 } from "../store/tripDraftStore";
 import { getApiErrorMessage } from '../../../lib/api/client';
-import { deleteTrip } from '../../../lib/api/trips';
 import styles from "./PlanningTrip.styles";
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -110,13 +114,56 @@ function formatBudget(value: number) {
 
 export default function PlanningTrip({ navigation, route }: any) {
   const routeTrip = route?.params?.tripData as TripData | undefined;
+  const routeTripId = route?.params?.tripId ? String(route.params.tripId) : undefined;
   const [expandedDays, setExpandedDays] = useState<number[]>([1]);
   const [isDeletingTrip, setIsDeletingTrip] = useState(false);
+  const [isLoadingRouteTrip, setIsLoadingRouteTrip] = useState(Boolean(routeTripId && !routeTrip));
   const [trip, setTrip] = useState<TripData>(normalizeTripDays({
     ...defaultTrip,
     ...routeTrip,
     title: routeTrip?.title || route?.params?.title || defaultTrip.title,
   }));
+
+  useEffect(() => {
+    if (!routeTripId || routeTrip) {
+      return;
+    }
+
+    let isMounted = true;
+    const tripId = routeTripId;
+    setIsLoadingRouteTrip(true);
+
+    async function loadTripFromRoute() {
+      try {
+        const apiTrip = await fetchTripById(tripId);
+        if (!isMounted) {
+          return;
+        }
+
+        const apiDraft = mapApiTripToDraft(apiTrip);
+        const draft = normalizeTripDays({
+          ...apiDraft,
+          id: apiDraft.id === undefined ? undefined : String(apiDraft.id),
+        } as TripData);
+        setTrip(draft);
+        upsertTripDraft(draft);
+      } catch (error) {
+        if (isMounted) {
+          Alert.alert('Cannot load trip', getApiErrorMessage(error));
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingRouteTrip(false);
+        }
+      }
+    }
+
+    loadTripFromRoute();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [routeTrip, routeTripId]);
 
   useEffect(() => {
     if (route?.params?.updatedTrip) {
@@ -225,11 +272,11 @@ export default function PlanningTrip({ navigation, route }: any) {
         {/* View trống để cân bằng không gian, giữ cho text nằm chính giữa */}
         <Pressable
           onPress={openEditTrip}
-          disabled={isDeletingTrip}
+          disabled={isDeletingTrip || isLoadingRouteTrip}
           style={({ pressed }) => [
             styles.headerEditButton,
             pressed && styles.buttonPressed,
-            isDeletingTrip && styles.actionButtonDisabled,
+            (isDeletingTrip || isLoadingRouteTrip) && styles.actionButtonDisabled,
           ]}
         >
           <Feather name="edit-2" size={16} color="#0EB4D3" />
@@ -238,17 +285,21 @@ export default function PlanningTrip({ navigation, route }: any) {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        {isLoadingRouteTrip ? (
+          <ActivityIndicator size="small" color="#0EB4D3" />
+        ) : null}
+
         <View style={styles.card}>
           <View style={styles.cardHeaderRow}>
             <Text style={styles.sectionTitle}>{trip.title}</Text>
             <View style={styles.actionButtons}>
               <Pressable
                 onPress={openEditTrip}
-                disabled={isDeletingTrip}
+                disabled={isDeletingTrip || isLoadingRouteTrip}
                 style={({ pressed }) => [
                   styles.actionPill,
                   pressed && styles.buttonPressed,
-                  isDeletingTrip && styles.actionButtonDisabled,
+                  (isDeletingTrip || isLoadingRouteTrip) && styles.actionButtonDisabled,
                 ]}
               >
                 <Feather name="edit-2" size={14} color="#0EB4D3" />
@@ -256,11 +307,11 @@ export default function PlanningTrip({ navigation, route }: any) {
               </Pressable>
               <Pressable
                 onPress={confirmDeleteTrip}
-                disabled={isDeletingTrip}
+                disabled={isDeletingTrip || isLoadingRouteTrip}
                 style={({ pressed }) => [
                   styles.actionPillDanger,
                   pressed && styles.buttonPressed,
-                  isDeletingTrip && styles.actionButtonDisabled,
+                  (isDeletingTrip || isLoadingRouteTrip) && styles.actionButtonDisabled,
                 ]}
               >
                 {isDeletingTrip ? (

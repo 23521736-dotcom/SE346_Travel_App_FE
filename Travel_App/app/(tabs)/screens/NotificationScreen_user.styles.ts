@@ -95,6 +95,43 @@ const styles = StyleSheet.create({
     rowGap: 14,
   },
 
+  statusWrap: {
+    minHeight: 120,
+    alignItems: "center",
+    justifyContent: "center",
+    rowGap: 10,
+  },
+
+  statusText: {
+    color: "#3E4850",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+  },
+
+  retryButton: {
+    minHeight: 34,
+    borderRadius: 17,
+    backgroundColor: colors.primary,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
+  retryButtonText: {
+    color: colors.white,
+    fontSize: 13,
+    fontWeight: "800",
+  },
+
+  emptyText: {
+    color: "#6E7881",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    paddingTop: 48,
+  },
+
   card: {
     borderRadius: 14,
     padding: 16,
@@ -103,6 +140,27 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 2,
+  },
+
+  swipeAction: {
+    width: 104,
+    marginLeft: 8,
+    borderRadius: 14,
+    overflow: "hidden",
+  },
+
+  deleteAction: {
+    flex: 1,
+    backgroundColor: colors.danger,
+    alignItems: "center",
+    justifyContent: "center",
+    rowGap: 4,
+  },
+
+  deleteActionText: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: "800",
   },
 
   readCard: {
@@ -119,7 +177,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 0.98 }],
   },
 
-  cardRow: {
+  cardPressArea: {
     flexDirection: "row",
     columnGap: 14,
   },
@@ -185,6 +243,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     columnGap: 8,
     marginTop: 12,
+    marginLeft: 62,
   },
 
   acceptButton: {

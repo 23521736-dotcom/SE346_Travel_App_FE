@@ -1,15 +1,27 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
-  GestureResponderEvent,
+  ActivityIndicator,
   Image,
   Pressable,
+  type GestureResponderEvent,
   SafeAreaView,
   ScrollView,
   Text,
   View,
 } from "react-native";
+import { Swipeable } from "react-native-gesture-handler";
+import { getApiErrorMessage } from "../../../lib/api/client";
+import {
+  acceptNotificationInvite,
+  deleteNotification,
+  declineNotificationInvite,
+  listNotifications,
+  markNotificationRead,
+  type ApiNotificationItem,
+  type NotificationTab,
+} from "../../../lib/api/notification";
 import { colors } from "../common/colors";
 import styles from "./NotificationScreen_user.styles";
 
@@ -17,13 +29,13 @@ type NotificationType =
   | "invited"
   | "upcoming"
   | "promotion"
-  | "like_comment"
-  | "update_diary";
+  | "like_comment";
 
 type IconTone = "primary" | "secondary" | "tertiary" | "danger";
 
 type BaseNotificationItem = {
   id: string;
+  notificationId?: string;
   type: NotificationType;
   targetId?: string;
   time: string;
@@ -32,7 +44,7 @@ type BaseNotificationItem = {
 
 type InvitedNotification = BaseNotificationItem & {
   type: "invited";
-  username: string; // người mời
+  username: string;
   itineraryName: string;
   days: number;
 };
@@ -55,18 +67,11 @@ type LikeCommentNotification = BaseNotificationItem & {
   placeName: string;
 };
 
-type UpdateDiaryNotification = BaseNotificationItem & {
-  type: "update_diary";
-  username: string; // người update
-  itineraryName: string;
-};
-
 type NotificationItem =
   | InvitedNotification
   | UpcomingNotification
   | PromotionNotification
-  | LikeCommentNotification
-  | UpdateDiaryNotification;
+  | LikeCommentNotification;
 
 type NotificationDisplay = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -82,53 +87,63 @@ type NotificationRoute = {
   params: Record<string, string | number | undefined>;
 };
 
-const notifications: NotificationItem[] = [
-  {
-    id: "invite-bali",
-    type: "invited",
-    targetId: "cmpsqyv8l00aju4906rljgnwv",
-    username: "Alex",
-    itineraryName: "Summer in Bali",
-    days: 7,
-    time: "2m ago",
-    unread: true,
-  },
-  {
-    id: "upcoming-da-nang",
-    type: "upcoming",
-    targetId: "cmpsqyx3h00bcu4905w58awck",
-    itineraryName: "Cuối tuần khám phá ẩm thực Việt",
-    days: 3,
-    time: "1h ago",
-  },
-  {
-    id: "promotion-hotel",
-    type: "promotion",
-    targetId: "cmpsqudtc0001u490mv4nv7vj",
-    placeName: "Seaside Hotel",
-    discount: 25,
-    time: "3h ago",
-    unread: true,
-    image:
-      "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=900&auto=format&fit=crop",
-  },
-  {
-    id: "review-like-hoi-an",
-    type: "like_comment",
-    targetId: "cmpsquh4x000gu490plmy1t9y",
-    placeName: "Hoi An Ancient Town",
-    time: "5h ago",
-  },
-  {
-    id: "diary-update-tokyo",
-    type: "update_diary",
-    targetId: "diary-tokyo-spring",
-    username: "Mina",
-    itineraryName: "Tokyo Spring Walk",
-    time: "1d ago",
-    unread: true,
-  },
+const SUPPORTED_TYPES: NotificationType[] = [
+  "invited",
+  "upcoming",
+  "promotion",
+  "like_comment",
 ];
+
+function isSupportedNotificationType(type: unknown): type is NotificationType {
+  return typeof type === "string" && SUPPORTED_TYPES.includes(type as NotificationType);
+}
+
+function mapApiNotification(item: ApiNotificationItem): NotificationItem | null {
+  if (!item.id || !isSupportedNotificationType(item.type)) {
+    return null;
+  }
+
+  const base = {
+    id: String(item.id),
+    notificationId: item.notificationId ? String(item.notificationId) : undefined,
+    type: item.type,
+    targetId: item.targetId ? String(item.targetId) : undefined,
+    time: item.time ?? "",
+    unread: Boolean(item.unread),
+  };
+
+  switch (item.type) {
+    case "invited":
+      return {
+        ...base,
+        type: "invited",
+        username: item.username ?? "Someone",
+        itineraryName: item.itineraryName ?? "this trip",
+        days: item.days ?? 0,
+      };
+    case "upcoming":
+      return {
+        ...base,
+        type: "upcoming",
+        itineraryName: item.itineraryName ?? "your trip",
+        days: item.days ?? 0,
+      };
+    case "promotion":
+      return {
+        ...base,
+        type: "promotion",
+        placeName: item.placeName ?? "this place",
+        discount: item.discount ?? 0,
+        image: item.image,
+      };
+    case "like_comment":
+      return {
+        ...base,
+        type: "like_comment",
+        placeName: item.placeName ?? "this place",
+      };
+  }
+}
 
 function getNotificationDisplay(item: NotificationItem): NotificationDisplay {
   switch (item.type) {
@@ -163,13 +178,6 @@ function getNotificationDisplay(item: NotificationItem): NotificationDisplay {
         iconTone: "danger",
         titleBeforeHighlight: "Someone liked your review",
         description: `See what they and others are saying about ${item.placeName}.`,
-      };
-    case "update_diary":
-      return {
-        icon: "book",
-        iconTone: "primary",
-        titleBeforeHighlight: `${item.username} updated the trip diary!`,
-        description: `Check out the latest memories added to "${item.itineraryName}".`,
       };
   }
 }
@@ -230,105 +238,182 @@ function getNotificationRoute(item: NotificationItem): NotificationRoute {
           placeName: item.placeName,
         },
       };
-    case "update_diary":
-      return {
-        name: "Trip Diary",
-        params: {
-          diaryId: targetId,
-          title: item.itineraryName,
-        },
-      };
   }
 }
 
 function NotificationCard({
   item,
+  onPress,
   onAccept,
   onDecline,
+  onDelete,
 }: {
   item: NotificationItem;
-  onAccept: (id: string) => void;
-  onDecline: (id: string) => void;
+  onPress: (item: NotificationItem) => void;
+  onAccept: (item: NotificationItem) => void;
+  onDecline: (item: NotificationItem) => void;
+  onDelete: (item: NotificationItem) => void;
 }) {
-  const navigation = useNavigation<any>();
   const display = getNotificationDisplay(item);
   const iconStyle = getIconStyles(display.iconTone);
 
-  const handleCardPress = () => {
-    const route = getNotificationRoute(item);
-    navigation.navigate(route.name, route.params);
-  };
-
   const handleAccept = (event: GestureResponderEvent) => {
-    event.stopPropagation(); //Nó chặn sự kiện bấm nút lan ra thẻ cha , vì mỗi card là 1 button 
-    onAccept(item.id);
+    event.stopPropagation();
+    onAccept(item);
   };
 
   const handleDecline = (event: GestureResponderEvent) => {
     event.stopPropagation();
-    onDecline(item.id);
+    onDecline(item);
   };
 
-  return (
-    <Pressable
-      onPress={handleCardPress}
-      style={({ pressed }) => [
-        styles.card,
-        item.unread ? styles.unreadCard : styles.readCard,
-        pressed && styles.cardPressed,
-      ]}
-    >
-      <View style={styles.cardRow}>
-        <View style={[styles.iconCircle, iconStyle.wrap]}>
-          <Ionicons name={display.icon} size={24} color={iconStyle.color} />
-        </View>
+  const renderRightActions = () => (
+    <View style={styles.swipeAction}>
+      <Pressable
+        style={styles.deleteAction}
+        onPress={(event) => {
+          event.stopPropagation();
+          onDelete(item);
+        }}
+      >
+        <Ionicons name="trash" size={20} color={colors.white} />
+        <Text style={styles.deleteActionText}>Delete</Text>
+      </Pressable>
+    </View>
+  );
 
-        <View style={styles.cardContent}>
-          <View style={styles.cardHeader}>
-            <Text style={styles.cardTitle}>
-              {display.titleBeforeHighlight}
-              {display.highlight ? (
-                <Text style={styles.highlightText}>{display.highlight}</Text>
-              ) : null}
-              {display.titleAfterHighlight ?? ""}
-            </Text>
-            <Text style={styles.timeText}>{item.time}</Text>
+  return (
+    <Swipeable renderRightActions={renderRightActions} overshootRight={false}>
+      <View
+        style={[
+          styles.card,
+          item.unread ? styles.unreadCard : styles.readCard,
+        ]}
+      >
+        <Pressable
+          onPress={() => onPress(item)}
+          style={({ pressed }) => [
+            styles.cardPressArea,
+            pressed && styles.cardPressed,
+          ]}
+        >
+          <View style={[styles.iconCircle, iconStyle.wrap]}>
+            <Ionicons name={display.icon} size={24} color={iconStyle.color} />
           </View>
 
-          <Text style={styles.descriptionText}>{display.description}</Text>
-
-          {item.type === "invited" ? (
-            <View style={styles.actionsRow}>
-              <Pressable style={styles.acceptButton} onPress={handleAccept}>
-                <Text style={styles.acceptButtonText}>Accept</Text>
-              </Pressable>
-              <Pressable style={styles.declineButton} onPress={handleDecline}>
-                <Text style={styles.declineButtonText}>Decline</Text>
-              </Pressable>
+          <View style={styles.cardContent}>
+            <View style={styles.cardHeader}>
+              <Text style={styles.cardTitle}>
+                {display.titleBeforeHighlight}
+                {display.highlight ? (
+                  <Text style={styles.highlightText}>{display.highlight}</Text>
+                ) : null}
+                {display.titleAfterHighlight ?? ""}
+              </Text>
+              <Text style={styles.timeText}>{item.time}</Text>
             </View>
-          ) : null}
 
-          {item.type === "promotion" && item.image ? (
-            <Image source={{ uri: item.image }} style={styles.previewImage} />
-          ) : null}
-        </View>
+            <Text style={styles.descriptionText}>{display.description}</Text>
+
+            {item.type === "promotion" && item.image ? (
+              <Image source={{ uri: item.image }} style={styles.previewImage} />
+            ) : null}
+          </View>
+        </Pressable>
+
+        {item.type === "invited" ? (
+          <View style={styles.actionsRow}>
+            <Pressable style={styles.acceptButton} onPress={handleAccept}>
+              <Text style={styles.acceptButtonText}>Accept</Text>
+            </Pressable>
+            <Pressable style={styles.declineButton} onPress={handleDecline}>
+              <Text style={styles.declineButtonText}>Decline</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
-    </Pressable>
+    </Swipeable>
   );
 }
 
 export default function NotificationScreenUser() {
-  const [activeTab, setActiveTab] = useState<"all" | "unread">("all");
-  const [items, setItems] = useState(notifications);
-  const visibleNotifications =
-    activeTab === "unread" ? items.filter((item) => item.unread) : items;
+  const navigation = useNavigation<any>();
+  const [activeTab, setActiveTab] = useState<NotificationTab>("all");
+  const [items, setItems] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
-  const handleAccept = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const fetchNotifications = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage("");
+
+    try {
+      const apiItems = await listNotifications(activeTab);
+      setItems(apiItems.map(mapApiNotification).filter((item): item is NotificationItem => Boolean(item)));
+    } catch (error) {
+      const message = getApiErrorMessage(error);
+      setErrorMessage(message);
+      console.warn("Failed to load notifications", error);
+    } finally {
+      setLoading(false);
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const handleCardPress = async (item: NotificationItem) => {
+    if (item.unread) {
+      try {
+        await markNotificationRead(item.id);
+        setItems((prev) =>
+          prev.map((notification) =>
+            notification.id === item.id ? { ...notification, unread: false } : notification
+          )
+        );
+      } catch (error) {
+        console.warn("Failed to mark notification as read", error);
+      }
+    }
+
+    const route = getNotificationRoute(item);
+    navigation.navigate(route.name, route.params);
   };
 
-  const handleDecline = (id: string) => {
-    setItems((prev) => prev.filter((item) => item.id !== id));
+  const handleAccept = async (item: NotificationItem) => {
+    if (item.type !== "invited") {
+      return;
+    }
+
+    try {
+      await acceptNotificationInvite(item.id);
+      setItems((prev) => prev.filter((notification) => notification.id !== item.id));
+    } catch (error) {
+      console.warn("Failed to accept trip invitation", error);
+    }
+  };
+
+  const handleDecline = async (item: NotificationItem) => {
+    if (item.type !== "invited") {
+      return;
+    }
+
+    try {
+      await declineNotificationInvite(item.id);
+      setItems((prev) => prev.filter((notification) => notification.id !== item.id));
+    } catch (error) {
+      console.warn("Failed to reject trip invitation", error);
+    }
+  };
+
+  const handleDelete = async (item: NotificationItem) => {
+    try {
+      await deleteNotification(item.id);
+      setItems((prev) => prev.filter((notification) => notification.id !== item.id));
+    } catch (error) {
+      console.warn("Failed to delete notification", error);
+    }
   };
 
   return (
@@ -381,14 +466,38 @@ export default function NotificationScreenUser() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.listContent}
       >
-        {visibleNotifications.map((item) => (
-          <NotificationCard
-            key={item.id}
-            item={item}
-            onAccept={handleAccept}
-            onDecline={handleDecline}
-          />
-        ))}
+        {loading ? (
+          <View style={styles.statusWrap}>
+            <ActivityIndicator size="small" color={colors.primary} />
+            <Text style={styles.statusText}>Loading notifications...</Text>
+          </View>
+        ) : null}
+
+        {!loading && errorMessage ? (
+          <View style={styles.statusWrap}>
+            <Text style={styles.statusText}>{errorMessage}</Text>
+            <Pressable style={styles.retryButton} onPress={fetchNotifications}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </Pressable>
+          </View>
+        ) : null}
+
+        {!loading && !errorMessage && items.length === 0 ? (
+          <Text style={styles.emptyText}>No notifications yet.</Text>
+        ) : null}
+
+        {!loading && !errorMessage
+          ? items.map((item) => (
+            <NotificationCard
+              key={item.id}
+              item={item}
+              onPress={handleCardPress}
+              onAccept={handleAccept}
+              onDecline={handleDecline}
+              onDelete={handleDelete}
+            />
+          ))
+          : null}
       </ScrollView>
     </SafeAreaView>
   );

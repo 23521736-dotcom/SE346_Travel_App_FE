@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Alert,
     Image,
@@ -11,40 +11,99 @@ import {
     View
 } from 'react-native';
 import { getApiErrorMessage } from '../../../lib/api/client';
-import { mapApiTripToDraft, upsertTripToBackend } from '../../../lib/api/trips';
+import {
+    type ApiTripMemberRecommendation,
+    fetchTripMemberRecommendations,
+    inviteTripMember,
+    mapApiTripToDraft,
+    removeTripInvitation,
+    upsertTripToBackend
+} from '../../../lib/api/trips';
+import { useAuth } from '../context/AuthContext';
 import { Collaborator, normalizeTripDays, TripData, upsertTripDraft } from '../store/tripDraftStore';
 import screenStyles from './AddCollaboratorsScreen.style';
 
-// --- MOCK DATA TỔNG HỢP ---
-const allUsers = [
-    { id: '1', name: 'Alex Rivera', email: 'alex.travels@cloud.com', type: 'add', avatar: 'https://randomuser.me/api/portraits/men/32.jpg', isRecent: false },
-    { id: '2', name: 'Sarah Chen', email: 's.chen@expedition.io', type: 'add', avatar: 'https://randomuser.me/api/portraits/women/44.jpg', isRecent: false },
-    { id: '3', name: 'Jordan', email: 'jordan@mail.com', type: 'add', online: true, avatar: 'https://randomuser.me/api/portraits/men/22.jpg', isRecent: true },
-    { id: '4', name: 'Elena', email: 'elena@mail.com', type: 'add', online: true, avatar: 'https://randomuser.me/api/portraits/women/31.jpg', isRecent: true },
-    { id: '5', name: 'Marcus', email: 'marcus@mail.com', type: 'add', online: false, avatar: 'https://randomuser.me/api/portraits/men/46.jpg', isRecent: true },
-    { id: '6', name: 'Sofia', email: 'sofia@mail.com', type: 'add', online: false, avatar: 'https://randomuser.me/api/portraits/women/68.jpg', isRecent: true },
-];
+function getPersonKey(person?: Pick<Collaborator, 'id' | 'userId'> | null) {
+    return person?.userId !== undefined && person.userId !== null ? String(person.userId) : String(person?.id ?? '');
+}
+
+function getTripOwnerId(trip?: TripData) {
+    return trip?.ownerId ?? trip?.createdBy ?? trip?.userId ?? trip?.owner?.userId ?? trip?.owner?.id;
+}
 
 export default function AddCollaboratorsScreen({ navigation, route }: any) {
     const trip = route?.params?.tripData as TripData | undefined;
+    const { user } = useAuth();
     const [searchQuery, setSearchQuery] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+    const [recommendations, setRecommendations] = useState<ApiTripMemberRecommendation[]>([]);
+    const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+    const [recommendationActionByUser, setRecommendationActionByUser] = useState<Record<number, boolean>>({});
+    const [selectedOwnerId, setSelectedOwnerId] = useState<string | undefined>(() => {
+        const ownerId = getTripOwnerId(trip);
+        return ownerId === undefined || ownerId === null ? undefined : String(ownerId);
+    });
 
-    // State lưu trữ danh sách ID các user đã được bấm Add/Invite
-    const [pendingUsers, setPendingUsers] = useState<Record<string, boolean>>(
-        () =>
-            trip?.members.reduce<Record<string, boolean>>((selected, member) => {
-                selected[member.id] = true;
-                return selected;
-            }, {}) || {}
-    );
+    const currentUserId = user?.id === undefined || user?.id === null ? undefined : String(user.id);
+    const originalOwnerId = getTripOwnerId(trip) === undefined ? undefined : String(getTripOwnerId(trip));
+    const tripOwnerId = selectedOwnerId ?? originalOwnerId;
+    const canManageTrip = Boolean(currentUserId) && (!originalOwnerId || originalOwnerId === currentUserId);
+    const tripId = trip?.id;
 
-    // Hàm chuyển đổi trạng thái Add <-> Cancel
-    const toggleUserAction = (userId: any) => {
-        setPendingUsers(prev => ({
-            ...prev,
-            [userId]: !prev[userId]
-        }));
+    useEffect(() => {
+        if (!tripId || !currentUserId) {
+            setRecommendations([]);
+            return;
+        }
+
+        let isActive = true;
+        const timeoutId = setTimeout(async () => {
+            setIsLoadingRecommendations(true);
+            try {
+                const nextRecommendations = await fetchTripMemberRecommendations(
+                    tripId,
+                    currentUserId,
+                    searchQuery
+                );
+
+                if (isActive) {
+                    setRecommendations(nextRecommendations);
+                }
+            } catch (error) {
+                if (isActive) {
+                    setRecommendations([]);
+                    Alert.alert('Unable to load users', getApiErrorMessage(error));
+                }
+            } finally {
+                if (isActive) {
+                    setIsLoadingRecommendations(false);
+                }
+            }
+        }, 300);
+
+        return () => {
+            isActive = false;
+            clearTimeout(timeoutId);
+        };
+    }, [currentUserId, searchQuery, tripId]);
+
+    const confirmTransferOwner = (member: Collaborator) => {
+        if (!canManageTrip || getPersonKey(member) === currentUserId) {
+            return;
+        }
+
+        Alert.alert(
+            'Change trip owner?',
+            `Transfer owner permission to ${member.name}?`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Confirm',
+                    style: 'destructive',
+                    onPress: () => setSelectedOwnerId(getPersonKey(member)),
+                },
+            ]
+        );
     };
 
     const saveCollaborators = async () => {
@@ -57,20 +116,12 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
             return;
         }
 
-        const selectedMockUsers: Collaborator[] = allUsers
-            .filter((user) => pendingUsers[user.id])
-            .map((user) => ({
-                id: user.id,
-                name: user.name,
-                avatar: user.avatar,
-            }));
-        const selectedMockUserIds = new Set(selectedMockUsers.map((member) => member.id));
-        const existingSelectedMembers = (trip.members || []).filter(
-            (member) => pendingUsers[member.id] && !selectedMockUserIds.has(member.id)
-        );
-        const members: Collaborator[] = [...existingSelectedMembers, ...selectedMockUsers];
+        const members: Collaborator[] = trip.members || [];
+        const newOwner = members.find((member) => getPersonKey(member) === selectedOwnerId) ?? trip.owner;
         const updatedTrip = {
             ...trip,
+            ownerId: selectedOwnerId ?? tripOwnerId,
+            owner: newOwner,
             members,
         };
 
@@ -84,6 +135,8 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
             const persistedTrip = normalizeTripDays({
                 ...updatedTrip,
                 ...mapApiTripToDraft(savedTrip),
+                ownerId: updatedTrip.ownerId,
+                owner: updatedTrip.owner,
             } as TripData);
 
             if (persistedTrip.id) {
@@ -96,41 +149,80 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
                 merge: true,
             });
         } catch (error) {
-            Alert.alert('Loi luu collaborators', getApiErrorMessage(error));
+            Alert.alert('Unable to save members', getApiErrorMessage(error));
         } finally {
             setIsSaving(false);
         }
     };
 
-    // Lọc dữ liệu dựa trên trạng thái
-    const suggestedUsers = allUsers.filter(u => !u.isRecent);
-    const recentCollaborators = allUsers.filter(u => u.isRecent);
+    const handleRecommendationAction = async (candidate: ApiTripMemberRecommendation) => {
+        if (!canManageTrip || !tripId || recommendationActionByUser[candidate.userId]) {
+            return;
+        }
 
-    // Lọc dữ liệu tìm kiếm
-    const searchResults = allUsers.filter(u =>
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+        setRecommendationActionByUser((prev) => ({ ...prev, [candidate.userId]: true }));
+        try {
+            if (candidate.isInvitedByUser) {
+                await removeTripInvitation(tripId, candidate.userId);
+            } else {
+                await inviteTripMember(tripId, candidate.userId);
+            }
 
-    // Component render nút Add/Cancel chung cho danh sách dọc
-    const renderActionButton = (user: any) => {
-        const isPending = pendingUsers[user.id];
+            setRecommendations((prev) =>
+                prev.map((item) =>
+                    item.userId === candidate.userId
+                        ? { ...item, isInvitedByUser: !candidate.isInvitedByUser }
+                        : item
+                )
+            );
+        } catch (error) {
+            Alert.alert(
+                candidate.isInvitedByUser ? 'Unable to remove invitation' : 'Unable to invite user',
+                getApiErrorMessage(error)
+            );
+        } finally {
+            setRecommendationActionByUser((prev) => ({ ...prev, [candidate.userId]: false }));
+        }
+    };
+
+    const renderAvatar = (avatarUrl: string | null, name: string, size: 'large' | 'medium' = 'large') => {
+        const avatarStyle = size === 'large' ? screenStyles.avatarLarge : screenStyles.avatarMedium;
+
+        if (avatarUrl) {
+            return <Image source={{ uri: avatarUrl }} style={avatarStyle} />;
+        }
+
+        return (
+            <View style={[avatarStyle, screenStyles.avatarFallback]}>
+                <Text style={screenStyles.avatarFallbackText}>{name.trim().charAt(0).toUpperCase() || '?'}</Text>
+            </View>
+        );
+    };
+
+    const renderInviteButton = (candidate: ApiTripMemberRecommendation) => {
+        if (!canManageTrip) {
+            return null;
+        }
+
+        const isInvited = candidate.isInvitedByUser;
+        const isActionLoading = Boolean(recommendationActionByUser[candidate.userId]);
 
         return (
             <TouchableOpacity
                 style={[
                     screenStyles.actionBtn,
-                    user.type === 'add' && !isPending ? screenStyles.actionBtnOutline : null,
-                    isPending ? screenStyles.cancelBtn : null
+                    isInvited ? screenStyles.cancelBtn : null,
+                    isActionLoading ? { opacity: 0.6 } : null
                 ]}
-                onPress={() => toggleUserAction(user.id)}
+                onPress={() => handleRecommendationAction(candidate)}
+                disabled={isActionLoading}
             >
+                <Feather name={isInvited ? 'user-minus' : 'user-plus'} size={15} color={isInvited ? '#707B81' : '#FFFFFF'} />
                 <Text style={[
                     screenStyles.actionBtnText,
-                    user.type === 'add' && !isPending ? screenStyles.actionBtnTextOutline : null,
-                    isPending ? screenStyles.cancelBtnText : null
+                    isInvited ? screenStyles.cancelBtnText : null
                 ]}>
-                    {isPending ? 'Cancel' : 'Add'}
+                    {isActionLoading ? '...' : isInvited ? 'Remove' : 'Invite'}
                 </Text>
             </TouchableOpacity>
         );
@@ -139,30 +231,26 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
     return (
         <SafeAreaView style={screenStyles.container}>
             <View style={screenStyles.scrollContent}>
-
-                {/* HEADER */}
                 <View style={screenStyles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()}>
                         <Feather name="arrow-left" size={24} color="#003A70" />
                     </TouchableOpacity>
                     <Text style={screenStyles.headerTitle}>Add Collaborators</Text>
-                    <TouchableOpacity onPress={saveCollaborators} disabled={isSaving}>
-                        <Text style={[screenStyles.saveText, isSaving && { opacity: 0.6 }]}> 
+                    <TouchableOpacity onPress={saveCollaborators} disabled={isSaving || !canManageTrip}>
+                        <Text style={[screenStyles.saveText, (isSaving || !canManageTrip) && { opacity: 0.45 }]}>
                             {isSaving ? 'Saving...' : 'Save'}
                         </Text>
                     </TouchableOpacity>
                 </View>
 
-                {/* SEARCH BAR */}
                 <View style={screenStyles.searchContainer}>
                     <Feather name="search" size={20} color="#8E9EAB" />
                     <TextInput
                         style={[screenStyles.searchInput, { outline: 'none' } as any]}
-                        placeholder="Search by name or email..."
+                        placeholder="Search by name..."
                         placeholderTextColor="#8E9EAB"
                         value={searchQuery}
                         onChangeText={setSearchQuery}
-
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -172,76 +260,65 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
                 </View>
 
                 <ScrollView showsVerticalScrollIndicator={false}>
-
-                    {/* NẾU ĐANG CÓ TỪ KHÓA TÌM KIẾM -> HIỂN THỊ KẾT QUẢ TÌM KIẾM */}
-                    {searchQuery.length > 0 ? (
-                        <View>
-                            <Text style={screenStyles.sectionTitle}>Search Results</Text>
-                            <View style={{ marginTop: 16 }}>
-                                {searchResults.length > 0 ? searchResults.map(user => (
-                                    <View key={user.id} style={screenStyles.card}>
-                                        <Image source={{ uri: user.avatar }} style={screenStyles.avatarLarge} />
-                                        <View style={screenStyles.cardTextContainer}>
-                                            <Text style={screenStyles.userName}>{user.name}</Text>
-                                            <Text style={screenStyles.userEmail}>{user.email}</Text>
-                                        </View>
-                                        {renderActionButton(user)}
-                                    </View>
-                                )) : (
-                                    <Text style={screenStyles.noResultText}>No users found.</Text>
-                                )}
-                            </View>
+                    <View>
+                        <View style={screenStyles.sectionHeader}>
+                            <Text style={screenStyles.sectionTitle}>
+                                {searchQuery.trim().length > 0 ? 'Search Results' : 'Suggested'}
+                            </Text>
                         </View>
-                    ) : (
-                        <View>
-                            {/* SUGGESTED SECTION */}
-                            <View style={screenStyles.sectionHeader}>
-                                <Text style={screenStyles.sectionTitle}>Suggested</Text>
-                            </View>
-                            {suggestedUsers.map((user) => (
-                                <View key={user.id} style={screenStyles.card}>
-                                    <Image source={{ uri: user.avatar }} style={screenStyles.avatarLarge} />
+
+                        {isLoadingRecommendations ? (
+                            <Text style={screenStyles.noResultText}>Loading users...</Text>
+                        ) : recommendations.length > 0 ? (
+                            recommendations.map((userItem) => (
+                                <View key={userItem.userId} style={screenStyles.card}>
+                                    {renderAvatar(userItem.avatarUrl, userItem.name)}
                                     <View style={screenStyles.cardTextContainer}>
-                                        <Text style={screenStyles.userName}>{user.name}</Text>
-                                        <Text style={screenStyles.userEmail}>{user.email}</Text>
+                                        <Text style={screenStyles.userName}>{userItem.name}</Text>
+                                        <Text style={screenStyles.userEmail}>
+                                            {userItem.commonTripCount} common trips
+                                        </Text>
                                     </View>
-                                    {renderActionButton(user)}
+                                    {renderInviteButton(userItem)}
                                 </View>
-                            ))}
+                            ))
+                        ) : (
+                            <Text style={screenStyles.noResultText}>No users found.</Text>
+                        )}
 
-                            {/* RECENT COLLABORATORS */}
-                            <View style={[screenStyles.sectionHeader, { marginTop: 24 }]}>
-                                <Text style={screenStyles.sectionTitle}>Recent Collaborators</Text>
-                            </View>
+                        <View style={[screenStyles.sectionHeader, { marginTop: 24 }]}>
+                            <Text style={screenStyles.sectionTitle}>Members</Text>
+                        </View>
 
+                        {(trip?.members || []).length > 0 ? (
                             <View style={screenStyles.recentRow}>
-                                {recentCollaborators.map((user) => {
-                                    const isPending = pendingUsers[user.id];
-                                    return (
-                                        <View key={user.id} style={screenStyles.recentItem}>
-                                            <View>
-                                                <Image source={{ uri: user.avatar }} style={screenStyles.avatarMedium} />
-                                                {user.online && <View style={screenStyles.onlineIndicator} />}
-                                            </View>
-                                            <Text style={screenStyles.recentName}>{user.name}</Text>
+                                {(trip?.members || []).map((member) => {
+                                    const canTransferOwner =
+                                        canManageTrip &&
+                                        getPersonKey(member) !== currentUserId &&
+                                        getPersonKey(member) !== tripOwnerId;
 
-                                            {/* DẤU ADD DƯỚI RECENT COLLABORATORS */}
-                                            <TouchableOpacity
-                                                style={[screenStyles.recentAddIconBtn, isPending && screenStyles.recentCancelIconBtn]}
-                                                onPress={() => toggleUserAction(user.id)}
-                                            >
-                                                <Feather name={isPending ? "x" : "plus"} size={14} color={isPending ? "#707B81" : "#FFFFFF"} />
-                                            </TouchableOpacity>
-                                        </View>
+                                    return (
+                                        <TouchableOpacity
+                                            key={`${member.id}-${member.userId ?? ''}`}
+                                            style={screenStyles.recentItem}
+                                            onPress={() => confirmTransferOwner(member)}
+                                            disabled={!canTransferOwner}
+                                        >
+                                            {renderAvatar(member.avatar || null, member.name, 'medium')}
+                                            <Text style={screenStyles.recentName} numberOfLines={1}>
+                                                {member.name}
+                                            </Text>
+                                        </TouchableOpacity>
                                     );
                                 })}
                             </View>
-                        </View>
-                    )}
-
+                        ) : (
+                            <Text style={screenStyles.noResultText}>No members yet.</Text>
+                        )}
+                    </View>
                 </ScrollView>
             </View>
         </SafeAreaView>
     );
 }
-

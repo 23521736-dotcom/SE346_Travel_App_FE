@@ -25,6 +25,10 @@ export type ItineraryDay = {
 
 export type TripData = {
   id?: string;
+  ownerId?: string | number;
+  createdBy?: string | number;
+  userId?: string | number;
+  owner?: Collaborator;
   title: string;
   date?: string;
   startDate?: string;

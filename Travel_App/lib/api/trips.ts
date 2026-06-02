@@ -1,11 +1,27 @@
 import type { ApiOk } from './types';
 import { apiClient } from './client';
+import type { ApiTripMember } from './tripMembers';
 
 const MY_TRIPS_PATH = '/users/me/trips';
 const TRIPS_PATH = '/trips';
 const TRIP_SAVE_TIMEOUT_MS = 60000;
 const defaultTripImage =
   'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=600&auto=format&fit=crop';
+
+export type {
+  ApiTripInvitation,
+  ApiTripMember,
+  ApiTripMemberRecommendation,
+  TripMemberStatus,
+} from './tripMembers';
+export {
+  fetchTripMemberRecommendations,
+  fetchMyTripInvitations,
+  inviteTripMember,
+  leaveTrip,
+  removeTripInvitation,
+  removeTripMember,
+} from './tripMembers';
 
 export type ApiTripLocation = {
   id?: string | number;
@@ -60,21 +76,17 @@ export type ApiTripDay = {
   Locations?: ApiTripLocation[];
 };
 
-export type ApiTripMember = {
-  id?: string | number;
-  userId?: string | number;
-  name?: string;
-  fullName?: string;
-  username?: string;
-  avatar?: string;
-  avatarUrl?: string;
-};
-
 export type ApiTrip = {
   id?: string | number;
   Id?: string | number;
   tripId?: string | number;
   trip_id?: string | number;
+  ownerId?: string | number;
+  OwnerId?: string | number;
+  createdBy?: string | number;
+  CreatedBy?: string | number;
+  userId?: string | number;
+  UserId?: string | number;
 
   title?: string;
   Title?: string;
@@ -146,6 +158,9 @@ export type TripDraftDay = {
 
 export type TripDraftPayload = {
   id?: string | number;
+  ownerId?: string | number;
+  createdBy?: string | number;
+  userId?: string | number;
   title?: string;
   date?: string;
   destination?: string | null;
@@ -189,6 +204,12 @@ function normalizeTripsResponse(data: TripsResponse | undefined): ApiTrip[] {
   return data?.trips ?? data?.items ?? data?.results ?? data?.rows ?? [];
 }
 
+function unwrapApiData<T>(payload: ApiOk<T> | T): T {
+  return !payload || typeof payload !== 'object' || !('data' in payload)
+    ? (payload as T)
+    : payload.data;
+}
+
 export async function fetchMyTrips(): Promise<ApiTrip[]> {
   let res;
   try {
@@ -206,10 +227,27 @@ export async function fetchMyTrips(): Promise<ApiTrip[]> {
 
 }
 
+export async function fetchTripById(tripId: string | number): Promise<ApiTrip> {
+  try {
+    const res = await apiClient.get<ApiOk<ApiTrip> | ApiTrip>(`${TRIPS_PATH}/${tripId}`);
+    return unwrapApiData(res.data as ApiOk<ApiTrip> | ApiTrip);
+  } catch (error: any) {
+    if (error?.response?.status !== 404) {
+      throw error;
+    }
+
+    const trips = await fetchMyTrips();
+    const trip = trips.find((item) => getApiTripId(item) === String(tripId));
+    if (!trip) {
+      throw error;
+    }
+
+    return trip;
+  }
+}
+
 function unwrapTripPayload(payload: ApiOk<ApiTrip> | ApiTrip) {
-  return Array.isArray(payload) || !payload || !('data' in payload)
-    ? (payload as ApiTrip)
-    : payload.data;
+  return unwrapApiData(payload);
 }
 
 export function getApiTripId(trip?: ApiTrip | null) {
@@ -289,6 +327,7 @@ function buildTripWritePayload(body: TripDraftPayload | Record<string, unknown>)
 
   return {
     title: String(trip.title || 'New Trip').trim(),
+    ownerId: optionalString(trip.ownerId),
     destination: trip.destination ?? null,
     hotel: optionalNullableString(trip.hotel ?? trip.currentHotelName),
     hotelPlaceId: optionalNullableString(trip.hotelPlaceId ?? trip.currentHotelPlaceId),
@@ -376,7 +415,11 @@ export function mapApiTripToDraft(apiTrip: ApiTrip): TripDraftPayload {
   const id = getApiTripId(apiTrip);
   const startDate = apiTrip.startDate ?? apiTrip.StartDate ?? apiTrip.start_date;
   const endDate = apiTrip.endDate ?? apiTrip.EndDate ?? apiTrip.end_date;
-  const members = apiTrip.members ?? apiTrip.Members ?? apiTrip.collaborators ?? [];
+  const allMembers = apiTrip.members ?? apiTrip.Members ?? apiTrip.collaborators ?? [];
+  const members = allMembers.filter((member) => {
+    const status = String(member.status ?? member.Status ?? 'ACTIVE').toUpperCase();
+    return status === 'ACTIVE';
+  });
   const itinerary = apiTrip.itineraryData ?? apiTrip.itinerary ?? apiTrip.days ?? [];
   const image =
     apiTrip.image ??
@@ -387,6 +430,9 @@ export function mapApiTripToDraft(apiTrip: ApiTrip): TripDraftPayload {
 
   return {
     id,
+    ownerId: apiTrip.ownerId ?? apiTrip.OwnerId,
+    createdBy: apiTrip.createdBy ?? apiTrip.CreatedBy,
+    userId: apiTrip.userId ?? apiTrip.UserId,
     title: apiTrip.title ?? apiTrip.Title ?? apiTrip.name ?? apiTrip.Name ?? apiTrip.destination ?? 'Untitled Trip',
     date: getTripDateRange(startDate, endDate, apiTrip.date ?? apiTrip.Date),
     startDate,
@@ -397,10 +443,10 @@ export function mapApiTripToDraft(apiTrip: ApiTrip): TripDraftPayload {
     budget: apiTrip.budget ?? apiTrip.Budget ?? apiTrip.totalBudgetPerPerson ?? 0,
     currency: apiTrip.currency ?? apiTrip.Currency ?? 'VND',
     members: members.map((member) => ({
-      id: String(member.id ?? member.userId ?? member.name ?? member.username ?? ''),
-      userId: member.userId,
-      name: member.name ?? member.fullName ?? member.username ?? 'Member',
-      avatar: member.avatar ?? member.avatarUrl ?? '',
+      id: String(member.user?.id ?? member.user?.userId ?? member.id ?? member.userId ?? member.name ?? member.username ?? ''),
+      userId: member.userId ?? member.user?.id ?? member.user?.userId,
+      name: member.name ?? member.fullName ?? member.username ?? member.user?.name ?? member.user?.fullName ?? member.user?.username ?? 'Member',
+      avatar: member.avatar ?? member.avatarUrl ?? member.user?.avatar ?? member.user?.avatarUrl ?? '',
     })),
     itineraryData: itinerary.map((day, dayIndex) => ({
       dayId: String(day.dayId ?? day.DayId ?? day.id ?? `day_${dayIndex + 1}`),

@@ -110,6 +110,16 @@ export const styles = StyleSheet.create({
         height: 50,
         borderRadius: 25,
     },
+    avatarFallback: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#E6EEF6',
+    },
+    avatarFallbackText: {
+        color: '#006699',
+        fontSize: 18,
+        fontWeight: '800',
+    },
     userName: {
         fontSize: 15,
         fontWeight: '700',
@@ -122,12 +132,15 @@ export const styles = StyleSheet.create({
     },
 
     actionBtn: {
+        flexDirection: 'row',
+        gap: 6,
         backgroundColor: '#006699',
         paddingVertical: 8,
-        paddingHorizontal: 20,
+        paddingHorizontal: 14,
         borderRadius: 20,
-        minWidth: 80,
+        minWidth: 92,
         alignItems: 'center',
+        justifyContent: 'center',
     },
     actionBtnText: {
         color: '#FFFFFF',
@@ -149,14 +162,47 @@ export const styles = StyleSheet.create({
     cancelBtnText: {
         color: '#707B81',
     },
+    ownerBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        backgroundColor: '#E6EEF6',
+        paddingVertical: 7,
+        paddingHorizontal: 10,
+        borderRadius: 16,
+    },
+    ownerBadgeText: {
+        color: '#006699',
+        fontSize: 12,
+        fontWeight: '700',
+    },
+    transferBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        backgroundColor: '#FFFFFF',
+        borderWidth: 1,
+        borderColor: '#B9D8EA',
+        paddingVertical: 7,
+        paddingHorizontal: 10,
+        borderRadius: 16,
+    },
+    transferBtnText: {
+        color: '#006699',
+        fontSize: 12,
+        fontWeight: '700',
+    },
 
     recentRow: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        justifyContent: 'flex-start',
+        gap: 10,
     },
     recentItem: {
         alignItems: 'center',
-        width: '23%',
+        width: '22%',
+        marginBottom: 16,
     },
     avatarMedium: {
         width: 60,
@@ -180,6 +226,7 @@ export const styles = StyleSheet.create({
         color: '#4A5568',
         fontWeight: '500',
         marginBottom: 6,
+        maxWidth: '100%',
     },
     recentAddIconBtn: {
         backgroundColor: '#006699',
