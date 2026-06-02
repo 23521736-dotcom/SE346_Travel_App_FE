@@ -51,6 +51,47 @@ function fromWebDateTimeValue(value: string) {
   return Number.isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString();
 }
 
+function formatDiaryDateTime(value?: string) {
+  const date = value ? new Date(value) : new Date();
+  const safeDate = Number.isNaN(date.getTime()) ? new Date() : date;
+  const day = String(safeDate.getDate()).padStart(2, "0");
+  const month = String(safeDate.getMonth() + 1).padStart(2, "0");
+  const year = safeDate.getFullYear();
+  const hours = String(safeDate.getHours()).padStart(2, "0");
+  const minutes = String(safeDate.getMinutes()).padStart(2, "0");
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+function parseDiaryDateTime(value: string) {
+  const trimmed = value.trim();
+  const match = trimmed.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{2})$/);
+  if (!match) {
+    return null;
+  }
+
+  const [, dayText, monthText, yearText, hourText, minuteText] = match;
+  const day = Number(dayText);
+  const month = Number(monthText);
+  const year = Number(yearText);
+  const hours = Number(hourText);
+  const minutes = Number(minuteText);
+  const date = new Date(year, month - 1, day, hours, minutes);
+
+  if (
+    Number.isNaN(date.getTime()) ||
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day ||
+    date.getHours() !== hours ||
+    date.getMinutes() !== minutes
+  ) {
+    return null;
+  }
+
+  return date.toISOString();
+}
+
 function normalizeInitialImages(imageUrls: string[] = []): LocalDiaryImage[] {
   return imageUrls.map((uri, index) => ({
     id: `remote-${index}-${uri}`,
@@ -65,7 +106,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
   const tripId = params.tripId ?? entry?.tripId;
   const [title, setTitle] = useState(entry?.title || "");
   const [locationName, setLocationName] = useState(entry?.locationName || "");
-  const [occurredAt, setOccurredAt] = useState(entry?.occurredAt || new Date().toISOString());
+  const [occurredAtInput, setOccurredAtInput] = useState(formatDiaryDateTime(entry?.occurredAt));
   const [content, setContent] = useState(entry?.content || "");
   const [selectedImages, setSelectedImages] = useState<LocalDiaryImage[]>(
     normalizeInitialImages(entry?.imageUrls)
@@ -126,6 +167,11 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
       Alert.alert("Thiếu nội dung", "Vui lòng nhập nội dung nhật ký.");
       return;
     }
+    const occurredAt = parseDiaryDateTime(occurredAtInput);
+    if (!occurredAt) {
+      Alert.alert("Sai định dạng thời gian", "Vui lòng nhập thời gian theo dạng dd/MM/yyyy HH:mm.");
+      return;
+    }
 
     setIsSaving(true);
     try {
@@ -172,15 +218,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
 
         <Text style={styles.headerTitle}>{screenTitle}</Text>
 
-        <Pressable
-          hitSlop={10}
-          onPress={handleSave}
-          disabled={!canSave}
-          style={[styles.saveHeaderButton, !canSave && styles.saveButtonDisabled]}
-        >
-          {isSaving ? <ActivityIndicator size="small" color={colors.white} /> : null}
-          <Text style={styles.saveHeaderText}>{isSaving ? "Saving" : "Save"}</Text>
-        </Pressable>
+        <View />
       </View>
 
       <ScrollView
@@ -223,8 +261,8 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
             <View style={styles.webDateInputWrap}>
               <WebDateTimeInput
                 type="datetime-local"
-                value={toWebDateTimeValue(occurredAt)}
-                onChange={(event: any) => setOccurredAt(fromWebDateTimeValue(event.currentTarget.value))}
+                value={toWebDateTimeValue(parseDiaryDateTime(occurredAtInput) || new Date().toISOString())}
+                onChange={(event: any) => setOccurredAtInput(formatDiaryDateTime(fromWebDateTimeValue(event.currentTarget.value)))}
                 style={{
                   width: "100%",
                   border: "none",
@@ -237,11 +275,12 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
             </View>
           ) : (
             <TextInput
-              value={occurredAt}
-              onChangeText={setOccurredAt}
-              placeholder="2026-08-01T20:30:00.000Z"
+                value={occurredAtInput}
+                onChangeText={setOccurredAtInput}
+                placeholder="01/08/2026 20:30"
               placeholderTextColor={colors.textMuted}
               style={styles.singleLineInput}
+                keyboardType="numbers-and-punctuation"
             />
           )}
         </View>
@@ -253,8 +292,10 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
 
         <View style={styles.photoGrid}>
           <Pressable style={styles.addPhotoTile} onPress={handlePickImage} disabled={isSaving}>
-            <Ionicons name="camera-outline" size={30} color={colors.primary} />
-            <Text style={styles.addPhotoText}>Thêm ảnh</Text>
+            <View style={styles.addPhotoContent}>
+              <Ionicons name="camera-outline" size={30} color={colors.primary} />
+              <Text style={styles.addPhotoText}>Thêm ảnh</Text>
+            </View>
           </Pressable>
 
           {selectedImages.map((item) => (

@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { getApiErrorMessage } from '../../../lib/api/client';
 import { fetchFavorites } from '../../../lib/api/favorites';
-import { fetchPlaces } from '../../../lib/api/places';
+import { fetchPlaces, fetchPromotionPlaceIds } from '../../../lib/api/places';
 import type { PlaceListItem } from '../../../lib/api/types';
 import { getPrimaryCategory, matchesPlaceCategory } from '../common/placeCategory';
 import {
@@ -38,6 +38,7 @@ type SavedPlaceItem = {
     description: string;
     imageUrl: string;
     cost: string;
+    hasPromotion?: boolean;
 };
 
 // const FILTERS = ['All', 'Festivals', 'Dining', 'Attractions'];
@@ -66,13 +67,14 @@ function getLocationSelectionId(location: ScheduleLocation) {
     return location.placeId || location.id;
 }
 
-function mapFavoritePlace(place: PlaceListItem): SavedPlaceItem {
+function mapFavoritePlace(place: PlaceListItem, promotionPlaceIds: Set<string> = new Set()): SavedPlaceItem {
     const category =
         normalizePlaceCategory(place.category || place.Category) ??
         getPrimaryCategory(place.Features || place.featureLabel);
+    const id = place.Id || place.id;
 
     return {
-        id: place.Id || place.id,
+        id,
         title: place.Name || place.name,
         category,
         location: place.Located || place.region,
@@ -81,6 +83,7 @@ function mapFavoritePlace(place: PlaceListItem): SavedPlaceItem {
         description: `${place.Name || place.name} in ${place.Located || place.region}`,
         imageUrl: place.image || place.coverImageUrl,
         cost: getPlaceCost(place),
+        hasPromotion: promotionPlaceIds.has(id),
     };
 }
 
@@ -118,7 +121,8 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
         setLoadingAllPlaces(true);
         try {
             const data = await fetchPlaces();
-            setAllPlaces(data.map(mapFavoritePlace));
+            const promotionIds = await fetchPromotionPlaceIds(data.map((place) => place.Id || place.id));
+            setAllPlaces(data.map((place) => mapFavoritePlace(place, promotionIds)));
         } catch (error) {
             Alert.alert('Loi', getApiErrorMessage(error));
             setAllPlaces([]);
@@ -131,7 +135,8 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
         setLoadingSavedPlaces(true);
         try {
             const data = await fetchFavorites();
-            setSavedPlaces(data.map(mapFavoritePlace));
+            const promotionIds = await fetchPromotionPlaceIds(data.map((place) => place.Id || place.id));
+            setSavedPlaces(data.map((place) => mapFavoritePlace(place, promotionIds)));
         } catch (error) {
             Alert.alert('Loi', getApiErrorMessage(error));
             setSavedPlaces([]);
@@ -231,6 +236,12 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                     <View style={styles.resultCategoryBadge}>
                         <Text style={styles.resultCategoryBadgeText}>{getPlaceCategoryLabel(item.category)}</Text>
                     </View>
+                    {item.hasPromotion && (
+                        <View style={styles.resultDealBadge}>
+                            <Ionicons name="pricetag" size={12} color="#FFFFFF" />
+                            <Text style={styles.resultDealBadgeText}>Deal</Text>
+                        </View>
+                    )}
                 </View>
 
                 <View style={styles.resultCardContent}>
@@ -416,7 +427,14 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
 
                     return (
                         <View key={place.id} style={styles.card}>
-                            <Image source={{ uri: place.imageUrl }} style={styles.cardImg} />
+                            <View style={styles.cardImageWrap}>
+                                <Image source={{ uri: place.imageUrl }} style={styles.cardImg} />
+                                {place.hasPromotion && (
+                                    <View style={styles.cardDealBadge}>
+                                        <Ionicons name="pricetag" size={11} color="#FFFFFF" />
+                                    </View>
+                                )}
+                            </View>
                             <View style={styles.cardInfo}>
                                 <Text numberOfLines={1} style={styles.placeName}>{place.title}</Text>
                                 <View style={styles.ratingRow}>

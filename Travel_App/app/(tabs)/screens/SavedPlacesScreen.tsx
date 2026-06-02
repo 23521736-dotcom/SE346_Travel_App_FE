@@ -12,6 +12,7 @@ import {
     View
 } from 'react-native';
 import { addFavorite, fetchFavorites, removeFavorite } from '../../../lib/api/favorites';
+import { fetchPromotionPlaceIds } from '../../../lib/api/places';
 import type { PlaceDetail, PlaceListItem } from '../../../lib/api/types';
 import { normalizePlaceCategory, PLACE_CATEGORIES } from '../../../lib/placeCategories';
 import { colors } from '../common/colors';
@@ -64,6 +65,7 @@ export default function SavedPlaces({ navigation }: any) {
     const [searchQuery, setSearchQuery] = useState('');
     const [places, setPlaces] = useState<PlaceListItem[]>([]);
     const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
+    const [promotionPlaceIds, setPromotionPlaceIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
     const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
 
@@ -73,10 +75,12 @@ export default function SavedPlaces({ navigation }: any) {
             const data = await fetchFavorites();
             setPlaces(data);
             setSavedIds(new Set(data.map((place) => place.Id)));
+            setPromotionPlaceIds(await fetchPromotionPlaceIds(data.map((place) => place.Id)));
         } catch (err) {
             Alert.alert('Loi', getApiErrorMessage(err));
             setPlaces([]);
             setSavedIds(new Set());
+            setPromotionPlaceIds(new Set());
         } finally {
             setLoading(false);
         }
@@ -200,6 +204,12 @@ export default function SavedPlaces({ navigation }: any) {
                             >
                                 <View style={styles.imageContainer}>
                                     <Image source={{ uri: place.image }} style={styles.cardImage} />
+                                    {promotionPlaceIds.has(place.Id) && (
+                                        <View style={styles.discountBadge}>
+                                            <Ionicons name="pricetag" size={12} color="#ffffff" />
+                                            <Text style={styles.discountText}>Deal</Text>
+                                        </View>
+                                    )}
                                     <TouchableOpacity
                                         style={styles.heartButton}
                                         disabled={savingIds.has(place.Id)}
