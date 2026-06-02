@@ -24,6 +24,9 @@ import WriteReviewScreen from './screens/WriteReviewScreen';
 import EditingTripScreen from './screens/EditingTripScreen';
 import AddLocationScreen_user from './screens/AddLocationScreen_user';
 import AddCollaboratorsScreen from './screens/AddCollaboratorsScreen';
+import DashboardFee_Admin from './screens/DashboardFee_Admin';
+import DashboardPlace_Admin from './screens/DashboardPlace_Admin';
+import DashboardUser_Admin from './screens/DashboardUser_Admin';
 
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -32,7 +35,6 @@ import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from './common/colors';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { forgotPassword } from '@/lib/api/auth';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -152,6 +154,46 @@ const OwnerTabs = () => {
   );
 };
 
+const AdminTabs = () => {
+  return (
+    <Tab.Navigator screenOptions={() => ({
+      tabBarActiveTintColor: '#00B4D8',
+      tabBarInactiveTintColor: 'gray'
+    })}>
+      <Tab.Screen
+        name="User"
+        component={DashboardUser_Admin}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Place"
+        component={DashboardPlace_Admin}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="location" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Fee"
+        component={DashboardFee_Admin}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="card" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
 
 const RootNavigation = () => {
   const { user, loading } = useAuth();
@@ -177,7 +219,23 @@ const RootNavigation = () => {
     );
   }
 
-  return user.role === 'admin' ? (
+  const role = user.role.toLowerCase();
+  const isAdmin = role === 'admin';
+  const isOwner = role === 'owner';
+
+  if (isAdmin) {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Main"
+          component={AdminTabs}
+          options={{ headerShown: false }}
+        />
+      </Stack.Navigator>
+    );
+  }
+
+  return isOwner ? (
     <Stack.Navigator>
       <Stack.Screen
         name="Main"

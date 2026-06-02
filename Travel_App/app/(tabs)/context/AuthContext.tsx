@@ -31,7 +31,7 @@ function mapUser(u: ApiUser): UserType {
   return {
     id: u.id,
     name: u.name,
-    role: u.role,
+    role: u.role.toLowerCase(),
     email: u.email,
     fullName: u.fullName,
     username: u.username,
