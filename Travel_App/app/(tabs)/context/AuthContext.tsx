@@ -30,7 +30,7 @@ function mapUser(u: ApiUser): UserType {
   return {
     id: u.id,
     name: u.name,
-    role: u.role,
+    role: u.role.toLowerCase(),
     email: u.email,
     fullName: u.fullName,
     username: u.username,
@@ -75,8 +75,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     fullName?: string,
     role?: RegisterRole
   ) => {
-    const { user: apiUser } = await authApi.register(email, password, fullName, role);
-    setUser(mapUser(apiUser));
+    await authApi.register(email, password, fullName, role);
   };
 
   const logout = async () => {

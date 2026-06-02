@@ -22,7 +22,7 @@ export default function RegisterScreen({ navigation }: any) {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
-    const [selectedRole, setSelectedRole] = useState<'traveler' | 'owner'>('traveler');
+    const [selectedRole, setSelectedRole] = useState<'TRAVELER' | 'OWNER'>('TRAVELER');
     const [submitting, setSubmitting] = useState(false);
     const { register } = useAuth();
 
@@ -37,6 +37,11 @@ export default function RegisterScreen({ navigation }: any) {
       return;
     }
 
+    if (password.length < 8) {
+      Alert.alert('Loi', 'Mat khau phai co it nhat 8 ky tu');
+      return;
+    }
+
     if (!isChecked) {
       Alert.alert('Loi', 'Vui long dong y dieu khoan su dung');
       return;
@@ -45,6 +50,7 @@ export default function RegisterScreen({ navigation }: any) {
     setSubmitting(true);
     try {
       await register(email.trim(), password, fullName.trim(), selectedRole);
+      navigation.replace('Login');
     } catch (err) {
       const msg = getApiErrorMessage(err);
       Alert.alert('Dang ky that bai', msg);
@@ -191,14 +197,14 @@ export default function RegisterScreen({ navigation }: any) {
                                 <Pressable
                                     style={[
                                         styles.roleCard,
-                                        selectedRole === 'traveler' && styles.roleCardActive,
+                                        selectedRole === 'TRAVELER' && styles.roleCardActive,
                                     ]}
-                                    onPress={() => setSelectedRole('traveler')}
+                                    onPress={() => setSelectedRole('TRAVELER')}
                                 >
                                     <Text
                                         style={[
                                             styles.roleName,
-                                            selectedRole === 'traveler' && styles.roleNameActive,
+                                            selectedRole === 'TRAVELER' && styles.roleNameActive,
                                         ]}
                                     >
                                         Traveler
@@ -211,14 +217,14 @@ export default function RegisterScreen({ navigation }: any) {
                                 <Pressable
                                     style={[
                                         styles.roleCard,
-                                        selectedRole === 'owner' && styles.roleCardActive,
+                                        selectedRole === 'OWNER' && styles.roleCardActive,
                                     ]}
-                                    onPress={() => setSelectedRole('owner')}
+                                    onPress={() => setSelectedRole('OWNER')}
                                 >
                                     <Text
                                         style={[
                                             styles.roleName,
-                                            selectedRole === 'owner' && styles.roleNameActive,
+                                            selectedRole === 'OWNER' && styles.roleNameActive,
                                         ]}
                                     >
                                         Place Owner

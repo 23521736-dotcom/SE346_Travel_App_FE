@@ -24,6 +24,9 @@ import SavedPlacesScreen from './screens/user/SavedPlacesScreen';
 import TripDiaryScreen from './screens/user/TripDiaryScreen';
 import ViewReviewsScreen from './screens/user/ViewReviewsScreen';
 import WriteReviewScreen from './screens/user/WriteReviewScreen';
+import DashboardFee_Admin from './screens/Admin/DashboardFee_Admin';
+import DashboardPlace_Admin from './screens/Admin/DashboardPlace_Admin';
+import DashboardUser_Admin from './screens/Admin/DashboardUser_Admin';
 
 import { Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
@@ -151,6 +154,46 @@ const OwnerTabs = () => {
   );
 };
 
+const AdminTabs = () => {
+  return (
+    <Tab.Navigator screenOptions={() => ({
+      tabBarActiveTintColor: '#00B4D8',
+      tabBarInactiveTintColor: 'gray'
+    })}>
+      <Tab.Screen
+        name="User"
+        component={DashboardUser_Admin}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="people" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Place"
+        component={DashboardPlace_Admin}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="location" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Fee"
+        component={DashboardFee_Admin}
+        options={{
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="card" size={size} color={color} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+};
+
 
 const RootNavigation = () => {
   const { user, loading } = useAuth();
@@ -176,7 +219,23 @@ const RootNavigation = () => {
     );
   }
 
-  return user.role === 'admin' ? (
+  const role = user.role.toLowerCase();
+  const isAdmin = role === 'admin';
+  const isOwner = role === 'owner';
+
+  if (isAdmin) {
+    return (
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Main"
+          component={AdminTabs}
+          options={{ headerShown: false }}
+        />
+      </Stack.Navigator>
+    );
+  }
+
+  return isOwner ? (
     <Stack.Navigator>
       <Stack.Screen
         name="Main"

@@ -9,7 +9,7 @@ export type ApiUser = {
   role: string;
 };
 
-export type RegisterRole = 'traveler' | 'owner';
+export type RegisterRole = "TRAVELER" | "OWNER";
 
 export type AuthResponse = {
   accessToken: string;

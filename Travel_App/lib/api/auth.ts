@@ -11,7 +11,7 @@ export async function register(
   email: string,
   password: string,
   fullName?: string,
-  role: RegisterRole = 'traveler'
+  role: RegisterRole = 'TRAVELER'
 ): Promise<AuthResponse> {
   const res = await apiClient.post<ApiOk<AuthResponse>>('/auth/register', {
     email,
@@ -19,7 +19,6 @@ export async function register(
     fullName,
     role,
   });
-  await setAccessToken(res.data.data.accessToken);
   return res.data.data;
 }
 
