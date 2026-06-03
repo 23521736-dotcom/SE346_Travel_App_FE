@@ -249,6 +249,16 @@ const RootNavigation = () => {
         options={{ headerShown: false }}
       />
       <Stack.Screen
+        name="All Reviews"
+        component={ViewReviewsScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
+        name="Write Review"
+        component={WriteReviewScreen}
+        options={{ headerShown: false }}
+      />
+      <Stack.Screen
         name="Log Out"
         component={LogoutScreen}
         options={{ headerShown: false }}

@@ -12,6 +12,7 @@ import {
   View,
 } from 'react-native';
 import type { DimensionValue } from 'react-native';
+import { Swipeable } from 'react-native-gesture-handler';
 import { getApiErrorMessage } from '@/lib/api/client';
 import {
   fetchOwnerDashboard,
@@ -69,6 +70,8 @@ function getChartMax(campaign: DashboardPromotionImpact | null): number {
     campaign.comments.after,
     campaign.saves.before,
     campaign.saves.after,
+    campaign.badReviews.before,
+    campaign.badReviews.after,
     0
   );
 
@@ -181,12 +184,65 @@ export default function DashboardScreen({ navigation }: any) {
   );
   const chartMax = useMemo(() => getChartMax(selectedCampaign), [selectedCampaign]);
   const chartTicks = useMemo(() => getChartTicks(chartMax), [chartMax]);
+  const renderChartGroup = (
+    label: string,
+    values: { before: number; after: number }
+  ) => (
+    <View style={styles.chartGroup}>
+      <View style={styles.barsRow}>
+        <View style={styles.barSlot}>
+          <Text style={styles.barValue}>{formatCount(values.before)}</Text>
+          <View
+            style={[
+              styles.bar,
+              styles.beforeBar,
+              { height: getBarHeight(values.before, chartMax) },
+            ]}
+          />
+        </View>
+        <View style={styles.barSlot}>
+          <Text style={styles.barValue}>{formatCount(values.after)}</Text>
+          <View
+            style={[
+              styles.bar,
+              styles.afterBar,
+              { height: getBarHeight(values.after, chartMax) },
+            ]}
+          />
+        </View>
+      </View>
+      <Text style={styles.chartLabel}>{label}</Text>
+    </View>
+  );
 
   const handleBack = () => {
     if (navigation?.canGoBack?.()) {
       navigation.goBack();
     }
   };
+
+  const openPlaceReviews = (place: OwnerDashboardData['places'][number]) => {
+    const params = { placeId: place.id, placeName: place.name };
+    const parentNavigation = navigation?.getParent?.();
+
+    if (parentNavigation?.navigate) {
+      parentNavigation.navigate('All Reviews', params);
+      return;
+    }
+
+    navigation?.navigate?.('All Reviews', params);
+  };
+
+  const renderReviewSwipeAction = (place: OwnerDashboardData['places'][number]) => (
+    <TouchableOpacity
+      activeOpacity={0.82}
+      onPress={() => openPlaceReviews(place)}
+      style={styles.swipeAction}
+    >
+      <Ionicons name="chatbubbles-outline" size={22} color="#ffffff" />
+      <Text style={styles.swipeActionText}>View reviews</Text>
+    </TouchableOpacity>
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -253,9 +309,7 @@ export default function DashboardScreen({ navigation }: any) {
               <Text style={styles.mutedText}>Compared with last month</Text>
             </View>
 
-            <View style={styles.statIcon}>
-              <Ionicons name="bookmark" size={24} color="#006591" />
-            </View>
+
           </View>
 
           <View style={styles.section}>
@@ -264,7 +318,6 @@ export default function DashboardScreen({ navigation }: any) {
                 <Text style={styles.sectionTitle}>
                   {selectedPlace?.name || selectedCampaign?.placeName || 'Promotion'} Impact
                 </Text>
-                <Ionicons name="information-circle-outline" size={22} color="#6e7881" />
               </View>
 
               {campaigns.length > 0 ? (
@@ -321,65 +374,9 @@ export default function DashboardScreen({ navigation }: any) {
                 </View>
 
                 <View style={styles.chartGroups}>
-                  <View style={styles.chartGroup}>
-                    <View style={styles.barsRow}>
-                      <View style={styles.barSlot}>
-                        <Text style={styles.barValue}>
-                          {formatCount(selectedCampaign.comments.before)}
-                        </Text>
-                        <View
-                          style={[
-                            styles.bar,
-                            styles.beforeBar,
-                            { height: getBarHeight(selectedCampaign.comments.before, chartMax) },
-                          ]}
-                        />
-                      </View>
-                      <View style={styles.barSlot}>
-                        <Text style={styles.barValue}>
-                          {formatCount(selectedCampaign.comments.after)}
-                        </Text>
-                        <View
-                          style={[
-                            styles.bar,
-                            styles.afterBar,
-                            { height: getBarHeight(selectedCampaign.comments.after, chartMax) },
-                          ]}
-                        />
-                      </View>
-                    </View>
-                    <Text style={styles.chartLabel}>Comments</Text>
-                  </View>
-
-                  <View style={styles.chartGroup}>
-                    <View style={styles.barsRow}>
-                      <View style={styles.barSlot}>
-                        <Text style={styles.barValue}>
-                          {formatCount(selectedCampaign.saves.before)}
-                        </Text>
-                        <View
-                          style={[
-                            styles.bar,
-                            styles.beforeBar,
-                            { height: getBarHeight(selectedCampaign.saves.before, chartMax) },
-                          ]}
-                        />
-                      </View>
-                      <View style={styles.barSlot}>
-                        <Text style={styles.barValue}>
-                          {formatCount(selectedCampaign.saves.after)}
-                        </Text>
-                        <View
-                          style={[
-                            styles.bar,
-                            styles.afterBar,
-                            { height: getBarHeight(selectedCampaign.saves.after, chartMax) },
-                          ]}
-                        />
-                      </View>
-                    </View>
-                    <Text style={styles.chartLabel}>Saves</Text>
-                  </View>
+                    {renderChartGroup('Comments', selectedCampaign.comments)}
+                    {renderChartGroup('Saves', selectedCampaign.saves)}
+                    {renderChartGroup('Bad Reviews', selectedCampaign.badReviews)}
                 </View>
               </View>
               </View>
@@ -397,65 +394,96 @@ export default function DashboardScreen({ navigation }: any) {
               const isSelected = place.id === selectedPlace?.id;
 
               return (
-                <TouchableOpacity
+                <Swipeable
                   key={place.id}
-                  activeOpacity={0.84}
-                  onPress={() => setSelectedPlaceId(place.id)}
-                  style={[
-                    styles.card,
-                    styles.placeCard,
-                    isSelected && styles.selectedPlaceCard,
-                  ]}
+                  friction={1.8}
+                  rightThreshold={36}
+                  overshootRight={false}
+                  renderRightActions={() => renderReviewSwipeAction(place)}
                 >
-                  {isSelected ? <View style={styles.selectedPlaceAccent} /> : null}
-                  <View style={styles.placeTopRow}>
-                    {place.imageUrl ? (
-                      <Image
-                        source={{ uri: place.imageUrl }}
-                        style={[styles.placeImage, isSelected && styles.selectedPlaceImage]}
-                      />
-                    ) : (
+                  <View
+                    style={[
+                      styles.card,
+                      styles.placeCard,
+                      isSelected && styles.selectedPlaceCard,
+                    ]}
+                  >
+                    {isSelected ? <View style={styles.selectedPlaceAccent} /> : null}
+                    <View style={styles.placeTopRow}>
+                      {place.imageUrl ? (
+                        <Image
+                          source={{ uri: place.imageUrl }}
+                          style={[styles.placeImage, isSelected && styles.selectedPlaceImage]}
+                        />
+                      ) : (
+                        <View
+                          style={[
+                            styles.placeImage,
+                            styles.placeImageFallback,
+                            isSelected && styles.selectedPlaceImage,
+                          ]}
+                        >
+                          <Ionicons name="image-outline" size={24} color="#6e7881" />
+                        </View>
+                      )}
+                      <TouchableOpacity
+                        activeOpacity={0.78}
+                        onPress={() => setSelectedPlaceId(place.id)}
+                        style={styles.placeInfo}
+                      >
+                        <Text
+                          style={[styles.placeTitle, isSelected && styles.selectedPlaceTitle]}
+                          numberOfLines={1}
+                        >
+                          {place.name}
+                        </Text>
+                        <Text style={styles.placeSubtitle} numberOfLines={1}>
+                          {formatRating(place.averageRating)} rating from {formatCount(place.ratingCount)} reviews
+                        </Text>
+                      </TouchableOpacity>
+                      {isSelected ? (
+                        <View style={styles.selectedPlaceBadge}>
+                          <Ionicons name="checkmark" size={16} color="#006591" />
+                        </View>
+                      ) : null}
+                    </View>
+
+                    <View style={[styles.metricRow, isSelected && styles.selectedMetricRow]}>
+                      <TouchableOpacity
+                        activeOpacity={0.74}
+                        onPress={() => setSelectedPlaceId(place.id)}
+                        style={[styles.metricItem, isSelected && styles.selectedMetricItem]}
+                      >
+                        <Text style={[styles.metricLabel, styles.metricLabelComment]}>Comments</Text>
+                        <Text style={[styles.metricValue, styles.metricValueComment]}>
+                          {formatCount(place.comments)}
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        activeOpacity={0.74}
+                        onPress={() => setSelectedPlaceId(place.id)}
+                        style={[styles.metricItem, isSelected && styles.selectedMetricItem]}
+                      >
+                        <Text style={[styles.metricLabel, styles.metricLabelSave]}>Saves</Text>
+                        <Text style={[styles.metricValue, styles.metricValueSave]}>
+                          {formatCount(place.saves)}
+                        </Text>
+                      </TouchableOpacity>
                       <View
                         style={[
-                          styles.placeImage,
-                          styles.placeImageFallback,
-                          isSelected && styles.selectedPlaceImage,
+                          styles.metricItem,
+                          styles.badReviewMetricItem,
+                          isSelected && styles.selectedMetricItem,
                         ]}
                       >
-                        <Ionicons name="image-outline" size={24} color="#6e7881" />
+                        <Text style={[styles.metricLabel, styles.metricLabelDanger]}>Bad Reviews</Text>
+                        <Text style={[styles.metricValue, styles.metricValueDanger]}>
+                          {formatCount(place.badReviews)}
+                        </Text>
                       </View>
-                    )}
-                    <View style={styles.placeInfo}>
-                      <Text
-                        style={[styles.placeTitle, isSelected && styles.selectedPlaceTitle]}
-                        numberOfLines={1}
-                      >
-                        {place.name}
-                      </Text>
-                      <Text style={styles.placeSubtitle} numberOfLines={1}>
-                        {formatRating(place.averageRating)} rating from {formatCount(place.ratingCount)} reviews
-                      </Text>
-                    </View>
-                    {isSelected ? (
-                      <View style={styles.selectedPlaceBadge}>
-                        <Ionicons name="checkmark" size={16} color="#006591" />
-                      </View>
-                    ) : null}
-                  </View>
-
-                  <View style={[styles.metricRow, isSelected && styles.selectedMetricRow]}>
-                    <View style={[styles.metricItem, isSelected && styles.selectedMetricItem]}>
-                      <Text style={styles.metricLabel}>Comments</Text>
-                      <Text style={styles.metricValue}>{formatCount(place.comments)}</Text>
-                    </View>
-                    <View style={[styles.metricItem, isSelected && styles.selectedMetricItem]}>
-                      <Text style={styles.metricLabel}>Saves</Text>
-                      <Text style={[styles.metricValue, styles.metricValuePrimary]}>
-                        {formatCount(place.saves)}
-                      </Text>
                     </View>
                   </View>
-                </TouchableOpacity>
+                </Swipeable>
               );
             }) : (
               <View style={[styles.card, styles.stateCard]}>

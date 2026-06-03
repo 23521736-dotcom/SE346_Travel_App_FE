@@ -14,6 +14,8 @@ const colors = {
   border: '#d3e4fe',
   borderMuted: '#bec8d2',
   success: '#00875A',
+  warning: '#f59e0b',
+  danger: '#dc2626',
 };
 
 const cardShadow = Platform.select({
@@ -246,7 +248,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'flex-end',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
   },
   chartGroup: {
     flex: 1,
@@ -259,7 +261,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    columnGap: 8,
+    columnGap: 6,
   },
   barSlot: {
     height: 172,
@@ -274,7 +276,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   bar: {
-    width: 36,
+    width: 28,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
   },
@@ -297,14 +299,33 @@ const styles = StyleSheet.create({
   },
   chartLabel: {
     marginTop: 10,
-    fontSize: 13,
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '700',
     color: colors.textSecondary,
+    textAlign: 'center',
   },
   placeCard: {
     padding: 16,
     marginBottom: 12,
     overflow: 'hidden',
+  },
+  swipeAction: {
+    width: 112,
+    marginBottom: 12,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    rowGap: 6,
+    backgroundColor: colors.danger,
+  },
+  swipeActionText: {
+    paddingHorizontal: 8,
+    fontSize: 12,
+    lineHeight: 16,
+    fontWeight: '800',
+    textAlign: 'center',
+    color: colors.surface,
   },
   selectedPlaceCard: {
     borderColor: 'rgba(0,101,145,0.1)',
@@ -399,6 +420,8 @@ const styles = StyleSheet.create({
   selectedMetricItem: {
     backgroundColor: 'rgba(255,255,255,0.72)',
   },
+  badReviewMetricItem: {
+  },
   metricLabel: {
     fontSize: 10,
     lineHeight: 14,
@@ -406,6 +429,15 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     letterSpacing: 0.5,
     textTransform: 'uppercase',
+  },
+  metricLabelComment: {
+    color: colors.success,
+  },
+  metricLabelSave: {
+    color: colors.warning,
+  },
+  metricLabelDanger: {
+    color: colors.danger,
   },
   metricValue: {
     marginTop: 2,
@@ -416,6 +448,15 @@ const styles = StyleSheet.create({
   },
   metricValuePrimary: {
     color: colors.primary,
+  },
+  metricValueComment: {
+    color: colors.success,
+  },
+  metricValueSave: {
+    color: colors.warning,
+  },
+  metricValueDanger: {
+    color: colors.danger,
   },
 });
 
