@@ -368,8 +368,6 @@ const RootNavigation = () => {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <RootNavigation />
-    </AuthProvider>
+    <RootNavigation />
   );
 }

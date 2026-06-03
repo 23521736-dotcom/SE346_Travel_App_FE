@@ -126,32 +126,7 @@ export const styles = StyleSheet.create({
   chipTextActive: {
     color: colors.textOnPrimary,
   },
-  // Map & Media
-  mapContainer: {
-    height: 120,
-    borderRadius: 12,
-    overflow: 'hidden',
-    marginBottom: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mapImage: {
-    ...StyleSheet.absoluteFillObject,
-    width: '100%',
-    height: '100%',
-  },
-  setPinButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: colors.surface,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-  },
+  // Media
   uploadBox: {
     borderWidth: 2,
     borderStyle: 'dashed',

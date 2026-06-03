@@ -389,22 +389,10 @@ const AddLocationScreen = ({ navigation, route }: any) => {
           />
         </View>
 
-        <Text style={styles.sectionTitle}>Location & Media</Text>
+        <Text style={styles.sectionTitle}>Images</Text>
         <View style={styles.card}>
-          {/* <Text style={styles.label}>Pin Location</Text>
-          <View style={styles.mapContainer}>
-            <Image
-              source={{ uri: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCT5oVzTfOwQWzcT6Atu7B0q--_Q46lzBnpoi5Ynl6t-jFeH_G0ddDJ2l3wkMx7ijFvl1pBfPloXeD3wytn487HTubcPPtWVbVWWuQ-2D9jjeeXK0dKYbyaevqcVY7kQUnaehCgek8p8BWfaGgYFfvwLvOEB5QeGLNemG6C-1uF3R7ApCE7cnP24Sdeb1Q34QTWc8DYR62RqIUpy6JVYpaFRVghXmCEopKS14rWn3x7KPZxnFl9mhPa4lCdGMLvf7rM3vlasLaSoo_c' }}
-              style={styles.mapImage}
-            />
-            <TouchableOpacity style={styles.setPinButton}>
-              <Ionicons name="location" size={18} color={colors.primary} />
-              <Text style={{ color: colors.primary, fontWeight: 'bold', marginLeft: 4 }}>Set Pin</Text>
-            </TouchableOpacity>
-          </View> */}
-
           <TouchableOpacity
-            style={[styles.uploadBox, { marginTop: 20 }]}
+            style={styles.uploadBox}
             onPress={handlePickCover}
             disabled={isUploading}
           >

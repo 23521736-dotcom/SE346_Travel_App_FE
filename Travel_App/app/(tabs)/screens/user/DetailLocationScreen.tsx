@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
 import { addFavorite, removeFavorite } from '../../../../lib/api/favorites';
 import { fetchPlaceDetail, fetchPlacePromotions } from '../../../../lib/api/places';
 import type { PlaceDetail } from '../../../../lib/api/types';
@@ -55,6 +55,60 @@ function getPromotionSchedule(promotion: PromotionItem) {
     };
 }
 
+function getDestinationLocation(place: PlaceDetail | null) {
+    if (!place) {
+        return null;
+    }
+
+    const anyPlace = place as any;
+    const latitude =
+        place.latitude ??
+        anyPlace.point?.lat ??
+        anyPlace.point?.latitude ??
+        anyPlace.geometry?.coordinates?.[1] ??
+        anyPlace.coords?.[1];
+    const longitude =
+        place.longitude ??
+        anyPlace.point?.lon ??
+        anyPlace.point?.lng ??
+        anyPlace.point?.longitude ??
+        anyPlace.geometry?.coordinates?.[0] ??
+        anyPlace.coords?.[0];
+
+    if (latitude == null || longitude == null) {
+        return null;
+    }
+
+    return {
+        latitude,
+        longitude,
+        name: place.Name || place.name,
+        address: place.Location,
+    };
+}
+
+function getGoogleMapsUrl(place: PlaceDetail | null, destinationLocation: ReturnType<typeof getDestinationLocation>) {
+    if (!place) {
+        return null;
+    }
+
+    const query = [place.Name, place.name, place.Location, destinationLocation?.name, destinationLocation?.address]
+        .map((item) => String(item || '').trim())
+        .filter(Boolean)
+        .filter((item, index, items) => items.indexOf(item) === index)
+        .join(', ');
+
+    if (!query) {
+        if (destinationLocation) {
+            return `https://www.google.com/maps/search/?api=1&query=${destinationLocation.latitude},${destinationLocation.longitude}`;
+        }
+        return null;
+    }
+
+    const encodedQuery = encodeURIComponent(query);
+    return `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
+}
+
 export default function DetailLocationScreen({ navigation, route }: any) {
     const placeId = route.params?.placeId as string | undefined;
     const fallbackPlace = route.params?.placeData as PlaceDetail | undefined;
@@ -91,6 +145,9 @@ export default function DetailLocationScreen({ navigation, route }: any) {
     useEffect(() => {
         loadPlace();
     }, [loadPlace]);
+
+    const destinationLocation = getDestinationLocation(place);
+    const googleMapsUrl = getGoogleMapsUrl(place, destinationLocation);
 
     useEffect(() => {
         setImageIndex(0);
@@ -276,6 +333,31 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                 {place.Location}
                             </Text>
                         </View>
+
+                        {googleMapsUrl && (
+                            <Pressable
+                                onPress={() => {
+                                    Linking.openURL(googleMapsUrl).catch((error) => {
+                                        console.error('Failed to open Google Maps', error);
+                                    });
+                                }}
+                                style={({ pressed }) => ({
+                                    flexDirection: 'row',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: pressed ? '#0A9AC0' : '#00B4D8',
+                                    paddingVertical: 14,
+                                    borderRadius: 12,
+                                    gap: 8,
+                                    marginTop: 12,
+                                })}
+                            >
+                                <Ionicons name="navigate" size={20} color="white" />
+                                <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>
+                                    Mở Google Maps
+                                </Text>
+                            </Pressable>
+                        )}
 
                         <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ borderRadius: 15 }}>
                             <View style={[styles.detailCard, { marginLeft: 3 }]}>
