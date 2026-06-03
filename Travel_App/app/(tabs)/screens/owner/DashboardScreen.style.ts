@@ -7,7 +7,7 @@ const colors = {
   background: '#f8f9ff',
   surface: '#ffffff',
   surfaceLow: '#eff4ff',
-  surfaceHigh: '#d3e4fe',
+  surfaceHigh: '#ceddf5',
   text: '#0b1c30',
   textSecondary: '#3e4850',
   textMuted: '#6e7881',
@@ -82,10 +82,11 @@ const styles = StyleSheet.create({
     paddingBottom: 112,
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.9)',
+    //backgroundColor: 'rgba(255,255,255,0.9)',
     borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.9)',
+    backgroundColor: '#FFFF',
+    // borderWidth: 1,
+    // borderColor: 'rgba(29, 8, 8, 0.9)',
     ...cardShadow,
   },
   statCard: {
@@ -328,9 +329,9 @@ const styles = StyleSheet.create({
     color: colors.surface,
   },
   selectedPlaceCard: {
-    borderColor: 'rgba(0,101,145,0.1)',
-    borderWidth: 1,
-    backgroundColor: 'rgba(0,101,145,0.06)',
+    // borderColor: 'rgba(0,101,145,0.1)',
+    // borderWidth: 1,
+    backgroundColor: colors.surfaceLow,
     ...Platform.select({
       ios: {
         shadowColor: colors.primaryBright,
@@ -349,7 +350,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     width: 4,
-    backgroundColor: colors.primaryBright,
+
+    backgroundColor: '#006591',
+    borderTopLeftRadius: 18,
+    borderBottomLeftRadius: 18,
   },
   placeTopRow: {
     flexDirection: 'row',
