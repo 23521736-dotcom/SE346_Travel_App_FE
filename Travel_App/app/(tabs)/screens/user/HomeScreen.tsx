@@ -23,6 +23,8 @@ import { planTrip } from '../../../../lib/api/ai';
 import type { PlaceListItem } from '../../../../lib/api/types';
 import { getApiErrorMessage } from '../../context/AuthContext';
 import { getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../../lib/placeCategories';
+import { fetchRecommendations } from '../../../../lib/api/recommendations';
+import type { RecommendationPlace } from '../../../../lib/api/recommendations';
 
 type Place = PlaceListItem;
 
@@ -135,6 +137,7 @@ export default function HomeScreen({ navigation }: any) {
     const [destination, setDestination] = useState('');
     const [budget, setBudget] = useState('');
     const [duration, setDuration] = useState('');
+    const [recommendations, setRecommendations] = useState<RecommendationPlace[]>([]);
 
     const loadPlaces = useCallback(async () => {
         setLoading(true);
@@ -157,6 +160,20 @@ export default function HomeScreen({ navigation }: any) {
     useEffect(() => {
         loadPlaces();
     }, [loadPlaces]);
+
+    // Load personalized recommendations
+    useEffect(() => {
+        const loadRecs = async () => {
+            try {
+                const data = await fetchRecommendations(5);
+                const topPicks = [...data.contentBased.slice(0, 2), ...data.tfidfSimilar.slice(0, 1), ...data.serendipity.slice(0, 2)];
+                setRecommendations(topPicks);
+            } catch {
+                // silent fail — recommendations are optional
+            }
+        };
+        loadRecs();
+    }, []);
 
     const filteredPlaces = places.filter(place => {
         const matchCategory = activeCategory === 'All' ? true : normalizePlaceCategory(place.category) === activeCategory;
@@ -269,13 +286,48 @@ export default function HomeScreen({ navigation }: any) {
                         </View>
                     </Pressable>
                 </View>
+                {/* Personalized Recommendations Section */}
+                {recommendations.length > 0 && (
+                    <View style={{ marginTop: 8, marginBottom: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, marginBottom: 8 }}>
+                            <Text style={{ fontWeight: '600', fontSize: 18 }}>
+                                Gợi ý cho bạn
+                            </Text>
+                            <Pressable onPress={() => navigation.navigate('Recommendations')}>
+                                <Text style={{ color: colors.primary, fontWeight: '500', fontSize: 13 }}>Xem tất cả</Text>
+                            </Pressable>
+                        </View>
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 10 }}>
+                            {recommendations.map((rec) => (
+                                <Pressable
+                                    key={rec.placeId}
+                                    style={{ width: 160, marginRight: 12, backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 }}
+                                    onPress={() => navigation.navigate('Detail Location', { placeId: rec.placeId })}
+                                >
+                                    <Image source={{ uri: rec.coverImageUrl }} style={{ width: '100%', height: 100 }} />
+                                    <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{rec.matchPercentage}%</Text>
+                                    </View>
+                                    <View style={{ padding: 8 }}>
+                                        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textPrimary }} numberOfLines={1}>{rec.name}</Text>
+                                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }} numberOfLines={1}>{rec.explanation}</Text>
+                                        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+                                            <Ionicons name="star" size={12} color="#FFB800" />
+                                            <Text style={{ fontSize: 11, marginLeft: 2, color: colors.textSecondary }}>{rec.averageRating.toFixed(1)}</Text>
+                                        </View>
+                                    </View>
+                                </Pressable>
+                            ))}
+                        </ScrollView>
+                    </View>
+                )}
                 <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
                     <Text style={{ flex: 1, fontWeight: '500', fontSize: 23 }}>
                         Popular this week
                     </Text>
                 </View>
             </View>
-    ), [activeCategory, aiLoading, searchQuery]);
+    ), [activeCategory, aiLoading, searchQuery, recommendations]);
 
     if (loading && places.length === 0) {
         return (
