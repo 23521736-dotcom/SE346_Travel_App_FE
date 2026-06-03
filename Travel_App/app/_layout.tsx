@@ -2,15 +2,20 @@ import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { FloatingChatbot } from '@/components/chatbot/FloatingChatbot';
+import { AuthProvider, useAuth } from './(tabs)/context/AuthContext';
 
 export const unstable_settings = {
   anchor: '(tabs)',
 };
 
-export default function RootLayout() {
+function RootLayoutContent() {
   const colorScheme = useColorScheme();
+  const { user } = useAuth();
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
@@ -18,6 +23,19 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
       <StatusBar style="auto" />
+      {user && <FloatingChatbot />}
     </ThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <AuthProvider>
+          <RootLayoutContent />
+        </AuthProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
