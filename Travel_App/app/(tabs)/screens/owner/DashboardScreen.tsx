@@ -436,19 +436,19 @@ export default function DashboardScreen({ navigation }: any) {
                         {formatRating(place.averageRating)} rating from {formatCount(place.ratingCount)} reviews
                       </Text>
                     </View>
-                    {isSelected ? (
+                    {/* {isSelected ? (
                       <View style={styles.selectedPlaceBadge}>
                         <Ionicons name="checkmark" size={16} color="#006591" />
                       </View>
-                    ) : null}
+                    ) : null} */}
                   </View>
 
-                  <View style={[styles.metricRow, isSelected && styles.selectedMetricRow]}>
-                    <View style={[styles.metricItem, isSelected && styles.selectedMetricItem]}>
+                  <View style={styles.metricRow}>
+                    <View style={styles.metricItem}>
                       <Text style={styles.metricLabel}>Comments</Text>
-                      <Text style={styles.metricValue}>{formatCount(place.comments)}</Text>
+                      <Text style={[styles.metricValue, styles.metricValuePrimary]}>{formatCount(place.comments)}</Text>
                     </View>
-                    <View style={[styles.metricItem, isSelected && styles.selectedMetricItem]}>
+                    <View style={styles.metricItem}>
                       <Text style={styles.metricLabel}>Saves</Text>
                       <Text style={[styles.metricValue, styles.metricValuePrimary]}>
                         {formatCount(place.saves)}
