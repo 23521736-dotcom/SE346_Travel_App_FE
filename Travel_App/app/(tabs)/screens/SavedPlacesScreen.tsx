@@ -39,6 +39,8 @@ function toPlaceDetail(place: PlaceListItem, isFavorite: boolean): PlaceDetail {
         Id: place.Id,
         Name: place.Name,
         Location: place.Located,
+        latitude: place.latitude ?? null,
+        longitude: place.longitude ?? null,
         Rate: place.Rate,
         NumberOfRate: place.NumberOfRate,
         Image: place.image,
