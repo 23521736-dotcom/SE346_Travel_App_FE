@@ -88,6 +88,19 @@ const styles = StyleSheet.create({
   emptyStateContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 50 },
   emptyStateText: { marginTop: 10, color: '#94a3b8', fontSize: 14, fontWeight: '500' },
 
+  statusBadge: {
+    position: 'absolute',
+    bottom: 8,
+    right: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+
 });
 
 export default styles;

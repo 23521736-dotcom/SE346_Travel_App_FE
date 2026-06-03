@@ -121,6 +121,9 @@ export type PlaceListItem = {
   Cost?: number | string | null;
   estimatedCost?: number | string | null;
   EstimatedCost?: number | string | null;
+  Status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  RejectionReason?: string | null;
+  ReviewedAt?: string | null;
 };
 
 export type PlaceReview = {

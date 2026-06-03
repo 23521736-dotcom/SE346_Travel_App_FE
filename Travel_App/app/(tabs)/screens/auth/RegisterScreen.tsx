@@ -11,10 +11,12 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import styles from './RegisterScreen.styles';
 
 export default function RegisterScreen({ navigation }: any) {
+    const nav = navigation ?? useNavigation<any>();
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [isCfPasswordVisible, setCfPasswordVisible] = useState(false);
     const [isChecked, setChecked] = useState(false);
@@ -50,7 +52,7 @@ export default function RegisterScreen({ navigation }: any) {
     setSubmitting(true);
     try {
       await register(email.trim(), password, fullName.trim(), selectedRole);
-      navigation.replace('Login');
+      nav.replace('Login');
     } catch (err) {
       const msg = getApiErrorMessage(err);
       Alert.alert('Dang ky that bai', msg);
@@ -247,7 +249,7 @@ export default function RegisterScreen({ navigation }: any) {
                         I agree to the{' '}
                         <Text
                             style={styles.linkText}
-                                onPress={() => navigation.navigate('Terms of Service')}>
+                                onPress={() => nav.navigate('Terms of Service')}>
                                 Terms of Service
                         </Text>
                     </Text>
@@ -291,7 +293,7 @@ export default function RegisterScreen({ navigation }: any) {
 
                         <Text style={styles.loginFooterText}>
                             Already have an account? {''}
-                            <Text style={styles.linkText} onPress={() => navigation.navigate("Login")}>
+                            <Text style={styles.linkText} onPress={() => nav.navigate("Login")}>
                                 Login
                             </Text>
                         </Text>

@@ -29,6 +29,30 @@ function getPlaceRate(place: OwnerPlace | OwnerPlaceDetail) {
   return typeof place.Rate === 'number' ? place.Rate : 0;
 }
 
+function getStatusBadge(place: OwnerPlace) {
+  const status = place.Status || 'PENDING';
+  switch (status) {
+    case 'APPROVED':
+      return (
+        <View style={[styles.statusBadge, { backgroundColor: '#bbf7d0' }]}>
+          <Text style={[styles.statusText, { color: '#14532d' }]}>Approved</Text>
+        </View>
+      );
+    case 'REJECTED':
+      return (
+        <View style={[styles.statusBadge, { backgroundColor: '#fecaca' }]}>
+          <Text style={[styles.statusText, { color: '#991b1b' }]}>Rejected</Text>
+        </View>
+      );
+    default:
+      return (
+        <View style={[styles.statusBadge, { backgroundColor: '#fef08a' }]}>
+          <Text style={[styles.statusText, { color: '#713f12' }]}>Pending</Text>
+        </View>
+      );
+  }
+}
+
 export default function OwnerManagementScreen({ navigation }: any) {
   const { user } = useAuth();
   const [activeFilter, setActiveFilter] = useState('All');
@@ -93,6 +117,7 @@ export default function OwnerManagementScreen({ navigation }: any) {
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryText}>{getPlaceCategoryLabel(getPlaceCategory(item))}</Text>
           </View>
+          {getStatusBadge(item)}
         </View>
 
         <View style={styles.cardBody}>
@@ -117,6 +142,16 @@ export default function OwnerManagementScreen({ navigation }: any) {
           </View>
 
         </View>
+        {item.Status === 'REJECTED' && item.RejectionReason && (
+          <View style={{ paddingHorizontal: 15, paddingBottom: 12 }}>
+            <View style={{ backgroundColor: '#fef2f2', padding: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
+              <Ionicons name="alert-circle-outline" size={14} color="#dc2626" style={{ marginTop: 1, marginRight: 6 }} />
+              <Text style={{ color: '#991b1b', fontSize: 12, flex: 1 }} numberOfLines={2}>
+                {item.RejectionReason}
+              </Text>
+            </View>
+          </View>
+        )}
       </TouchableOpacity>
     );
   };

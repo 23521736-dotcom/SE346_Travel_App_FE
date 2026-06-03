@@ -1,89 +1,83 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
+    ActivityIndicator,
+    Alert,
     Image,
     Modal,
     SafeAreaView,
     ScrollView,
     StatusBar,
     Text,
+    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 
 import { styles } from './DashboardPlace_Admin.style';
 import { useAuth } from '../../context/AuthContext';
+import {
+    fetchAdminPlaces,
+    approvePlace,
+    rejectPlace,
+    deleteAdminPlace,
+    type AdminPlace
+} from '../../../../lib/api/admin';
 
-interface ContentItem {
-    id: string;
-    status: 'active' | 'pending';
-    label: { text: string; color: string; bgColor: string };
-    imageUrl: string;
-    title: string;
-    username: string;
-    description: string;
+const STATUS_TAB_MAP: Record<string, 'APPROVED' | 'PENDING' | 'REJECTED' | undefined> = {
+    'Active Places': 'APPROVED',
+    'Pending Approval': 'PENDING',
+    'Rejected': 'REJECTED',
+};
+
+function getStatusLabel(status: string) {
+    switch (status) {
+        case 'APPROVED':
+            return { text: 'Verified Place', color: '#14532d', bgColor: '#bbf7d0' };
+        case 'PENDING':
+            return { text: 'Pending Approval', color: '#713f12', bgColor: '#fef08a' };
+        case 'REJECTED':
+            return { text: 'Rejected', color: '#991b1b', bgColor: '#fecaca' };
+        default:
+            return { text: 'Unknown', color: '#525252', bgColor: '#e4e4e7' };
+    }
 }
 
 export default function DashboardPlace_Admin({ navigation }: any) {
     const { logout } = useAuth();
 
-    const mockContentItems: ContentItem[] = [
-        // --- CÁC ĐỊA ĐIỂM ĐANG HOẠT ĐỘNG (ACTIVE) ---
-        {
-            id: '1',
-            status: 'active',
-            label: { text: 'Verified Place', color: '#14532d', bgColor: '#bbf7d0' },
-            imageUrl: 'https://images.unsplash.com/photo-1528127269322-539801943592?q=80&w=600&auto=format&fit=crop',
-            title: 'Hoi An Ancient Town',
-            username: '@vietnam_travel',
-            description: 'UNESCO World Heritage site. Known for its well-preserved Ancient Town, mixed cultural heritage, and beautiful lantern-lit nights.',
-        },
-        {
-            id: '2',
-            status: 'active',
-            label: { text: 'Verified Place', color: '#14532d', bgColor: '#bbf7d0' },
-            imageUrl: 'https://images.unsplash.com/photo-1557456170-0cf4f4d0d362?q=80&w=600&auto=format&fit=crop',
-            title: 'Ha Long Bay',
-            username: '@nature_explorer',
-            description: 'A popular travel destination in Quang Ninh Province, Vietnam. Features thousands of limestone karsts and isles in various shapes. This destination attracts millions of visitors every year who come to take boat cruises and explore the majestic caves.',
-        },
-        {
-            id: '3',
-            status: 'active',
-            label: { text: 'Verified Place', color: '#14532d', bgColor: '#bbf7d0' },
-            imageUrl: 'https://images.unsplash.com/photo-1581337204873-ef36aa186caa?q=80&w=600&auto=format&fit=crop',
-            title: 'Nha Trang City',
-            username: '@nature_explorer',
-            description: 'Known for its stunning beaches, diving sites and offshore islands. Nha Trang’s main beach is a long, curving stretch along Tran Phu Street backed by a promenade, hotels and seafood restaurants.',
-        },
-        // --- CÁC ĐỊA ĐIỂM CHỜ DUYỆT (PENDING) ---
-        {
-            id: '4',
-            status: 'pending',
-            label: { text: 'Pending Approval', color: '#713f12', bgColor: '#fef08a' },
-            imageUrl: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=600&auto=format&fit=crop',
-            title: 'The Azure Retreat',
-            username: '@retreat_official',
-            description: 'New destination submission. Detailed amenities include infinity pool, private beach access, and organic farm-to-table dining. Requires verification of business license and environmental safety checks before it can be listed publicly on our platform.',
-        },
-        {
-            id: '5',
-            status: 'pending',
-            label: { text: 'Pending Approval', color: '#713f12', bgColor: '#fef08a' },
-            imageUrl: 'https://images.unsplash.com/photo-1596796338561-bd80e64f895c?q=80&w=600&auto=format&fit=crop',
-            title: 'Mu Cang Chai Terraces',
-            username: '@wander_lust',
-            description: 'Breathtaking rice terraces carved into the mountains. Best time to visit is during the harvest season in September and October.',
-        },
-    ];
-
-    const tabs = ['Active Places', 'Pending Approval'];
+    const tabs = ['Active Places', 'Pending Approval', 'Rejected'];
 
     const [activeTab, setActiveTab] = useState<string>('Active Places');
-    const [activeNavItem, setActiveNavItem] = useState('Content');
-    const navItems = ['Users', 'Content', 'Alerts', 'Profile'];
-
+    const [places, setPlaces] = useState<AdminPlace[]>([]);
+    const [loading, setLoading] = useState(true);
     const [expandedDescIds, setExpandedDescIds] = useState<string[]>([]);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+    // Rejection reason modal
+    const [rejectModalPlaceId, setRejectModalPlaceId] = useState<string | null>(null);
+    const [rejectionReason, setRejectionReason] = useState('');
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const loadPlaces = useCallback(async () => {
+        try {
+            setLoading(true);
+            const statusFilter = STATUS_TAB_MAP[activeTab];
+            const response = await fetchAdminPlaces({ status: statusFilter });
+            setPlaces(response.items);
+        } catch (err: any) {
+            Alert.alert('Error', err?.message || 'Failed to load places');
+            setPlaces([]);
+        } finally {
+            setLoading(false);
+        }
+    }, [activeTab]);
+
+    useFocusEffect(
+        useCallback(() => {
+            loadPlaces();
+        }, [loadPlaces])
+    );
 
     const toggleDescription = (id: string) => {
         if (expandedDescIds.includes(id)) {
@@ -93,11 +87,65 @@ export default function DashboardPlace_Admin({ navigation }: any) {
         }
     };
 
-    const displayedItems = mockContentItems.filter((item) => {
-        if (activeTab === 'Active Places') return item.status === 'active';
-        if (activeTab === 'Pending Approval') return item.status === 'pending';
-        return true;
-    });
+    const handleApprove = async (placeId: string) => {
+        try {
+            setActionLoading(true);
+            await approvePlace(placeId);
+            Alert.alert('Success', 'Place has been approved and is now visible to travelers.');
+            loadPlaces();
+        } catch (err: any) {
+            Alert.alert('Error', err?.message || 'Failed to approve place');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleRejectPress = (placeId: string) => {
+        setRejectionReason('');
+        setRejectModalPlaceId(placeId);
+    };
+
+    const handleRejectConfirm = async () => {
+        if (!rejectModalPlaceId) return;
+        try {
+            setActionLoading(true);
+            await rejectPlace(rejectModalPlaceId, rejectionReason.trim() || undefined);
+            Alert.alert('Success', 'Place has been rejected.');
+            setRejectModalPlaceId(null);
+            setRejectionReason('');
+            loadPlaces();
+        } catch (err: any) {
+            Alert.alert('Error', err?.message || 'Failed to reject place');
+        } finally {
+            setActionLoading(false);
+        }
+    };
+
+    const handleDelete = (placeId: string, placeName: string) => {
+        Alert.alert(
+            'Delete Place',
+            `Are you sure you want to delete "${placeName}"? This action cannot be undone.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setActionLoading(true);
+                            await deleteAdminPlace(placeId);
+                            Alert.alert('Success', 'Place has been deleted.');
+                            loadPlaces();
+                        } catch (err: any) {
+                            Alert.alert('Error', err?.message || 'Failed to delete place');
+                        } finally {
+                            setActionLoading(false);
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -128,78 +176,130 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                         ))}
                     </View>
 
-                    <ScrollView
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={styles.scrollContent}
-                    >
-                        {displayedItems.map((item) => {
-                            const isExpanded = expandedDescIds.includes(item.id);
+                    {loading ? (
+                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                            <ActivityIndicator size="large" color="#0284c7" />
+                            <Text style={{ marginTop: 12, color: '#71717a' }}>Loading places...</Text>
+                        </View>
+                    ) : (
+                        <ScrollView
+                            showsVerticalScrollIndicator={false}
+                            contentContainerStyle={styles.scrollContent}
+                            refreshing={loading}
+                            onRefresh={loadPlaces}
+                        >
+                            {places.map((item) => {
+                                const isExpanded = expandedDescIds.includes(item.Id);
+                                const label = getStatusLabel(item.Status);
 
-                            return (
-                                <View key={item.id} style={styles.card}>
-                                    <TouchableOpacity
-                                        style={styles.imageContainer}
-                                        activeOpacity={0.9}
-                                        onPress={() => setPreviewImage(item.imageUrl)}
-                                    >
-                                        <Image source={{ uri: item.imageUrl }} style={styles.cardImage} />
-                                        <View style={[styles.cardLabel, { backgroundColor: item.label.bgColor }]}>
-                                            <Text style={[styles.cardLabelText, { color: item.label.color }]}>
-                                                {item.label.text}
+                                return (
+                                    <View key={item.Id} style={styles.card}>
+                                        <TouchableOpacity
+                                            style={styles.imageContainer}
+                                            activeOpacity={0.9}
+                                            onPress={() => setPreviewImage(item.CoverImageUrl)}
+                                        >
+                                            <Image source={{ uri: item.CoverImageUrl }} style={styles.cardImage} />
+                                            <View style={[styles.cardLabel, { backgroundColor: label.bgColor }]}>
+                                                <Text style={[styles.cardLabelText, { color: label.color }]}>
+                                                    {label.text}
+                                                </Text>
+                                            </View>
+                                            <View style={styles.zoomIconContainer}>
+                                                <Text style={styles.zoomIcon}>🔍</Text>
+                                            </View>
+                                        </TouchableOpacity>
+
+                                        <Text style={styles.cardTitle}>{item.Name}</Text>
+                                        <View style={styles.userRow}>
+                                            <View style={styles.userAvatarMock} />
+                                            <Text style={styles.userName}>
+                                                {item.Owner ? `@${item.Owner.Name}` : 'Unknown Owner'}
                                             </Text>
                                         </View>
-                                        <View style={styles.zoomIconContainer}>
-                                            <Text style={styles.zoomIcon}>🔍</Text>
-                                        </View>
-                                    </TouchableOpacity>
 
-                                    <Text style={styles.cardTitle}>{item.title}</Text>
-                                    <View style={styles.userRow}>
-                                        <View style={styles.userAvatarMock} />
-                                        <Text style={styles.userName}>{item.username}</Text>
-                                    </View>
-
-                                    <Text
-                                        style={styles.cardDesc}
-                                        numberOfLines={isExpanded ? undefined : 3}
-                                    >
-                                        “{item.description}”
-                                    </Text>
-
-                                    <TouchableOpacity onPress={() => toggleDescription(item.id)}>
-                                        <Text style={styles.readMoreBtn}>
-                                            {isExpanded ? 'Show less' : 'Read more'}
-                                        </Text>
-                                    </TouchableOpacity>
-
-                                    <View style={styles.actionRow}>
-                                        {item.status === 'active' ? (
-                                            <TouchableOpacity style={[styles.actionBtn, styles.btnDelete]}>
-                                                <Text style={styles.navIconMock}>🗑️ </Text>
-                                                <Text style={styles.btnDeleteText}>Delete Place</Text>
-                                            </TouchableOpacity>
-                                        ) : (
+                                        {item.About ? (
                                             <>
-                                                <TouchableOpacity style={[styles.actionBtn, styles.btnApprove]}>
-                                                    <Text style={styles.btnApproveText}>Approve</Text>
-                                                </TouchableOpacity>
-                                                <TouchableOpacity style={[styles.actionBtn, styles.btnReject]}>
-                                                    <Text style={styles.btnRejectText}>Reject</Text>
+                                                <Text
+                                                    style={styles.cardDesc}
+                                                    numberOfLines={isExpanded ? undefined : 3}
+                                                >
+                                                    {item.About}
+                                                </Text>
+                                                <TouchableOpacity onPress={() => toggleDescription(item.Id)}>
+                                                    <Text style={styles.readMoreBtn}>
+                                                        {isExpanded ? 'Show less' : 'Read more'}
+                                                    </Text>
                                                 </TouchableOpacity>
                                             </>
-                                        )}
-                                    </View>
-                                </View>
-                            );
-                        })}
+                                        ) : null}
 
-                        {displayedItems.length === 0 && (
-                            <Text style={styles.emptyText}>No destinations found in this category.</Text>
-                        )}
-                    </ScrollView>
+                                        {item.RejectionReason && (
+                                            <View style={{ backgroundColor: '#fef2f2', padding: 10, borderRadius: 8, marginTop: 8 }}>
+                                                <Text style={{ color: '#991b1b', fontSize: 12, fontWeight: '600' }}>
+                                                    Rejection Reason:
+                                                </Text>
+                                                <Text style={{ color: '#7f1d1d', fontSize: 13, marginTop: 2 }}>
+                                                    {item.RejectionReason}
+                                                </Text>
+                                            </View>
+                                        )}
+
+                                        <View style={styles.actionRow}>
+                                            {item.Status === 'APPROVED' && (
+                                                <TouchableOpacity
+                                                    style={[styles.actionBtn, styles.btnDelete]}
+                                                    onPress={() => handleDelete(item.Id, item.Name)}
+                                                    disabled={actionLoading}
+                                                >
+                                                    <Text style={styles.navIconMock}>🗑️ </Text>
+                                                    <Text style={styles.btnDeleteText}>Delete Place</Text>
+                                                </TouchableOpacity>
+                                            )}
+                                            {item.Status === 'PENDING' && (
+                                                <>
+                                                    <TouchableOpacity
+                                                        style={[styles.actionBtn, styles.btnApprove]}
+                                                        onPress={() => handleApprove(item.Id)}
+                                                        disabled={actionLoading}
+                                                    >
+                                                        <Text style={styles.btnApproveText}>
+                                                            {actionLoading ? 'Processing...' : 'Approve'}
+                                                        </Text>
+                                                    </TouchableOpacity>
+                                                    <TouchableOpacity
+                                                        style={[styles.actionBtn, styles.btnReject]}
+                                                        onPress={() => handleRejectPress(item.Id)}
+                                                        disabled={actionLoading}
+                                                    >
+                                                        <Text style={styles.btnRejectText}>Reject</Text>
+                                                    </TouchableOpacity>
+                                                </>
+                                            )}
+                                            {item.Status === 'REJECTED' && (
+                                                <TouchableOpacity
+                                                    style={[styles.actionBtn, styles.btnDelete]}
+                                                    onPress={() => handleDelete(item.Id, item.Name)}
+                                                    disabled={actionLoading}
+                                                >
+                                                    <Text style={styles.navIconMock}>🗑️ </Text>
+                                                    <Text style={styles.btnDeleteText}>Delete Place</Text>
+                                                </TouchableOpacity>
+                                            )}
+                                        </View>
+                                    </View>
+                                );
+                            })}
+
+                            {places.length === 0 && (
+                                <Text style={styles.emptyText}>No destinations found in this category.</Text>
+                            )}
+                        </ScrollView>
+                    )}
                 </View>
             </View>
 
+            {/* Image Preview Modal */}
             <Modal
                 visible={previewImage !== null}
                 transparent={true}
@@ -223,7 +323,81 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                     )}
                 </View>
             </Modal>
+
+            {/* Rejection Reason Modal */}
+            <Modal
+                visible={rejectModalPlaceId !== null}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setRejectModalPlaceId(null)}
+            >
+                <View style={{
+                    flex: 1,
+                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    padding: 24,
+                }}>
+                    <View style={{
+                        backgroundColor: '#fff',
+                        borderRadius: 16,
+                        padding: 24,
+                        width: '100%',
+                        maxWidth: 400,
+                    }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#09090b', marginBottom: 8 }}>
+                            Reject Place
+                        </Text>
+                        <Text style={{ fontSize: 14, color: '#71717a', marginBottom: 16 }}>
+                            Please provide a reason for rejection (optional):
+                        </Text>
+                        <TextInput
+                            style={{
+                                borderWidth: 1,
+                                borderColor: '#e4e4e7',
+                                borderRadius: 12,
+                                padding: 12,
+                                fontSize: 14,
+                                minHeight: 80,
+                                textAlignVertical: 'top',
+                                marginBottom: 16,
+                            }}
+                            placeholder="e.g. Incomplete information, low quality images..."
+                            placeholderTextColor="#a1a1aa"
+                            multiline
+                            value={rejectionReason}
+                            onChangeText={setRejectionReason}
+                        />
+                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+                            <TouchableOpacity
+                                onPress={() => setRejectModalPlaceId(null)}
+                                style={{
+                                    paddingHorizontal: 16,
+                                    paddingVertical: 10,
+                                    borderRadius: 10,
+                                    backgroundColor: '#f4f4f5',
+                                }}
+                            >
+                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#52525b' }}>Cancel</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={handleRejectConfirm}
+                                disabled={actionLoading}
+                                style={{
+                                    paddingHorizontal: 16,
+                                    paddingVertical: 10,
+                                    borderRadius: 10,
+                                    backgroundColor: '#dc2626',
+                                }}
+                            >
+                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>
+                                    {actionLoading ? 'Rejecting...' : 'Reject'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeAreaView>
     );
 };
-

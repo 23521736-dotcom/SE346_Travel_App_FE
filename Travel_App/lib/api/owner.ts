@@ -2,7 +2,10 @@ import type { PromotionItem } from '../types/promotion';
 import type { ApiOk, PlaceListItem } from './types';
 import { apiClient } from './client';
 
-export type OwnerPlace = PlaceListItem;
+export type OwnerPlace = PlaceListItem & {
+  Status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+  RejectionReason?: string | null;
+};
 
 export type OwnerPlaceDetail = OwnerPlace & {
   category: string;
@@ -11,6 +14,9 @@ export type OwnerPlaceDetail = OwnerPlace & {
   priceLevel: number | null;
   latitude: number | null;
   longitude: number | null;
+  Status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  RejectionReason: string | null;
+  ReviewedAt: string | null;
   promotions: PromotionItem[];
 };
 
