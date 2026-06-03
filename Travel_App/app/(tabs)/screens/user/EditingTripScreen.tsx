@@ -493,7 +493,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
       const nextDuration = getTripDayCount(normalizedDate, endDate);
       setTrip((current) => ({
         ...current,
-        startDate: normalizedDate.toISOString(),
+        startDate: toWebDateValue(normalizedDate),
         duration: nextDuration,
         date: endDate ? `${formatDate(normalizedDate)} - ${formatDate(endDate)}` : formatDate(normalizedDate),
         itineraryData: updateDayDates(current.itineraryData, nextDuration, normalizedDate),
@@ -512,7 +512,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
       const nextDuration = getTripDayCount(startDate, normalizedDate);
       setTrip((current) => ({
         ...current,
-        endDate: normalizedDate.toISOString(),
+        endDate: toWebDateValue(normalizedDate),
         duration: nextDuration,
         date: startDate ? `${formatDate(startDate)} - ${formatDate(normalizedDate)}` : formatDate(normalizedDate),
         itineraryData: updateDayDates(current.itineraryData, nextDuration, startDate),

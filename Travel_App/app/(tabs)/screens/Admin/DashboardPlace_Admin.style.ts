@@ -8,6 +8,8 @@ export const styles = StyleSheet.create({
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingBottom: 8 },
     headerLeft: { flexDirection: 'row', alignItems: 'center' },
     headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#18181b' },
+    logoutButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: '#fee2e2', borderWidth: 1, borderColor: '#fecaca' },
+    logoutText: { fontSize: 12, fontWeight: '700', color: '#dc2626' },
 
     contentArea: { flex: 1, paddingHorizontal: 24, paddingTop: 16, backgroundColor: '#ffffff' },
     tabContainer: { flexDirection: 'row', backgroundColor: '#f4f4f5', borderRadius: 30, padding: 4, marginBottom: 24 },

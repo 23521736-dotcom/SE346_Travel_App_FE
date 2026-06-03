@@ -11,6 +11,7 @@ import {
 
 // Import file style
 import { styles } from './DashboardFee_Admin.style';
+import { useAuth } from '../../context/AuthContext';
 
 // --- ĐỊNH NGHĨA KIỂU DỮ LIỆU ---
 interface Transaction {
@@ -23,6 +24,8 @@ interface Transaction {
 }
 
 const DashboardFee_Admin: React.FC = (navigation) => {
+    const { logout } = useAuth();
+
     // --- DỮ LIỆU MẪU ---
     const [transactions, setTransactions] = useState<Transaction[]>([
         { id: '1', ownerName: 'Blue Lagoon Resort', amount: '$2,450.00', avatarBg: '#e0f2fe', avatarColor: '#0284c7', status: 'Paid' },
@@ -76,6 +79,9 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                     <View style={styles.headerLeft}>
                         <Text style={styles.headerTitle}>Admin Dashboard</Text>
                     </View>
+                    <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+                        <Text style={styles.logoutText}>Logout</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Main Content */}

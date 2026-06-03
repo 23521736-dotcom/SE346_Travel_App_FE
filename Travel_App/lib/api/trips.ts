@@ -107,10 +107,17 @@ export type ApiTrip = {
   trip_id?: string | number;
   ownerId?: string | number;
   OwnerId?: string | number;
+  owner_id?: string | number;
   createdBy?: string | number;
   CreatedBy?: string | number;
+  created_by?: string | number;
   userId?: string | number;
   UserId?: string | number;
+  user_id?: string | number;
+  owner?: {
+    id?: string | number;
+    userId?: string | number;
+  } | null;
 
   title?: string;
   Title?: string;
@@ -293,19 +300,38 @@ export function getApiTripId(trip?: ApiTrip | null) {
   return rawId === null || rawId === undefined || rawId === '' ? undefined : String(rawId);
 }
 
-function toIsoDate(value: unknown, fallback?: Date) {
+function toDateValue(value: unknown, fallback?: Date) {
   if (value instanceof Date && !Number.isNaN(value.getTime())) {
-    return value.toISOString();
+    return value;
   }
 
   if (typeof value === 'string' && value.trim()) {
     const parsedDate = new Date(value);
     if (!Number.isNaN(parsedDate.getTime())) {
-      return parsedDate.toISOString();
+      return parsedDate;
     }
   }
 
-  return fallback?.toISOString();
+  return fallback;
+}
+
+function toDateOnly(value: unknown, fallback?: Date) {
+  if (typeof value === 'string') {
+    const dateOnlyMatch = value.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dateOnlyMatch) {
+      return `${dateOnlyMatch[1]}-${dateOnlyMatch[2]}-${dateOnlyMatch[3]}`;
+    }
+  }
+
+  const date = toDateValue(value, fallback);
+  if (!date) {
+    return undefined;
+  }
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 function addDays(date: Date, daysToAdd: number) {
@@ -401,8 +427,8 @@ function isBackendId(value: unknown) {
 function buildTripWritePayload(body: TripDraftPayload | Record<string, unknown>) {
   const trip = body as TripDraftPayload;
   const now = new Date();
-  const startDate = new Date(toIsoDate(trip.startDate, now) ?? now.toISOString());
-  const endDate = new Date(toIsoDate(trip.endDate, startDate) ?? startDate.toISOString());
+  const startDate = toDateValue(trip.startDate, now) ?? now;
+  const endDate = toDateValue(trip.endDate, startDate) ?? startDate;
   const itineraryData = Array.isArray(trip.itineraryData) ? trip.itineraryData : [];
   const coverImageUrl = optionalNullableString(trip.coverImageUrl ?? trip.image);
 
@@ -412,8 +438,8 @@ function buildTripWritePayload(body: TripDraftPayload | Record<string, unknown>)
     destination: trip.destination ?? null,
     hotel: optionalNullableString(trip.hotel ?? trip.currentHotelName),
     hotelPlaceId: optionalNullableString(trip.hotelPlaceId ?? trip.currentHotelPlaceId),
-    startDate: startDate.toISOString(),
-    endDate: endDate.toISOString(),
+    startDate: toDateOnly(startDate),
+    endDate: toDateOnly(endDate),
     image: coverImageUrl,
     coverImageUrl,
     budget: toNumber(trip.budget),
@@ -428,7 +454,7 @@ function buildTripWritePayload(body: TripDraftPayload | Record<string, unknown>)
     itineraryData: itineraryData.map((day, dayIndex) => ({
       dayId: isBackendId(day.dayId) ? String(day.dayId) : undefined,
       title: day.title || `Day ${dayIndex + 1}`,
-      date: toIsoDate(day.date, addDays(startDate, dayIndex)),
+      date: toDateOnly(day.date, addDays(startDate, dayIndex)),
       locations: (day.locations || []).map((location, locationIndex) => ({
         id: location.placeId && location.id !== location.placeId && isBackendId(location.id)
           ? String(location.id)
@@ -512,9 +538,9 @@ export function mapApiTripToDraft(apiTrip: ApiTrip): TripDraftPayload {
 
   return {
     id,
-    ownerId: apiTrip.ownerId ?? apiTrip.OwnerId,
-    createdBy: apiTrip.createdBy ?? apiTrip.CreatedBy,
-    userId: apiTrip.userId ?? apiTrip.UserId,
+    ownerId: apiTrip.ownerId ?? apiTrip.OwnerId ?? apiTrip.owner_id ?? apiTrip.owner?.id ?? apiTrip.owner?.userId,
+    createdBy: apiTrip.createdBy ?? apiTrip.CreatedBy ?? apiTrip.created_by,
+    userId: apiTrip.userId ?? apiTrip.UserId ?? apiTrip.user_id,
     title: apiTrip.title ?? apiTrip.Title ?? apiTrip.name ?? apiTrip.Name ?? apiTrip.destination ?? 'Untitled Trip',
     date: getTripDateRange(startDate, endDate, apiTrip.date ?? apiTrip.Date),
     startDate,

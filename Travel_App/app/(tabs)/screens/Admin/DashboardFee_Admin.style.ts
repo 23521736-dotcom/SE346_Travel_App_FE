@@ -9,6 +9,8 @@ export const styles = StyleSheet.create({
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 24, paddingBottom: 16 },
     headerLeft: { flexDirection: 'row', alignItems: 'center' },
     headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#0f172a' },
+    logoutButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: '#fee2e2', borderWidth: 1, borderColor: '#fecaca' },
+    logoutText: { fontSize: 12, fontWeight: '700', color: '#dc2626' },
 
     scrollContent: { paddingHorizontal: 20, paddingBottom: 24 },
 

@@ -171,9 +171,12 @@ export async function removeTripMember(
   return unwrapApiData(res.data as ApiOk<ApiTripMember> | ApiTripMember);
 }
 
-export async function leaveTrip(tripId: string | number): Promise<ApiTripMember> {
+export async function leaveTrip(
+  tripId: string | number,
+  userId: string | number
+): Promise<ApiTripMember> {
   const res = await apiClient.patch<ApiOk<ApiTripMember> | ApiTripMember>(
-    `${TRIPS_PATH}/${tripId}/members/leave`
+    `${TRIPS_PATH}/${tripId}/members/${userId}/leave`
   );
 
   return unwrapApiData(res.data as ApiOk<ApiTripMember> | ApiTripMember);

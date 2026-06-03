@@ -10,6 +10,8 @@ export const styles = StyleSheet.create({
     headerLeft: { flexDirection: 'row', alignItems: 'center' },
     logoMock: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#0284c7', marginRight: 8 },
     headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#0f172a' },
+    logoutButton: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 10, backgroundColor: '#fee2e2', borderWidth: 1, borderColor: '#fecaca' },
+    logoutText: { fontSize: 12, fontWeight: '700', color: '#dc2626' },
 
     scrollContent: { paddingHorizontal: 20, paddingBottom: 120 },
 

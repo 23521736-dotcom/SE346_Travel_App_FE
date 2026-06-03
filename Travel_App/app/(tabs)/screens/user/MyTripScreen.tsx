@@ -11,8 +11,9 @@ import {
   View,
 } from "react-native";
 import { getApiErrorMessage } from "../../../../lib/api/client";
-import { ApiTrip, deleteTrip, fetchMyTrips, mapApiTripToDraft } from "../../../../lib/api/trips";
+import { ApiTrip, deleteTrip, fetchMyTrips, leaveTrip, mapApiTripToDraft } from "../../../../lib/api/trips";
 import { colors } from "../../common/colors";
+import { useAuth } from "../../context/AuthContext";
 import {
   Collaborator,
   getTripDraft,
@@ -28,6 +29,7 @@ import styles from "./MyTripScreen.styles";
 
 type Trip = {
   id: string;
+  ownerId?: string | number;
   title: string;
   date: string;
   startDate?: string;
@@ -108,9 +110,19 @@ function mapApiTrip(apiTrip: ApiTrip): Trip {
   const endDate = draft.endDate;
   const members = apiTrip.members ?? apiTrip.Members ?? apiTrip.collaborators ?? [];
   const status = apiTrip.status ?? apiTrip.Status;
+  const ownerId =
+    draft.ownerId ??
+    apiTrip.ownerId ??
+    apiTrip.OwnerId ??
+    apiTrip.owner_id ??
+    apiTrip.owner?.id ??
+    apiTrip.owner?.userId ??
+    draft.createdBy ??
+    draft.userId;
 
   return {
     id,
+    ownerId,
     title: draft.title,
     date: formatApiDateRange(startDate, endDate, draft.date),
     startDate,
@@ -141,6 +153,7 @@ function toTripData(trip: Trip): TripData {
 
   return normalizeTripDays({
     id: trip.id,
+    ownerId: trip.ownerId,
     title: trip.title,
     date: trip.date,
     startDate: trip.startDate,
@@ -256,6 +269,7 @@ function TripCard({
 }
 
 export default function MyTripScreen({ navigation }: any) {
+  const { user } = useAuth();
   const [upcomingTripList, setUpcomingTripList] = useState<Trip[]>([]);
   const [pastTripList, setPastTripList] = useState<Trip[]>([]);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
@@ -267,6 +281,7 @@ export default function MyTripScreen({ navigation }: any) {
   );
   const trips = activeFilter === "Upcoming" ? upcomingTripList : pastTripList;
   const featuredTrip = upcomingTripList[0];
+  const currentUserId = user?.id;
 
   const loadTrips = useCallback(() => {
     let isMounted = true;
@@ -281,7 +296,30 @@ export default function MyTripScreen({ navigation }: any) {
           return;
         }
 
+        console.log(
+          "[MyTripScreen] raw trips ownerId",
+          apiTrips.map((trip) => ({
+            id: trip.id ?? trip.Id ?? trip.tripId ?? trip.trip_id,
+            title: trip.title ?? trip.Title ?? trip.name ?? trip.Name,
+            ownerId: trip.ownerId,
+            OwnerId: trip.OwnerId,
+            owner_id: trip.owner_id,
+            owner: trip.owner,
+          }))
+        );
+
         const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
+        console.log(
+          "[MyTripScreen] mapped trips owner check",
+          mappedTrips.map((trip) => ({
+            id: trip.id,
+            title: trip.title,
+            ownerId: trip.ownerId,
+            currentUserId,
+            isOwner: currentUserId !== undefined && String(trip.ownerId) === String(currentUserId),
+          }))
+        );
+
         const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
         const pastTrips = mappedTrips.filter(isPastTrip);
 
@@ -306,7 +344,7 @@ export default function MyTripScreen({ navigation }: any) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [currentUserId]);
 
   useFocusEffect(loadTrips);
 
@@ -416,27 +454,57 @@ export default function MyTripScreen({ navigation }: any) {
       return;
     }
 
+    const isOwner = currentUserId !== undefined && String(trip.ownerId) === String(currentUserId);
+    console.log("[MyTripScreen] delete/leave pressed", {
+      tripId: trip.id,
+      title: trip.title,
+      ownerId: trip.ownerId,
+      currentUserId,
+      isOwner,
+      action: isOwner ? "deleteTrip" : "leaveTrip",
+    });
+
     setDeletingTripId(trip.id);
     try {
-      await deleteTrip(trip.id);
+      if (isOwner) {
+        await deleteTrip(trip.id);
+      } else {
+        if (currentUserId === undefined) {
+          throw new Error("Cannot identify the current user.");
+        }
+
+        await leaveTrip(trip.id, currentUserId);
+      }
+
       removeTripDraft(trip.id);
       setUpcomingTripList((current) => current.filter((item) => item.id !== trip.id));
       setPastTripList((current) => current.filter((item) => item.id !== trip.id));
     } catch (error) {
-      Alert.alert("Cannot delete trip", getApiErrorMessage(error));
+      Alert.alert(isOwner ? "Cannot delete trip" : "Cannot leave trip", getApiErrorMessage(error));
     } finally {
       setDeletingTripId(null);
     }
   };
 
   const confirmDeleteTrip = (trip: Trip) => {
+    const isOwner = currentUserId !== undefined && String(trip.ownerId) === String(currentUserId);
+    console.log("[MyTripScreen] delete/leave confirm opened", {
+      tripId: trip.id,
+      title: trip.title,
+      ownerId: trip.ownerId,
+      currentUserId,
+      isOwner,
+    });
+
     Alert.alert(
-      "Delete trip",
-      `Delete "${trip.title}"? This cannot be undone.`,
+      isOwner ? "Delete trip" : "Leave trip",
+      isOwner
+        ? `Delete "${trip.title}"? This cannot be undone.`
+        : `Leave "${trip.title}"? You can join again only if you are invited back.`,
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Delete",
+          text: isOwner ? "Delete" : "Leave",
           style: "destructive",
           onPress: () => {
             void deleteTripFromList(trip);

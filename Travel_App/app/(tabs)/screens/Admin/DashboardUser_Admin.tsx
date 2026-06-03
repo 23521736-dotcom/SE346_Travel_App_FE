@@ -12,6 +12,7 @@ import {
 
 // Import file style
 import { styles } from './DashboardUser_Admin.style';
+import { useAuth } from '../../context/AuthContext';
 
 // --- ĐỊNH NGHĨA KIỂU DỮ LIỆU ---
 interface StatItem {
@@ -31,6 +32,8 @@ interface UserItem {
 }
 
 const DashboardUser_Admin: React.FC = (navigation) => {
+    const { logout } = useAuth();
+
     // --- DỮ LIỆU THỐNG KÊ ---
     const statsData: StatItem[] = [
         { id: '1', title: 'Total Users', value: '12,842', color: '#0284c7' },
@@ -130,6 +133,9 @@ const DashboardUser_Admin: React.FC = (navigation) => {
                     <View style={styles.headerLeft}>
                         <Text style={styles.headerTitle}>Admin Dashboard</Text>
                     </View>
+                    <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+                        <Text style={styles.logoutText}>Logout</Text>
+                    </TouchableOpacity>
                 </View>
 
                 {/* Main Scroll Content */}

@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 
 import { styles } from './DashboardPlace_Admin.style';
+import { useAuth } from '../../context/AuthContext';
 
 interface ContentItem {
     id: string;
@@ -23,6 +24,8 @@ interface ContentItem {
 }
 
 export default function DashboardPlace_Admin({ navigation }: any) {
+    const { logout } = useAuth();
+
     const mockContentItems: ContentItem[] = [
         // --- CÁC ĐỊA ĐIỂM ĐANG HOẠT ĐỘNG (ACTIVE) ---
         {
@@ -105,6 +108,9 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                     <View style={styles.headerLeft}>
                         <Text style={styles.headerTitle}>Admin Dashboard</Text>
                     </View>
+                    <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+                        <Text style={styles.logoutText}>Logout</Text>
+                    </TouchableOpacity>
                 </View>
 
                 <View style={styles.contentArea}>
