@@ -530,6 +530,27 @@ export default function MyTripScreen({ navigation }: any) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
       >
+        <Pressable
+          onPress={() => navigation.navigate('SmartPlanning' as never)}
+          style={({ pressed }) => [
+            {
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: 12,
+              borderRadius: 12,
+              marginTop: 12,
+              backgroundColor: colors.primary,
+            },
+            pressed && { opacity: 0.8 }
+          ]}
+        >
+          <Ionicons name="bulb-outline" size={20} color="white" style={{ marginRight: 8 }} />
+          <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>
+            Lập lịch thông minh
+          </Text>
+        </Pressable>
+
         {featuredTrip ? (
           <View style={styles.featuredSection}>
             <View style={styles.featuredCard}>

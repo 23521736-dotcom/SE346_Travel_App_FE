@@ -24,6 +24,7 @@ import SavedPlacesScreen from './screens/user/SavedPlacesScreen';
 import TripDiaryScreen from './screens/user/TripDiaryScreen';
 import ViewReviewsScreen from './screens/user/ViewReviewsScreen';
 import WriteReviewScreen from './screens/user/WriteReviewScreen';
+import SmartPlanningScreen from './screens/user/SmartPlanningScreen';
 import DashboardFee_Admin from './screens/Admin/DashboardFee_Admin';
 import DashboardPlace_Admin from './screens/Admin/DashboardPlace_Admin';
 import DashboardUser_Admin from './screens/Admin/DashboardUser_Admin';
@@ -361,6 +362,11 @@ const RootNavigation = () => {
           headerShadowVisible: false,
           headerTintColor: '#000',
         }}
+      />
+      <Stack.Screen
+        name="SmartPlanning"
+        component={SmartPlanningScreen}
+        options={{ headerShown: false }}
       />
     </Stack.Navigator>
   );
