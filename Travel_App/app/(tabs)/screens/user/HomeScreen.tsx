@@ -21,7 +21,7 @@ import { useTranslation } from 'react-i18next';
 import { colors } from "../../common/colors";
 import { useTheme } from '../../context/ThemeContext';
 import styles from './HomeScreen.styles';
-import { fetchPlaces, fetchPromotionPlaceIds } from '../../../../lib/api/places';
+import { fetchPlaces } from '../../../../lib/api/places';
 import { planTrip } from '../../../../lib/api/ai';
 import type { PlaceListItem } from '../../../../lib/api/types';
 import { getApiErrorMessage } from '../../context/AuthContext';
@@ -190,16 +190,17 @@ export default function HomeScreen({ navigation }: any) {
                 limit: PAGE_SIZE,
                 offset,
             });
+            const promotionIds = data
+                .filter((place) => place.hasActivePromotion)
+                .map((place) => place.Id);
             if (offset === 0) {
                 setPlaces(data);
-                setPromotionPlaceIds(await fetchPromotionPlaceIds(data.map((place) => place.Id)));
-                setHasMore(data.length === PAGE_SIZE);
+                setPromotionPlaceIds(new Set(promotionIds));
             } else {
-                setPlaces(prev => [...prev, ...data]);
-                const newPromotionIds = await fetchPromotionPlaceIds(data.map((place) => place.Id));
-                setPromotionPlaceIds(prev => new Set([...prev, ...newPromotionIds]));
-                setHasMore(data.length === PAGE_SIZE);
+                setPlaces((prev) => [...prev, ...data]);
+                setPromotionPlaceIds((prev) => new Set([...prev, ...promotionIds]));
             }
+            setHasMore(data.length === PAGE_SIZE);
         } catch {
             if (offset === 0) {
                 setPlaces([]);

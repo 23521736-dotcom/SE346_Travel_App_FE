@@ -89,6 +89,7 @@ export type ApiFavoritePlaceItem = {
   category?: string;
   Category?: string;
   PriceLevel?: number | string | null;
+  hasActivePromotion?: boolean;
 };
 
 export type PlaceListItem = {
@@ -125,6 +126,7 @@ export type PlaceListItem = {
   Status?: 'PENDING' | 'APPROVED' | 'REJECTED';
   RejectionReason?: string | null;
   ReviewedAt?: string | null;
+  hasActivePromotion?: boolean;
 };
 
 export type PlaceReview = {
@@ -370,6 +372,7 @@ export function normalizePlaceListItem(raw: ApiFavoritePlaceItem): PlaceListItem
     Price: price,
     cost: price,
     Cost: price,
+    hasActivePromotion: Boolean(raw.hasActivePromotion),
   };
 }
 
