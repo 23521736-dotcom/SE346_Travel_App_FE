@@ -9,6 +9,7 @@ import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FloatingChatbot } from '@/components/chatbot/FloatingChatbot';
 import { AuthProvider, useAuth } from './(tabs)/context/AuthContext';
 import { ErrorBoundary } from './(tabs)/components/ErrorBoundary';
+import '../lib/i18n';
 
 export const unstable_settings = {
   anchor: '(tabs)',
