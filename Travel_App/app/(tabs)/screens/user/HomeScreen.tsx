@@ -139,10 +139,29 @@ export default function HomeScreen({ navigation }: any) {
     const [duration, setDuration] = useState('');
     const [recommendations, setRecommendations] = useState<RecommendationPlace[]>([]);
 
+    // Advanced filters
+    const [minRating, setMinRating] = useState<number | undefined>();
+    const [maxPrice, setMaxPrice] = useState<number | undefined>();
+
+    // Debounced search
+    const [debouncedSearch, setDebouncedSearch] = useState('');
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 300);
+        return () => clearTimeout(timeoutId);
+    }, [searchQuery]);
+
     const loadPlaces = useCallback(async () => {
         setLoading(true);
         try {
-            const data = await fetchPlaces();
+            const data = await fetchPlaces({
+                category: activeCategory !== 'All' ? activeCategory : undefined,
+                search: debouncedSearch || undefined,
+                minRating,
+                maxPrice,
+            });
             setPlaces(data);
             setPromotionPlaceIds(await fetchPromotionPlaceIds(data.map((place) => place.Id)));
         } catch {
@@ -151,7 +170,7 @@ export default function HomeScreen({ navigation }: any) {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [activeCategory, debouncedSearch, minRating, maxPrice]);
 
     const renderPlaceItem = ({ item }: { item: Place }) => (
         renderPlaceCard(item, navigation, promotionPlaceIds.has(item.Id))
@@ -175,13 +194,6 @@ export default function HomeScreen({ navigation }: any) {
         loadRecs();
     }, []);
 
-    const filteredPlaces = places.filter(place => {
-        const matchCategory = activeCategory === 'All' ? true : normalizePlaceCategory(place.category) === activeCategory;
-        const searchText = searchQuery.toLowerCase();
-        const matchSearch = place.Name.toLowerCase().includes(searchText) ||
-            place.Located.toLowerCase().includes(searchText);
-        return matchCategory && matchSearch;
-    });
 
     const handlePlanWithAi = useCallback(async () => {
         const destinationText = destination.trim() || searchQuery.trim() || 'weekend trip';
@@ -262,6 +274,51 @@ export default function HomeScreen({ navigation }: any) {
                         </Pressable>
                     ))}
                 </ScrollView>
+
+                {/* Rating and Price Filters */}
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    style={styles.filtersScroll}
+                    contentContainerStyle={styles.filtersContent}
+                >
+                    <Pressable
+                        style={[styles.filterChip, minRating === undefined && styles.filterChipActive]}
+                        onPress={() => setMinRating(undefined)}>
+                        <View style={styles.containerCategoryButton}>
+                            <Text style={styles.filterText}>All Ratings</Text>
+                        </View>
+                    </Pressable>
+                    <Pressable
+                        style={[styles.filterChip, minRating === 4 && styles.filterChipActive]}
+                        onPress={() => setMinRating(minRating === 4 ? undefined : 4)}>
+                        <View style={styles.containerCategoryButton}>
+                            <Text style={styles.filterText}>4+ ⭐</Text>
+                        </View>
+                    </Pressable>
+                    <Pressable
+                        style={[styles.filterChip, minRating === 3 && styles.filterChipActive]}
+                        onPress={() => setMinRating(minRating === 3 ? undefined : 3)}>
+                        <View style={styles.containerCategoryButton}>
+                            <Text style={styles.filterText}>3+ ⭐</Text>
+                        </View>
+                    </Pressable>
+                    <Pressable
+                        style={[styles.filterChip, maxPrice === 1 && styles.filterChipActive]}
+                        onPress={() => setMaxPrice(maxPrice === 1 ? undefined : 1)}>
+                        <View style={styles.containerCategoryButton}>
+                            <Text style={styles.filterText}>$ Budget</Text>
+                        </View>
+                    </Pressable>
+                    <Pressable
+                        style={[styles.filterChip, maxPrice === 2 && styles.filterChipActive]}
+                        onPress={() => setMaxPrice(maxPrice === 2 ? undefined : 2)}>
+                        <View style={styles.containerCategoryButton}>
+                            <Text style={styles.filterText}>$$ Moderate</Text>
+                        </View>
+                    </Pressable>
+                </ScrollView>
+
                 <View
                     style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
                     <Pressable
@@ -341,7 +398,7 @@ export default function HomeScreen({ navigation }: any) {
         <View style={[styles.background, { justifyContent: 'center', marginTop: 35 }]}>
             <View style={styles.container}>
                 <FlatList
-                    data={filteredPlaces}
+                    data={places}
                     renderItem={renderPlaceItem}
                     keyExtractor={(item) => item.Id}
                     ListHeaderComponent={listHeader}
