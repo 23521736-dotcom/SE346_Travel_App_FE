@@ -4,6 +4,50 @@ import { normalizePlaceDetail, normalizePlaceListItem } from './types';
 import { apiClient } from './client';
 import { normalizePlaceCategory } from '../placeCategories';
 
+type PlacesResponse =
+  | PlaceListItem[]
+  | {
+    places?: PlaceListItem[];
+    items?: PlaceListItem[];
+    results?: PlaceListItem[];
+    rows?: PlaceListItem[];
+  };
+
+type PlaceDetailResponse =
+  | PlaceDetail
+  | {
+    place?: PlaceDetail;
+    item?: PlaceDetail;
+    result?: PlaceDetail;
+  };
+
+function unwrapApiData<T>(payload: ApiOk<T> | T): T {
+  return !payload || typeof payload !== 'object' || !('data' in payload)
+    ? (payload as T)
+    : payload.data;
+}
+
+function normalizePlacesResponse(data: PlacesResponse | undefined): PlaceListItem[] {
+  if (Array.isArray(data)) {
+    return data;
+  }
+
+  return data?.places ?? data?.items ?? data?.results ?? data?.rows ?? [];
+}
+
+function normalizePlaceDetailResponse(data: PlaceDetailResponse | undefined): PlaceDetail | null {
+  if (!data) {
+    return null;
+  }
+
+  const detailData = data as any;
+  if (detailData.place || detailData.item || detailData.result) {
+    return detailData.place ?? detailData.item ?? detailData.result ?? null;
+  }
+
+  return data as PlaceDetail;
+}
+
 export async function fetchPlaces(params?: {
   category?: string;
   search?: string;
@@ -28,16 +72,22 @@ export async function fetchPlaces(params?: {
   if (params?.minRating !== undefined) queryParams.minRating = params.minRating;
   if (params?.maxPrice !== undefined) queryParams.maxPrice = params.maxPrice;
 
-  const res = await apiClient.get<ApiOk<PlaceListItem[]>>('/places', {
+  const res = await apiClient.get<ApiOk<PlacesResponse> | PlacesResponse>('/places', {
     params: queryParams,
     signal: options?.signal,
   });
-  return res.data.data.map((item) => normalizePlaceListItem(item as any));
+  const payload = unwrapApiData(res.data as ApiOk<PlacesResponse> | PlacesResponse);
+  return normalizePlacesResponse(payload).map((item) => normalizePlaceListItem(item as any));
 }
 
 export async function fetchPlaceDetail(placeId: string): Promise<PlaceDetail> {
-  const res = await apiClient.get<ApiOk<PlaceDetail>>(`/places/${placeId}`);
-  return normalizePlaceDetail(res.data.data as any);
+  const res = await apiClient.get<ApiOk<PlaceDetailResponse> | PlaceDetailResponse>(`/places/${placeId}`);
+  const payload = unwrapApiData(res.data as ApiOk<PlaceDetailResponse> | PlaceDetailResponse);
+  const place = normalizePlaceDetailResponse(payload);
+  if (!place) {
+    throw new Error('Place detail response is empty');
+  }
+  return normalizePlaceDetail(place as any);
 }
 
 export async function fetchPlacePromotions(placeId: string): Promise<PromotionItem[]> {

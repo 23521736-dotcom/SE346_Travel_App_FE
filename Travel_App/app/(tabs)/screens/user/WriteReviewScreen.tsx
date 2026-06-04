@@ -66,6 +66,7 @@ export default function WriteReviewScreen({ navigation, route }: any) {
           uri: asset.uri,
           fileName: asset.fileName,
           mimeType: asset.mimeType,
+          file: (asset as any).file,
         },
       ].slice(0, 10));
     }

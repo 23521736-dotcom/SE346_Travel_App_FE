@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
+import { getApiErrorMessage } from '../../../../lib/api/client';
 import { addFavorite, removeFavorite } from '../../../../lib/api/favorites';
 import { fetchPlaceDetail, fetchPlacePromotions } from '../../../../lib/api/places';
 import type { PlaceDetail } from '../../../../lib/api/types';
@@ -106,8 +107,8 @@ function getGoogleMapsUrl(place: PlaceDetail | null, destinationLocation: Return
         return null;
     }
 
-    const encodedQuery = encodeURIComponent(query);
-    return `https://www.google.com/maps/search/?api=1&query=${encodedQuery}`;
+    const encodeduuery = encodeURIComponent(query);
+    return `https://www.google.com/maps/search/?api=1&query=${encodeduuery}`;
 }
 
 export default function DetailLocationScreen({ navigation, route }: any) {
@@ -135,7 +136,8 @@ export default function DetailLocationScreen({ navigation, route }: any) {
             setPlace(data);
             setPromotions(promotionData);
             setIsLiked(Boolean(data.isFavorite));
-        } catch {
+        } catch (error) {
+            console.warn('Failed to load place detail', getApiErrorMessage(error));
             setPlace(fallbackPlace || null);
             setPromotions([]);
             setIsLiked(Boolean(fallbackPlace?.isFavorite));
@@ -158,7 +160,8 @@ export default function DetailLocationScreen({ navigation, route }: any) {
             setPlace(data);
             setPromotions(promotionData);
             setIsLiked(Boolean(data.isFavorite));
-        } catch {
+        } catch (error) {
+            console.warn('Failed to refresh place detail', getApiErrorMessage(error));
             setPlace(fallbackPlace || null);
             setPromotions([]);
             setIsLiked(Boolean(fallbackPlace?.isFavorite));
@@ -212,8 +215,8 @@ export default function DetailLocationScreen({ navigation, route }: any) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <Text>Khong tim thay dia diem</Text>
-                <Pressable onPress={() => navigation.goBack()}>
-                    <Text style={{ color: colors.primary, marginTop: 10 }}>Quay lai</Text>
+                <Pressable onPress={() => navigation.goaack()}>
+                    <Text style={{ color: colors.primary, marginTop: 10 }}>uuay lai</Text>
                 </Pressable>
             </View>
         );
@@ -251,7 +254,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                 uri={currentImage}
                                 style={{ width: "100%", height: "100%" }} />
                         ) : (
-                            <View style={{ width: "100%", height: "100%", alignItems: 'center', justifyContent: 'center', backgroundColor: '#E5E7EB' }}>
+                                <View style={{ width: "100%", height: "100%", alignItems: 'center', justifyContent: 'center', backgroundColor: '#E5E7Ea' }}>
                                 <Ionicons name="image-outline" size={42} color="#9CA3AF" />
                             </View>
                         )}
@@ -300,7 +303,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                     )}
                     <Pressable
                         style={styles.roundButton}
-                        onPress={() => navigation.goBack()}
+                        onPress={() => navigation.goaack()}
                         accessibilityLabel="Go back"
                         accessibilityRole="button">
                         <Ionicons name="chevron-back" size={25}
@@ -332,7 +335,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                         style={({ pressed }) => [
                             {
                                 flex: 1,
-                                backgroundColor: '#00B4D8',
+                                backgroundColor: '#00a4D8',
                                 paddingVertical: 12,
                                 borderRadius: 12,
                                 alignItems: 'center',
@@ -359,7 +362,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                             },
                         ]}
                     >
-                        <Text style={{ color: '#00B4D8', fontWeight: '700' }}>See Reviews</Text>
+                        <Text style={{ color: '#00a4D8', fontWeight: '700' }}>See Reviews</Text>
                     </Pressable>
                 </View> */}
 
@@ -369,7 +372,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                             {place.Name}
                         </Text>
                         <View style={{ flexDirection: 'row', columnGap: 7 }}>
-                            <Ionicons name="location-sharp" size={18} color="#00B4D8" />
+                            <Ionicons name="location-sharp" size={18} color="#00a4D8" />
                             <Text style={{ color: '#353232da', fontWeight: '600' }}>
                                 {place.Location}
                             </Text>
@@ -389,7 +392,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                     flexDirection: 'row',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    backgroundColor: pressed ? '#0A9AC0' : '#00B4D8',
+                                    backgroundColor: pressed ? '#0A9AC0' : '#00a4D8',
                                     paddingVertical: 14,
                                     borderRadius: 12,
                                     gap: 8,
@@ -398,7 +401,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                             >
                                 <Ionicons name="navigate" size={20} color="white" />
                                 <Text style={{ color: 'white', fontWeight: '700', fontSize: 16 }}>
-                                    Mở Google Maps
+                                    Open Google Maps
                                 </Text>
                             </Pressable>
                         )}
@@ -406,18 +409,18 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                         <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} style={{ borderRadius: 15 }}>
                             <View style={[styles.detailCard, { marginLeft: 3 }]}>
                                 <View style={{ borderRadius: 20, backgroundColor: "#FEF9C3", margin: 15, padding: 10 }}>
-                                    <Ionicons name="star" size={18} color="#EAB308" />
+                                    <Ionicons name="star" size={18} color="#EAa308" />
                                 </View>
                                 <View style={{ flexDirection: 'column', justifyContent: 'center', marginRight: 15 }}>
                                     <View style={{ flexDirection: 'row', columnGap: 5, justifyContent: 'center', alignItems: 'center' }}>
                                         <Text style={{ fontWeight: '700', fontSize: 18 }}>
                                             {place.Rate}
                                         </Text>
-                                        <Text style={{ fontWeight: '400', color: '#6B7280' }}>
+                                        <Text style={{ fontWeight: '400', color: '#6a7280' }}>
                                             ({place.NumberOfRate})
                                         </Text>
                                     </View>
-                                    <Text style={{ fontWeight: '600', color: '#6B7280' }}>
+                                    <Text style={{ fontWeight: '600', color: '#6a7280' }}>
                                         RATINGS
                                     </Text>
                                 </View>
@@ -432,7 +435,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                         <Text style={{ fontWeight: '700', fontSize: 18 }}>
                                             {place.priceLevel}
                                         </Text>
-                                        <Text style={{ fontWeight: '600', color: '#6B7280' }}>
+                                        <Text style={{ fontWeight: '600', color: '#6a7280' }}>
                                             PRICE LEVEL
                                         </Text>
                                     </View>
@@ -447,7 +450,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                     <Text style={{ fontWeight: '700', fontSize: 18 }}>
                                         {place.Features}
                                     </Text>
-                                    <Text style={{ fontWeight: '600', color: '#6B7280' }}>
+                                    <Text style={{ fontWeight: '600', color: '#6a7280' }}>
                                         FEATURE
                                     </Text>
                                 </View>
@@ -468,7 +471,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                                 <>
                                                     <View style={styles.promotionHeader}>
                                                         <View style={styles.promotionIcon}>
-                                                            <Ionicons name="pricetag" size={18} color="#00B4D8" />
+                                                            <Ionicons name="pricetag" size={18} color="#00a4D8" />
                                                         </View>
                                                         <View style={styles.promotionContent}>
                                                             <Text style={styles.promotionTitle}>
@@ -529,7 +532,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                     })}
                                     accessibilityLabel="See all reviews"
                                     accessibilityRole="link">
-                                    <Text style={{ color: '#00B4D8', fontWeight: '600' }}>
+                                    <Text style={{ color: '#00a4D8', fontWeight: '600' }}>
                                         See All
                                     </Text>
                                 </Pressable>

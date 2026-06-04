@@ -1,4 +1,4 @@
-import { Platform, StatusBar, StyleSheet } from "react-native";
+import { StyleSheet } from "react-native";
 import { colors } from "../../common/colors";
 import { commonStyles } from "../../common/styles";
 
@@ -7,47 +7,37 @@ const styles = StyleSheet.create({
 
   screen: {
     flex: 1,
-    backgroundColor: "#F8FAFF",
+    backgroundColor: colors.background,
   },
 
   header: {
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 14 : 24,
+    paddingHorizontal: 18,
+    paddingTop: 50,
     paddingBottom: 14,
-    backgroundColor: "rgba(248,250,255,0.96)",
+    backgroundColor: colors.background,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
   },
 
-  profileRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    columnGap: 12,
-  },
-
-  avatar: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    borderWidth: 2,
-    borderColor: "#0EA5E9",
-    backgroundColor: colors.surfaceMuted,
-  },
-
   headerTitle: {
-    color: colors.primary,
-    fontSize: 21,
+    color: colors.textPrimary,
+    fontSize: 28,
     fontWeight: "800",
   },
 
   headerIconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(0,174,239,0.1)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
 
   tabsWrap: {

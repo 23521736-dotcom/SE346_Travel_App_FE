@@ -18,13 +18,13 @@ export default function TabLayout() {
             <Tabs.Screen
                 name="index"
                 options={{
-                    title: 'Trang chủ',
+                    title: 'Home',
                 }}
             />
             <Tabs.Screen
                 name="explore"
                 options={{
-                    title: 'Khám phá',
+                    title: 'Explore',
                 }}
             />
             <Tabs.Screen name="AuthStyles" options={{ href: null }} />

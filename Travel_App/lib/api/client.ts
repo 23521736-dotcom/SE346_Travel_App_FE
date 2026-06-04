@@ -228,7 +228,10 @@ export async function storeTokens(accessToken: string, refreshToken: string): Pr
 export function getApiErrorMessage(err: unknown): string {
   if (err instanceof AxiosError) {
     if (err.code === 'ERR_CANCELED' || err.code === 'ECONNABORTED' || err.message.toLowerCase().includes('timeout')) {
-      return 'Save request timed out. Please check that the backend is running, then try again.';
+      return `Request timed out. Please check that the backend is running at ${API_V1}.`;
+    }
+    if (!err.response) {
+      return `Cannot connect to API at ${API_V1}. Please check the backend server, port, Wi-Fi IP, and firewall.`;
     }
     const data = err.response?.data as any;
     if (data) {

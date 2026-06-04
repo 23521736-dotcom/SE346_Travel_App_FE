@@ -36,6 +36,64 @@ export type AdminUser = {
   reviewsCount: number;
 };
 
+const firstString = (...values: unknown[]): string => {
+  for (const value of values) {
+    if (typeof value === 'string' && value.trim()) {
+      return value;
+    }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return String(value);
+    }
+  }
+  return '';
+};
+
+const firstNumber = (...values: unknown[]): number => {
+  for (const value of values) {
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value;
+    }
+    if (typeof value === 'string' && value.trim()) {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) {
+        return parsed;
+      }
+    }
+  }
+  return 0;
+};
+
+const firstBoolean = (...values: unknown[]): boolean => {
+  for (const value of values) {
+    if (typeof value === 'boolean') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const normalized = value.trim().toLowerCase();
+      if (normalized === 'true') return true;
+      if (normalized === 'false') return false;
+    }
+  }
+  return false;
+};
+
+const normalizeRole = (value: unknown): AdminUser['role'] => {
+  const role = typeof value === 'string' ? value.toUpperCase() : '';
+  return role === 'OWNER' || role === 'ADMIN' ? role : 'TRAVELER';
+};
+
+const normalizeAdminUser = (raw: any): AdminUser => ({
+  id: firstNumber(raw?.id, raw?.Id, raw?.userId, raw?.UserId),
+  username: firstString(raw?.username, raw?.Username) || null,
+  email: firstString(raw?.email, raw?.Email),
+  fullName: firstString(raw?.fullName, raw?.FullName, raw?.name, raw?.Name) || null,
+  role: normalizeRole(raw?.role ?? raw?.Role),
+  isBanned: firstBoolean(raw?.isBanned, raw?.IsBanned, raw?.is_banned),
+  createdAt: firstString(raw?.createdAt, raw?.CreatedAt, raw?.created_at, raw?.joinDate, raw?.JoinDate),
+  ownedPlacesCount: firstNumber(raw?.ownedPlacesCount, raw?.OwnedPlacesCount, raw?.placesCount, raw?.PlacesCount),
+  reviewsCount: firstNumber(raw?.reviewsCount, raw?.ReviewsCount, raw?.reviewCount, raw?.ReviewCount),
+});
+
 export async function fetchAdminPlaces(params?: {
   status?: 'PENDING' | 'APPROVED' | 'REJECTED';
   limit?: number;
@@ -80,12 +138,13 @@ export async function deleteAdminPlace(placeId: string): Promise<{ ok: true }> {
 export async function fetchAdminUsers(params?: {
   search?: string;
   role?: 'TRAVELER' | 'OWNER' | 'ADMIN';
+  isBanned?: boolean;
   limit?: number;
   offset?: number;
 }): Promise<{ items: AdminUser[]; meta: { total: number; limit: number; offset: number } }> {
   const res = await apiClient.get<ApiOk<AdminUser[]>>('/admin/users', { params });
   return {
-    items: res.data.data,
+    items: Array.isArray(res.data.data) ? res.data.data.map(normalizeAdminUser) : [],
     meta: {
       total: res.data.meta?.total ?? 0,
       limit: res.data.meta?.limit ?? 50,

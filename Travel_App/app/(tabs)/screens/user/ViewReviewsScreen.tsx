@@ -41,29 +41,29 @@ function ReviewItem({
   };
 
   return (
-    <View style={{ backgroundColor: colors.white, margin: 10, padding: 15, borderRadius: 20, elevation: 3 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <View style={{ flexDirection: 'row', columnGap: 10, alignItems: 'center' }}>
+    <View style={styles.reviewCard}>
+      <View style={styles.reviewHeader}>
+        <View style={styles.reviewAuthorRow}>
           <View style={[styles.avatarBorder, { width: 50, height: 50, overflow: 'hidden', borderRadius: 25 }]}>
             <Image source={{ uri: item.avatar }} style={{ height: '100%', width: '100%' }} resizeMode='cover' />
           </View>
-          <View style={{ flexDirection: 'column' }}>
-            <Text style={{ color: 'black', fontSize: 18, fontWeight: 'bold' }}>{item.username}</Text>
+          <View style={styles.reviewAuthorInfo}>
+            <Text style={styles.reviewUserName} numberOfLines={1}>{item.username}</Text>
             <View style={{ alignItems: 'flex-start', marginLeft: 0 }}>
               <RatingStartBar ratingValue={item.Rate} size={20} />
             </View>
           </View>
         </View>
-        <Text style={{ color: '#908a8a', fontSize: 13 }}>{item.date}</Text>
+        <Text style={styles.reviewDate} numberOfLines={2}>{item.date}</Text>
       </View>
 
       <View style={{ marginVertical: 10 }}>
-        <Text style={{ color: '#4a4a4a', fontSize: 15, lineHeight: 22 }}>{item.content}</Text>
+        <Text style={styles.reviewContent}>{item.content}</Text>
       </View>
 
       <PicturesContainer pictures={item.images} />
 
-      <View style={{ flexDirection: 'row', columnGap: 18, marginTop: 5, alignItems: 'center' }}>
+      <View style={styles.reviewActionRow}>
         <TouchableHighlight underlayColor="transparent" onPress={handlePress}>
           <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}>
             <Fontisto name="like" size={20} color={colors.primary} />
@@ -274,7 +274,7 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
             </View>
           </View>
         }
-        contentContainerStyle={{ paddingBottom: 20 }}
+        contentContainerStyle={{ paddingBottom: 20, paddingTop: 0 }}
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.5}
         ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color={colors.primary} style={{ margin: 16 }} /> : null}

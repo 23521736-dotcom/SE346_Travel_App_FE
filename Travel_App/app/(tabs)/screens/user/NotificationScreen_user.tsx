@@ -10,7 +10,6 @@ import {
   type GestureResponderEvent,
   RefreshControl,
   SafeAreaView,
-  ScrollView,
   Text,
   View,
 } from "react-native";
@@ -18,8 +17,8 @@ import { Swipeable } from "react-native-gesture-handler";
 import { getApiErrorMessage } from "../../../../lib/api/client";
 import {
   acceptNotificationInvite,
-  deleteNotification,
   declineNotificationInvite,
+  deleteNotification,
   listNotifications,
   markNotificationRead,
   type ApiNotificationItem,
@@ -101,6 +100,26 @@ function isSupportedNotificationType(type: unknown): type is NotificationType {
   return typeof type === "string" && SUPPORTED_TYPES.includes(type as NotificationType);
 }
 
+function formatNotificationDate(value?: string | null): string {
+  if (!value) {
+    return "";
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return value;
+  }
+
+  const pad = (number: number) => String(number).padStart(2, "0");
+  const day = pad(date.getDate());
+  const month = pad(date.getMonth() + 1);
+  const year = date.getFullYear();
+  const hours = pad(date.getHours());
+  const minutes = pad(date.getMinutes());
+
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
 function mapApiNotification(item: ApiNotificationItem): NotificationItem | null {
   if (!item.id || !isSupportedNotificationType(item.type)) {
     return null;
@@ -111,7 +130,7 @@ function mapApiNotification(item: ApiNotificationItem): NotificationItem | null 
     notificationId: item.notificationId ? String(item.notificationId) : undefined,
     type: item.type,
     targetId: item.targetId ? String(item.targetId) : undefined,
-    time: item.time ?? "",
+    time: formatNotificationDate(item.time),
     unread: Boolean(item.unread),
   };
 
@@ -452,10 +471,18 @@ export default function NotificationScreenUser() {
     }
 
     try {
+      const notificationId = item.notificationId ?? item.id;
       await acceptNotificationInvite(item.id);
-      setItems((prev) => prev.filter((notification) => notification.id !== item.id));
+      setItems((prev) =>
+        prev.filter(
+          (notification) =>
+            notification.id !== item.id &&
+            notification.notificationId !== notificationId
+        )
+      );
     } catch (error) {
       console.warn("Failed to accept trip invitation", error);
+      Alert.alert("Unable to accept", getApiErrorMessage(error));
     }
   };
 
@@ -465,21 +492,29 @@ export default function NotificationScreenUser() {
     }
 
     try {
+      const notificationId = item.notificationId ?? item.id;
       await declineNotificationInvite(item.id);
-      setItems((prev) => prev.filter((notification) => notification.id !== item.id));
+      setItems((prev) =>
+        prev.filter(
+          (notification) =>
+            notification.id !== item.id &&
+            notification.notificationId !== notificationId
+        )
+      );
     } catch (error) {
       console.warn("Failed to reject trip invitation", error);
+      Alert.alert("Unable to decline", getApiErrorMessage(error));
     }
   };
 
   const handleDelete = async (item: NotificationItem) => {
     Alert.alert(
-      "Xóa thông báo",
-      "Bạn có chắc muốn xóa thông báo này?",
+      "Delete Notification",
+      "Are you sure you want to delete this notification?",
       [
-        { text: "Hủy", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         {
-          text: "Xóa",
+          text: "Delete",
           style: "destructive",
           onPress: async () => {
             try {
@@ -497,17 +532,12 @@ export default function NotificationScreenUser() {
   return (
     <SafeAreaView style={styles.screen}>
       <View style={styles.header}>
-        <View style={styles.profileRow}>
-          <Image
-            source={{
-              uri: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop",
-            }}
-            style={styles.avatar}
-          />
-          <Text style={styles.headerTitle}>Notification</Text>
-        </View>
-        <Pressable style={styles.headerIconButton}>
-          <Ionicons name="notifications" size={22} color={colors.primary} />
+        <Text style={styles.headerTitle}>Notifications</Text>
+        <Pressable
+          style={styles.headerIconButton}
+          accessibilityRole="button"
+          accessibilityLabel="Notifications">
+          <Ionicons name="notifications" size={20} color={colors.primary} />
         </Pressable>
       </View>
 

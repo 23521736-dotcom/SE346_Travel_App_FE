@@ -309,18 +309,7 @@ export default function HomeScreen({ navigation }: any) {
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Ionicons name="location-sharp" size={18} color={theme.primary} />
                         <Text style={{ fontWeight: 'bold', fontSize: 20, color: theme.text }}> {t('home.nearMe')}</Text>
-                        <Pressable
-                            onPress={() => alert('pressed down')}
-                            accessibilityLabel="Change location"
-                            accessibilityRole="button"
-                            accessibilityHint="Tap to select a different location">
-                            <Ionicons
-                                name="chevron-down"
-                                size={20}
-                                color={theme.primary}
-                                style={{ marginLeft: 2 }}
-                            />
-                        </Pressable>
+
                     </View>
                     <View style={styles.searchContainer}>
                         <Ionicons name="search" size={20} color={theme.textMuted} style={styles.searchIcon} />
@@ -432,33 +421,7 @@ export default function HomeScreen({ navigation }: any) {
                     </Pressable>
                 </ScrollView>
 
-                <View
-                    style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
-                    <Pressable
-                        style={{ flex: 1, borderRadius: 8, borderWidth: 2, borderColor: theme.primary, padding: 10 }}
-                        onPress={() => setModalVisible(true)}
-                        disabled={aiLoading}
-                        accessibilityLabel="Plan with AI"
-                        accessibilityRole="button"
-                        accessibilityHint="Tap to get personalized trip suggestions using AI">
-                        <View style={[styles.containerCategoryButton, { height: 40 }]}>
-                            <Image source={require('../../../../assets/images/AIPlan-icon.png')}
-                                style={{ width: 25, height: 25, marginRight: 2 }}>
-                            </Image>
-                            <View style={{ flexDirection: 'column', flex: 1 }}>
-                                <Text style={[styles.categoryButtonText, { flex: 1, fontSize: 15, color: theme.text }]}>
-                                    {aiLoading ? t('home.planning') : t('home.planWithAI')}
-                                </Text>
-                                <Text style={[styles.linkText, { fontSize: 12, color: theme.textMuted }]}>
-                                    {t('home.getPersonalizedIdeas')}
-                                </Text>
-                            </View>
-                            <Image source={require('../../../../assets/images/right-arrow-icon.png')}
-                                style={{ width: 25, height: 25, marginRight: 2, tintColor: theme.primary }}>
-                            </Image>
-                        </View>
-                    </Pressable>
-                </View>
+
 
                 {/* Personalized Recommendations Section */}
                 {recommendations.length > 0 && (

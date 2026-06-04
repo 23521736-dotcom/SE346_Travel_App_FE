@@ -19,6 +19,8 @@ export type AuthResponse = {
 
 export type ApiFavoritePlaceItem = {
   id?: string;
+  _id?: string;
+  placeId?: string;
   name?: string;
   region?: string;
   latitude?: number | null;
@@ -82,9 +84,15 @@ export type ApiFavoritePlaceItem = {
   Id?: string;
   Name?: string;
   Located?: string;
+  Location?: string;
   Rate?: number;
+  rating?: number;
   NumberOfRate?: number;
+  numberOfRate?: number;
+  reviewCount?: number;
   Features?: string;
+  Image?: string;
+  Images?: string[];
   image?: string;
   category?: string;
   Category?: string;
@@ -322,15 +330,43 @@ const firstArray = <T>(...values: unknown[]): T[] => {
   return [];
 };
 
+const normalizeImageUrls = (...values: unknown[]): string[] => {
+  const rawImages = firstArray<any>(...values);
+
+  return rawImages
+    .map((item) => {
+      if (typeof item === 'string') {
+        return item.trim();
+      }
+
+      if (item && typeof item === 'object') {
+        return firstString(
+          item.url,
+          item.publicUrl,
+          item.imageUrl,
+          item.image,
+          item.uri,
+          item.path,
+          item.Url,
+          item.PublicUrl,
+          item.ImageUrl
+        );
+      }
+
+      return '';
+    })
+    .filter(Boolean);
+};
+
 export function normalizePlaceListItem(raw: ApiFavoritePlaceItem): PlaceListItem {
-  const id = firstString(raw.id, raw.Id);
+  const id = firstString(raw.id, raw.Id, raw.placeId, raw._id);
   const name = firstString(raw.name, raw.Name);
-  const region = firstString(raw.region, raw.Located);
-  const averageRating = firstNumber(raw.averageRating, raw.Rate);
-  const ratingCount = firstNumber(raw.ratingCount, raw.NumberOfRate);
+  const region = firstString(raw.region, raw.Located, raw.Location, raw.location);
+  const averageRating = firstNumber(raw.averageRating, raw.Rate, raw.rating);
+  const ratingCount = firstNumber(raw.ratingCount, raw.NumberOfRate, raw.numberOfRate, raw.reviewCount);
   const featureLabel = firstString(raw.featureLabel, raw.Features);
-  const coverImageUrl = firstString(raw.coverImageUrl, raw.image);
-  const images = firstArray<string>(raw.images);
+  const coverImageUrl = firstString(raw.coverImageUrl, raw.image, raw.Image);
+  const images = firstArray<string>(raw.images, raw.Images);
   const category = firstString(raw.category, raw.Category);
   const priceLevel = raw.priceLevel ?? raw.PriceLevel ?? null;
   const { latitude, longitude } = normalizePlaceCoordinates(raw);
@@ -411,7 +447,7 @@ export function normalizeReviewListItem(raw: any): ReviewListItem {
   const date = firstString(raw.date, raw.createdAt, raw.updatedAt);
   const content = firstString(raw.content, raw.Content);
   const avatar = firstString(raw.avatar, raw.userAvatar, raw.ava);
-  const images = firstArray<string>(raw.images, raw.imageUrls, raw.Pictures);
+  const images = normalizeImageUrls(raw.images, raw.imageUrls, raw.Pictures, raw.reviewImages, raw.ReviewImages);
   const likes = firstNumber(raw.likes, raw.likesCount);
 
   return {

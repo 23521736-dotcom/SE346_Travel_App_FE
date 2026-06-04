@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
     ActivityIndicator,
     Alert,
@@ -213,7 +214,7 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                                                 </Text>
                                             </View>
                                             <View style={styles.zoomIconContainer}>
-                                                <Text style={styles.zoomIcon}>🔍</Text>
+                                                <Ionicons name="search" size={14} color="#ffffff" />
                                             </View>
                                         </TouchableOpacity>
 
@@ -259,7 +260,7 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                                                     onPress={() => handleDelete(item.Id, item.Name)}
                                                     disabled={actionLoading}
                                                 >
-                                                    <Text style={styles.navIconMock}>🗑️ </Text>
+                                                    <Ionicons name="trash-outline" size={16} color="#991b1b" />
                                                     <Text style={styles.btnDeleteText}>Delete Place</Text>
                                                 </TouchableOpacity>
                                             )}
@@ -289,7 +290,7 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                                                     onPress={() => handleDelete(item.Id, item.Name)}
                                                     disabled={actionLoading}
                                                 >
-                                                    <Text style={styles.navIconMock}>🗑️ </Text>
+                                                    <Ionicons name="trash-outline" size={16} color="#991b1b" />
                                                     <Text style={styles.btnDeleteText}>Delete Place</Text>
                                                 </TouchableOpacity>
                                             )}

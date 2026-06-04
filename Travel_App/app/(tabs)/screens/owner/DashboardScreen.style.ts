@@ -36,6 +36,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   container: {
+    paddingTop: 35,
     flex: 1,
     backgroundColor: colors.background,
   },
@@ -77,7 +78,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   scrollContent: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     paddingTop: 20,
     paddingBottom: 112,
   },
@@ -198,12 +199,14 @@ const styles = StyleSheet.create({
     color: colors.surface,
   },
   chartCard: {
-    padding: 18,
+    padding: 14,
   },
   legend: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     columnGap: 20,
+    rowGap: 8,
     marginBottom: 20,
   },
   legendItem: {
@@ -228,14 +231,14 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
   },
   chartArea: {
-    height: 212,
+    height: 204,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
     flexDirection: 'row',
     position: 'relative',
   },
   yAxis: {
-    width: 36,
+    width: 30,
     paddingRight: 6,
     justifyContent: 'space-between',
     alignItems: 'flex-end',
@@ -262,7 +265,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     justifyContent: 'center',
-    columnGap: 6,
+    columnGap: 4,
   },
   barSlot: {
     height: 172,
@@ -277,7 +280,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   bar: {
-    width: 28,
+    width: 22,
     borderTopLeftRadius: 8,
     borderTopRightRadius: 8,
   },
@@ -307,7 +310,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   placeCard: {
-    padding: 16,
+    padding: 14,
     marginBottom: 12,
     overflow: 'hidden',
   },
@@ -407,16 +410,20 @@ const styles = StyleSheet.create({
   },
   metricRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     borderTopWidth: 1,
     borderTopColor: 'rgba(211,228,254,0.8)',
     paddingTop: 12,
-    columnGap: 10,
+    columnGap: 8,
+    rowGap: 8,
   },
   selectedMetricRow: {
     borderTopColor: 'rgba(0,101,145,0.12)',
   },
   metricItem: {
-    flex: 1,
+    flexGrow: 1,
+    flexBasis: '30%',
+    minWidth: 88,
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 8,

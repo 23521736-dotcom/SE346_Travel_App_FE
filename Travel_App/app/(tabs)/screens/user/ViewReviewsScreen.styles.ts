@@ -15,6 +15,68 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
 
+  reviewCard: {
+    backgroundColor: colors.white,
+    marginHorizontal: 14,
+    marginVertical: 8,
+    padding: 14,
+    borderRadius: 16,
+    elevation: 3,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+  },
+
+  reviewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    columnGap: 10,
+  },
+
+  reviewAuthorRow: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    columnGap: 10,
+    alignItems: 'center',
+  },
+
+  reviewAuthorInfo: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  reviewUserName: {
+    color: colors.black,
+    fontSize: 16,
+    fontWeight: '700',
+  },
+
+  reviewDate: {
+    flexShrink: 0,
+    maxWidth: 94,
+    color: '#908a8a',
+    fontSize: 12,
+    textAlign: 'right',
+  },
+
+  reviewContent: {
+    color: '#4a4a4a',
+    fontSize: 15,
+    lineHeight: 22,
+  },
+
+  reviewActionRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 18,
+    rowGap: 10,
+    marginTop: 8,
+    alignItems: 'center',
+  },
+
   bottomActionContainer: {
     paddingHorizontal: 15,
     paddingTop: 10,

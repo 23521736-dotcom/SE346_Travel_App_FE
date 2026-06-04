@@ -329,8 +329,8 @@ const styles = StyleSheet.create({
 
   tripList: {
     paddingHorizontal: 16,
-    paddingTop: 14,
-    rowGap: 10,
+    paddingTop: 16,
+    rowGap: 14,
   },
 
   tripState: {
@@ -358,6 +358,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 10,
+    marginBottom: 14,
     flexDirection: "row",
     alignItems: "center",
     columnGap: 13,

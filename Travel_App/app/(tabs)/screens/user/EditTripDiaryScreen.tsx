@@ -122,13 +122,13 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
 
   const handlePickImage = async () => {
     if (selectedImages.length >= 12) {
-      Alert.alert("Thông báo", "Bạn có thể thêm tối đa 12 ảnh cho một mục nhật ký.");
+      Alert.alert("Notice", "You can add up to 12 photos for one diary entry.");
       return;
     }
 
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== "granted") {
-      Alert.alert("Lỗi", "Cần quyền truy cập thư viện ảnh");
+      Alert.alert("Error", "Photo library access is required");
       return;
     }
 
@@ -156,20 +156,20 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
 
   const handleSave = async () => {
     if (!tripId) {
-      Alert.alert("Không thể lưu", "Thiếu thông tin chuyến đi.");
+      Alert.alert("Cannot Save", "Trip information is missing.");
       return;
     }
     if (!title.trim()) {
-      Alert.alert("Thiếu tiêu đề", "Vui lòng nhập tiêu đề nhật ký.");
+      Alert.alert("Missing Title", "Please enter a diary title.");
       return;
     }
     if (!content.trim()) {
-      Alert.alert("Thiếu nội dung", "Vui lòng nhập nội dung nhật ký.");
+      Alert.alert("Missing Content", "Please enter diary content.");
       return;
     }
     const occurredAt = parseDiaryDateTime(occurredAtInput);
     if (!occurredAt) {
-      Alert.alert("Sai định dạng thời gian", "Vui lòng nhập thời gian theo dạng dd/MM/yyyy HH:mm.");
+      Alert.alert("Invalid Time Format", "Please enter the time in dd/MM/yyyy HH:mm format.");
       return;
     }
 
@@ -195,7 +195,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
       }
       navigation.goBack();
     } catch (error) {
-      Alert.alert("Lưu nhật ký thất bại", getApiErrorMessage(error));
+      Alert.alert("Failed to Save Diary", getApiErrorMessage(error));
     } finally {
       setIsSaving(false);
     }
@@ -233,30 +233,30 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
           <View style={styles.infoTextWrap}>
             <Text style={styles.infoLabel}>Linked trip</Text>
             <Text numberOfLines={1} style={styles.placeName}>{tripTitle}</Text>
-            <Text style={styles.timeText}>Ảnh và nội dung sẽ được lưu vào chuyến đi này.</Text>
+            <Text style={styles.timeText}>Photos and content will be saved to this trip.</Text>
           </View>
         </View>
 
         <View style={styles.captionCard}>
-          <Text style={styles.inputLabel}>Tiêu đề</Text>
+          <Text style={styles.inputLabel}>Title</Text>
           <TextInput
             value={title}
             onChangeText={setTitle}
-            placeholder="Ví dụ: Buổi tối ở Shinjuku"
+            placeholder="Example: Evening in Shinjuku"
             placeholderTextColor={colors.textMuted}
             style={styles.singleLineInput}
           />
 
-          <Text style={styles.inputLabel}>Địa điểm</Text>
+          <Text style={styles.inputLabel}>Location</Text>
           <TextInput
             value={locationName}
             onChangeText={setLocationName}
-            placeholder="Tên nơi bạn ghé thăm"
+            placeholder="Name of the place you visited"
             placeholderTextColor={colors.textMuted}
             style={styles.singleLineInput}
           />
 
-          <Text style={styles.inputLabel}>Thời gian</Text>
+          <Text style={styles.inputLabel}>Time</Text>
           {Platform.OS === "web" ? (
             <View style={styles.webDateInputWrap}>
               <WebDateTimeInput
@@ -286,7 +286,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
         </View>
 
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Ảnh kỷ niệm</Text>
+          <Text style={styles.sectionTitle}>Memory Photos</Text>
           <Text style={styles.sectionMeta}>{selectedImages.length}/12</Text>
         </View>
 
@@ -294,7 +294,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
           <Pressable style={styles.addPhotoTile} onPress={handlePickImage} disabled={isSaving}>
             <View style={styles.addPhotoContent}>
               <Ionicons name="camera-outline" size={30} color={colors.primary} />
-              <Text style={styles.addPhotoText}>Thêm ảnh</Text>
+              <Text style={styles.addPhotoText}>Add Photo</Text>
             </View>
           </Pressable>
 
@@ -316,14 +316,14 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
         <View style={styles.captionCard}>
           <View style={styles.captionHeader}>
             <Ionicons name="create-outline" size={20} color={colors.primary} />
-            <Text style={styles.captionTitle}>Nội dung</Text>
+            <Text style={styles.captionTitle}>Content</Text>
           </View>
           <TextInput
             value={content}
             onChangeText={setContent}
             multiline
             textAlignVertical="top"
-            placeholder="Viết cảm nghĩ, câu chuyện, món ăn, thời tiết hoặc khoảnh khắc đáng nhớ..."
+            placeholder="Write your thoughts, story, food, weather, or a memorable moment..."
             placeholderTextColor={colors.textMuted}
             style={styles.captionInput}
           />
@@ -339,7 +339,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
           ) : (
             <Ionicons name="checkmark-circle" size={22} color={colors.white} />
           )}
-          <Text style={styles.saveButtonText}>{isSaving ? "Đang lưu..." : "Lưu nhật ký"}</Text>
+          <Text style={styles.saveButtonText}>{isSaving ? "Saving..." : "Save Diary"}</Text>
         </Pressable>
       </ScrollView>
     </KeyboardAvoidingView>

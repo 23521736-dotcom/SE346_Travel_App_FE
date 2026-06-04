@@ -5,11 +5,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Image,
   Modal,
   Platform,
-  Pressable,
   SafeAreaView,
   ScrollView,
   Text,
@@ -72,6 +70,19 @@ function formatDate(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
+function formatDisplayDate(value: Date | string) {
+  const date = value instanceof Date ? value : fromWebDateValue(String(value)) ?? new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return String(value);
+  }
+
+  return date.toLocaleDateString('vi-VN', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+}
+
 function toStartOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate());
 }
@@ -102,6 +113,18 @@ function fromWebDateValue(value: string) {
 
 function formatVnd(value: number) {
   return String(Math.round(value)).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+
+function getActivityTotalCost(days: OptimizationResult['days']) {
+  return days.reduce(
+    (total, day) =>
+      total + day.activities.reduce((dayTotal, activity) => dayTotal + (Number(activity.estimatedCost) || 0), 0),
+    0
+  );
+}
+
+function getDayActivityTotalCost(day: OptimizationResult['days'][number]) {
+  return day.activities.reduce((total, activity) => total + (Number(activity.estimatedCost) || 0), 0);
 }
 
 function formatDuration(minutes: number) {
@@ -181,7 +204,7 @@ export default function SmartPlanningScreen() {
         setPlaces(placesData.map(mapPlaceToItem));
         setFavoritePlaces(favoritesData.map(mapPlaceToItem));
       } catch (error) {
-        Alert.alert('Lỗi', getApiErrorMessage(error));
+        Alert.alert('Error', getApiErrorMessage(error));
       } finally {
         setLoadingPlaces(false);
       }
@@ -232,13 +255,13 @@ export default function SmartPlanningScreen() {
 
     if (activeDateInput === 'start') {
       if (normalizedDate < today) {
-        Alert.alert('Ngày không hợp lệ', 'Ngày bắt đầu không thể là ngày trong quá khứ.');
+        Alert.alert('Invalid Date', 'The start date cannot be in the past.');
         closeDatePicker();
         return;
       }
 
       if (endDate && normalizedDate > toStartOfDay(endDate)) {
-        Alert.alert('Ngày không hợp lệ', 'Ngày bắt đầu không thể sau ngày kết thúc.');
+        Alert.alert('Invalid Date', 'The start date cannot be after the end date.');
         closeDatePicker();
         return;
       }
@@ -247,7 +270,7 @@ export default function SmartPlanningScreen() {
     } else if (activeDateInput === 'end') {
       const minimumEndDate = getMinimumSelectableDate('end');
       if (normalizedDate < minimumEndDate) {
-        Alert.alert('Ngày không hợp lệ', 'Ngày kết thúc không thể trước ngày bắt đầu.');
+        Alert.alert('Invalid Date', 'The end date cannot be before the start date.');
         closeDatePicker();
         return;
       }
@@ -272,19 +295,19 @@ export default function SmartPlanningScreen() {
 
   const handleContinueToStep2 = () => {
     if (!title.trim()) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng nhập tên chuyến đi.');
+      Alert.alert('Missing Information', 'Please enter a trip name.');
       return;
     }
     if (!destination.trim()) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng nhập điểm đến.');
+      Alert.alert('Missing Information', 'Please enter a destination.');
       return;
     }
     if (!startDate) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng chọn ngày bắt đầu.');
+      Alert.alert('Missing Information', 'Please select a start date.');
       return;
     }
     if (!endDate) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng chọn ngày kết thúc.');
+      Alert.alert('Missing Information', 'Please select an end date.');
       return;
     }
     setStep(2);
@@ -292,12 +315,12 @@ export default function SmartPlanningScreen() {
 
   const handleOptimize = async () => {
     if (selectedPlaces.size === 0) {
-      Alert.alert('Thiếu địa điểm', 'Vui lòng chọn ít nhất một địa điểm để tối ưu hóa.');
+      Alert.alert('Missing Places', 'Please select at least one place to optimize.');
       return;
     }
 
     if (!startDate || !endDate) {
-      Alert.alert('Thiếu thông tin', 'Vui lòng chọn ngày bắt đầu và ngày kết thúc.');
+      Alert.alert('Missing Information', 'Please select both a start date and an end date.');
       return;
     }
 
@@ -321,7 +344,7 @@ export default function SmartPlanningScreen() {
       setOptimizedResult(result);
       setStep(3);
     } catch (error) {
-      Alert.alert('Lỗi tối ưu hóa', getApiErrorMessage(error));
+      Alert.alert('Optimization Error', getApiErrorMessage(error));
     } finally {
       setOptimizing(false);
     }
@@ -334,20 +357,21 @@ export default function SmartPlanningScreen() {
 
     setLoading(true);
     try {
+      const tripBudget = getActivityTotalCost(optimizedResult.days);
       // Convert optimized result to trip format
       const tripPayload = {
         title: title.trim(),
         destination: destination.trim(),
         startDate: formatDate(startDate),
         endDate: formatDate(endDate),
-        budget: budget ? Number(budget.replace(/[^0-9.]/g, '')) : 0,
+        budget: tripBudget,
         currency: 'VND',
         hotel: 'Not selected',
         duration: Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1,
         members: [],
         itineraryData: optimizedResult.days.map((day) => ({
           dayId: `day_${day.dayNumber}`,
-          title: `Ngày ${day.dayNumber}`,
+          title: `Day ${day.dayNumber}`,
           date: day.date,
           locations: day.activities.map((activity) => ({
             placeId: activity.placeId,
@@ -373,7 +397,7 @@ export default function SmartPlanningScreen() {
         tripId: tripDraft.id,
       });
     } catch (error) {
-      Alert.alert('Lỗi tạo chuyến đi', getApiErrorMessage(error));
+      Alert.alert('Trip Creation Error', getApiErrorMessage(error));
     } finally {
       setLoading(false);
     }
@@ -385,21 +409,21 @@ export default function SmartPlanningScreen() {
 
   const renderStep1 = () => (
     <View style={styles.sectionCard}>
-      <Text style={styles.sectionTitle}>Thông tin chuyến đi</Text>
+      <Text style={styles.sectionTitle}>Trip Information</Text>
 
-      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Tên chuyến đi</Text>
+      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Trip Name</Text>
       <TextInput
         style={styles.input}
-        placeholder="VD: Khám phá Đà Lạt 3 ngày"
+        placeholder="Example: 3 days in Da Lat"
         placeholderTextColor="#999"
         value={title}
         onChangeText={setTitle}
       />
 
-      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Điểm đến</Text>
+      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Destination</Text>
       <TextInput
         style={styles.input}
-        placeholder="VD: Đà Lạt, Lâm Đồng"
+        placeholder="Example: Da Lat, Lam Dong"
         placeholderTextColor="#999"
         value={destination}
         onChangeText={setDestination}
@@ -407,7 +431,7 @@ export default function SmartPlanningScreen() {
 
       <View style={styles.dateTimeRow}>
         <View style={{ flex: 1, marginRight: 8 }}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Ngày bắt đầu</Text>
+          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Start Date</Text>
           <TouchableOpacity
             style={styles.input}
             onPress={() => openDatePicker('start')}
@@ -418,7 +442,7 @@ export default function SmartPlanningScreen() {
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1, marginLeft: 8 }}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Ngày kết thúc</Text>
+          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>End Date</Text>
           <TouchableOpacity
             style={styles.input}
             onPress={() => openDatePicker('end')}
@@ -432,7 +456,7 @@ export default function SmartPlanningScreen() {
 
       <View style={styles.dateTimeRow}>
         <View style={{ flex: 1, marginRight: 8 }}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Giờ bắt đầu/ngày</Text>
+          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Start Time/Day</Text>
           <TextInput
             style={styles.input}
             placeholder="08:00"
@@ -442,7 +466,7 @@ export default function SmartPlanningScreen() {
           />
         </View>
         <View style={{ flex: 1, marginLeft: 8 }}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Giờ kết thúc/ngày</Text>
+          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>End Time/Day</Text>
           <TextInput
             style={styles.input}
             placeholder="22:00"
@@ -453,10 +477,10 @@ export default function SmartPlanningScreen() {
         </View>
       </View>
 
-      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Ngân sách (VNĐ)</Text>
+      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Budget (VND)</Text>
       <TextInput
         style={styles.input}
-        placeholder="VD: 5000000"
+        placeholder="Example: 5000000"
         placeholderTextColor="#999"
         value={budget}
         onChangeText={setBudget}
@@ -467,7 +491,7 @@ export default function SmartPlanningScreen() {
         style={styles.primaryButton}
         onPress={handleContinueToStep2}
       >
-        <Text style={styles.buttonText}>Tiếp tục</Text>
+        <Text style={styles.buttonText}>Continue</Text>
       </TouchableOpacity>
     </View>
   );
@@ -481,18 +505,18 @@ export default function SmartPlanningScreen() {
             style={[styles.primaryButton, { flex: 1, marginRight: 8, padding: 10, backgroundColor: filter === 'all' ? colors.primary : colors.borderLight }]}
             onPress={() => setFilter('all')}
           >
-            <Text style={[styles.buttonText, { color: filter === 'all' ? colors.white : colors.textSecondary }]}>Tất cả</Text>
+            <Text style={[styles.buttonText, { color: filter === 'all' ? colors.white : colors.textSecondary }]}>All</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.primaryButton, { flex: 1, marginLeft: 8, padding: 10, backgroundColor: filter === 'favorites' ? colors.primary : colors.borderLight }]}
             onPress={() => setFilter('favorites')}
           >
-            <Text style={[styles.buttonText, { color: filter === 'favorites' ? colors.white : colors.textSecondary }]}>Yêu thích</Text>
+            <Text style={[styles.buttonText, { color: filter === 'favorites' ? colors.white : colors.textSecondary }]}>Favorites</Text>
           </TouchableOpacity>
         </View>
 
         <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary, marginTop: 4 }}>
-          Đã chọn {selectedCount} địa điểm
+          Selected {selectedCount} places
         </Text>
 
         {/* Category filters */}
@@ -501,7 +525,7 @@ export default function SmartPlanningScreen() {
             style={[styles.primaryButton, { marginRight: 8, padding: 8, paddingHorizontal: 16, backgroundColor: !categoryFilter ? colors.primary : colors.borderLight }]}
             onPress={() => setCategoryFilter('')}
           >
-            <Text style={[styles.buttonText, { fontSize: 13, color: !categoryFilter ? colors.white : colors.textSecondary }]}>Tất cả</Text>
+            <Text style={[styles.buttonText, { fontSize: 13, color: !categoryFilter ? colors.white : colors.textSecondary }]}>All</Text>
           </TouchableOpacity>
           {PLACE_CATEGORIES.filter((cat) => cat.value !== 'STAYS').map((cat) => (
             <TouchableOpacity
@@ -519,12 +543,12 @@ export default function SmartPlanningScreen() {
 
       {/* Preference weights */}
       <View style={styles.sectionCard}>
-        <Text style={styles.sectionTitle}>Trọng số ưu tiên</Text>
+        <Text style={styles.sectionTitle}>Preference Weights</Text>
         {[
-          { key: 'ATTRACTIONS', label: 'Điểm tham quan' },
-          { key: 'DINING', label: 'Ẩm thực' },
-          { key: 'FESTIVALS', label: 'Lễ hội' },
-          { key: 'SHOPPING', label: 'Mua sắm' },
+          { key: 'ATTRACTIONS', label: 'Attractions' },
+          { key: 'DINING', label: 'Dining' },
+          { key: 'FESTIVALS', label: 'Festivals' },
+          { key: 'SHOPPING', label: 'Shopping' },
         ].map((item) => {
           const weight = preferenceWeights[item.key as keyof typeof preferenceWeights];
           const hasError = weightErrors[item.key] || (String(weight) !== '' && Number(weight) <= 0);
@@ -551,7 +575,7 @@ export default function SmartPlanningScreen() {
               />
               {hasError && (
                 <Text style={{ color: '#ef4444', fontSize: 11, marginLeft: 8 }}>
-                  Phai lon hon 0
+                  Must be greater than 0
                 </Text>
               )}
             </View>
@@ -568,7 +592,7 @@ export default function SmartPlanningScreen() {
         <View style={styles.sectionCard}>
           {visiblePlaces.length === 0 ? (
             <Text style={{ textAlign: 'center', color: colors.textSecondary, padding: 20 }}>
-              Không có địa điểm nào
+              No places found
             </Text>
           ) : (
             visiblePlaces.map((place, index) => {
@@ -606,7 +630,7 @@ export default function SmartPlanningScreen() {
         {optimizing ? (
           <ActivityIndicator size="small" color={colors.white} />
         ) : (
-          <Text style={styles.buttonText}>Tối ưu hóa</Text>
+          <Text style={styles.buttonText}>Optimize</Text>
         )}
       </TouchableOpacity>
     </View>
@@ -618,6 +642,7 @@ export default function SmartPlanningScreen() {
     }
 
     const { days, summary } = optimizedResult;
+    const totalEstimatedCost = getActivityTotalCost(days);
 
     return (
       <View>
@@ -625,19 +650,19 @@ export default function SmartPlanningScreen() {
         <View style={styles.summaryCard}>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryValue}>{summary.totalPlaces}</Text>
-            <Text style={styles.summaryLabel}>Địa điểm</Text>
+            <Text style={styles.summaryLabel}>Places</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryValue}>{formatDuration(summary.totalDuration)}</Text>
-            <Text style={styles.summaryLabel}>Tổng thời gian</Text>
+            <Text style={styles.summaryLabel}>Total Time</Text>
           </View>
           <View style={styles.summaryItem}>
             <Text style={styles.summaryValue}>{(summary.totalTravelDistance).toFixed(1)}km</Text>
-            <Text style={styles.summaryLabel}>Quãng đường</Text>
+            <Text style={styles.summaryLabel}>Distance</Text>
           </View>
           <View style={styles.summaryItem}>
-            <Text style={styles.summaryValue}>{formatVnd(summary.totalEstimatedCost)}</Text>
-            <Text style={styles.summaryLabel}>Tổng chi phí</Text>
+            <Text style={styles.summaryValue}>{formatVnd(totalEstimatedCost)}</Text>
+            <Text style={styles.summaryLabel}>Total Cost</Text>
           </View>
         </View>
 
@@ -645,10 +670,10 @@ export default function SmartPlanningScreen() {
         {summary.unassignedPlaces.length > 0 && (
           <View style={[styles.sectionCard, { backgroundColor: colors.warningSoft }]}>
             <Text style={{ color: colors.warning, fontWeight: '600', marginBottom: 4 }}>
-              Cảnh báo
+              Warning
             </Text>
             <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
-              {summary.unassignedPlaces.length} địa điểm không được phân công: {summary.unassignedPlaces.join(', ')}
+              {summary.unassignedPlaces.length} unassigned places: {summary.unassignedPlaces.join(', ')}
             </Text>
           </View>
         )}
@@ -657,8 +682,8 @@ export default function SmartPlanningScreen() {
         {days.map((day, dayIndex) => (
           <View key={day.dayNumber} style={styles.dayCard}>
             <View style={styles.dayHeader}>
-              <Text style={styles.dayTitle}>Ngày {day.dayNumber}</Text>
-              <Text style={{ fontSize: 12, color: colors.textSecondary }}>{day.date}</Text>
+              <Text style={styles.dayTitle}>Day {day.dayNumber}</Text>
+              <Text style={{ fontSize: 12, color: colors.textSecondary }}>{formatDisplayDate(day.date)}</Text>
             </View>
 
             <View style={styles.dayStats}>
@@ -668,7 +693,7 @@ export default function SmartPlanningScreen() {
               </View>
               <View style={styles.dayStatItem}>
                 <Ionicons name="cash-outline" size={14} color={colors.textSecondary} />
-                <Text style={styles.dayStatText}>{formatVnd(day.totalEstimatedCost)} VNĐ</Text>
+                <Text style={styles.dayStatText}>{formatVnd(getDayActivityTotalCost(day))} VND</Text>
               </View>
               <View style={styles.dayStatItem}>
                 <Ionicons name="navigate-outline" size={14} color={colors.textSecondary} />
@@ -692,12 +717,12 @@ export default function SmartPlanningScreen() {
                       <Text style={styles.activityMetaText}>
                         {formatDuration(activity.estimatedDuration)}
                       </Text>
-                      <Text style={styles.activityMetaText}>•</Text>
-                      <Text style={styles.activityMetaText}>{formatVnd(activity.estimatedCost)} VNĐ</Text>
+                      <Text style={styles.activityMetaText}>-</Text>
+                      <Text style={styles.activityMetaText}>{formatVnd(activity.estimatedCost)} VND</Text>
                     </View>
                     {activity.travelFromPrevious > 0 && (
                       <Text style={styles.travelInfo}>
-                        Di chuyển: {formatDuration(activity.travelFromPrevious)} • {(activity.travelDistance).toFixed(1)}km
+                        Travel: {formatDuration(activity.travelFromPrevious)} - {(activity.travelDistance).toFixed(1)}km
                       </Text>
                     )}
                   </View>
@@ -716,7 +741,7 @@ export default function SmartPlanningScreen() {
           {loading ? (
             <ActivityIndicator size="small" color={colors.white} />
           ) : (
-            <Text style={styles.buttonText}>Áp dụng & Tạo chuyến đi</Text>
+            <Text style={styles.buttonText}>Apply & Create Trip</Text>
           )}
         </TouchableOpacity>
 
@@ -725,7 +750,7 @@ export default function SmartPlanningScreen() {
           onPress={handleBackToEdit}
           disabled={loading}
         >
-          <Text style={[styles.buttonText, { color: colors.textPrimary }]}>Quay lại chỉnh sửa</Text>
+          <Text style={[styles.buttonText, { color: colors.textPrimary }]}>Back to Edit</Text>
         </TouchableOpacity>
       </View>
     );
@@ -746,7 +771,7 @@ export default function SmartPlanningScreen() {
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={2}>
-          Lập kế hoạch thông minh
+          Smart Planning
         </Text>
         <View style={{ width: 24 }} />
       </View>
@@ -794,7 +819,7 @@ export default function SmartPlanningScreen() {
               }}
             >
               <Text style={{ fontSize: 18, fontWeight: '700', color: colors.primary, marginBottom: 12 }}>
-                {activeDateInput === 'start' ? 'Chọn ngày bắt đầu' : 'Chọn ngày kết thúc'}
+                {activeDateInput === 'start' ? 'Select Start Date' : 'Select End Date'}
               </Text>
 
               <View
@@ -831,7 +856,7 @@ export default function SmartPlanningScreen() {
 
               <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 }}>
                 <TouchableOpacity onPress={closeDatePicker} style={{ paddingVertical: 10, paddingHorizontal: 14 }}>
-                  <Text style={{ color: '#666', fontWeight: '600' }}>Hủy</Text>
+                  <Text style={{ color: '#666', fontWeight: '600' }}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleConfirmDate(webPickerDate)}
@@ -843,7 +868,7 @@ export default function SmartPlanningScreen() {
                     backgroundColor: colors.primary,
                   }}
                 >
-                  <Text style={{ color: colors.white, fontWeight: '700' }}>Áp dụng</Text>
+                  <Text style={{ color: colors.white, fontWeight: '700' }}>Apply</Text>
                 </TouchableOpacity>
               </View>
             </View>

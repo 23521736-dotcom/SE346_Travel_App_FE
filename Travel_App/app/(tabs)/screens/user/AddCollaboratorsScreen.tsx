@@ -1,5 +1,5 @@
 import { Feather } from '@expo/vector-icons';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     Alert,
     Image,
@@ -20,8 +20,10 @@ import {
     upsertTripToBackend
 } from '../../../../lib/api/trips';
 import { useAuth } from '../../context/AuthContext';
-import { Collaborator, normalizeTripDays, TripData, upsertTripDraft } from '../../store/tripDraftStore';
+import { Collaborator, normalizeTripDays, removeTripDraft, TripData, upsertTripDraft } from '../../store/tripDraftStore';
 import screenStyles from './AddCollaboratorsScreen.style';
+
+const LOCAL_TRIP_ID_PREFIX = 'local_trip_';
 
 function getPersonKey(person?: Pick<Collaborator, 'id' | 'userId'> | null) {
     return person?.userId !== undefined && person.userId !== null ? String(person.userId) : String(person?.id ?? '');
@@ -31,13 +33,19 @@ function getTripOwnerId(trip?: TripData) {
     return trip?.ownerId ?? trip?.createdBy ?? trip?.userId ?? trip?.owner?.userId ?? trip?.owner?.id;
 }
 
+function isLocalTripId(tripId?: string) {
+    return Boolean(tripId?.startsWith(LOCAL_TRIP_ID_PREFIX));
+}
+
 export default function AddCollaboratorsScreen({ navigation, route }: any) {
     const trip = route?.params?.tripData as TripData | undefined;
     const { user } = useAuth();
+    const [activeTrip, setActiveTrip] = useState<TripData | undefined>(trip);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [recommendations, setRecommendations] = useState<ApiTripMemberRecommendation[]>([]);
     const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
+    const [isPreparingTrip, setIsPreparingTrip] = useState(false);
     const [recommendationActionByUser, setRecommendationActionByUser] = useState<Record<number, boolean>>({});
     const [selectedOwnerId, setSelectedOwnerId] = useState<string | undefined>(() => {
         const ownerId = getTripOwnerId(trip);
@@ -48,10 +56,49 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
     const originalOwnerId = getTripOwnerId(trip) === undefined ? undefined : String(getTripOwnerId(trip));
     const tripOwnerId = selectedOwnerId ?? originalOwnerId;
     const canManageTrip = Boolean(currentUserId) && (!originalOwnerId || originalOwnerId === currentUserId);
-    const tripId = trip?.id;
+    const tripId = activeTrip?.id;
+
+    const persistTripForCollaboration = useCallback(async (sourceTrip: TripData) => {
+        setIsPreparingTrip(true);
+        try {
+            const localDraftId = isLocalTripId(sourceTrip.id) ? sourceTrip.id : undefined;
+            const savedTrip = await upsertTripToBackend(
+                sourceTrip as Record<string, unknown>,
+                localDraftId ? undefined : sourceTrip.id
+            );
+
+            const persistedTrip = normalizeTripDays({
+                ...sourceTrip,
+                ...mapApiTripToDraft(savedTrip),
+            } as TripData);
+
+            if (persistedTrip.id) {
+                upsertTripDraft(persistedTrip);
+            }
+
+            if (localDraftId) {
+                removeTripDraft(localDraftId);
+            }
+
+            setActiveTrip(persistedTrip);
+            if (typeof navigation.setParams === 'function') {
+                navigation.setParams({ tripData: persistedTrip });
+            }
+
+            return persistedTrip;
+        } finally {
+            setIsPreparingTrip(false);
+        }
+    }, [navigation]);
 
     useEffect(() => {
-        if (!tripId || !currentUserId) {
+        if (trip) {
+            setActiveTrip(trip);
+        }
+    }, [trip]);
+
+    useEffect(() => {
+        if (!activeTrip || !tripId || !currentUserId) {
             setRecommendations([]);
             return;
         }
@@ -60,8 +107,16 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
         const timeoutId = setTimeout(async () => {
             setIsLoadingRecommendations(true);
             try {
+                const tripForApi = isLocalTripId(tripId)
+                    ? await persistTripForCollaboration(activeTrip)
+                    : activeTrip;
+
+                if (!isActive || !tripForApi.id) {
+                    return;
+                }
+
                 const nextRecommendations = await fetchTripMemberRecommendations(
-                    tripId,
+                    tripForApi.id,
                     currentUserId,
                     searchQuery
                 );
@@ -85,7 +140,7 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
             isActive = false;
             clearTimeout(timeoutId);
         };
-    }, [currentUserId, searchQuery, tripId]);
+    }, [activeTrip, currentUserId, persistTripForCollaboration, searchQuery, tripId]);
 
     const confirmTransferOwner = (member: Collaborator) => {
         if (!canManageTrip || getPersonKey(member) === currentUserId) {
@@ -106,20 +161,33 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
         );
     };
 
+    const returnToEditingTrip = () => {
+        if (activeTrip) {
+            navigation.navigate({
+                name: 'EditingTrip',
+                params: { tripData: activeTrip },
+                merge: true,
+            });
+            return;
+        }
+
+        navigation.goBack();
+    };
+
     const saveCollaborators = async () => {
         if (isSaving) {
             return;
         }
 
-        if (!trip) {
+        if (!activeTrip) {
             navigation.goBack();
             return;
         }
 
-        const members: Collaborator[] = trip.members || [];
-        const newOwner = members.find((member) => getPersonKey(member) === selectedOwnerId) ?? trip.owner;
+        const members: Collaborator[] = activeTrip.members || [];
+        const newOwner = members.find((member) => getPersonKey(member) === selectedOwnerId) ?? activeTrip.owner;
         const updatedTrip = {
-            ...trip,
+            ...activeTrip,
             ownerId: selectedOwnerId ?? tripOwnerId,
             owner: newOwner,
             members,
@@ -127,9 +195,10 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
 
         setIsSaving(true);
         try {
+            const localDraftId = isLocalTripId(updatedTrip.id) ? updatedTrip.id : undefined;
             const savedTrip = await upsertTripToBackend(
                 updatedTrip as Record<string, unknown>,
-                updatedTrip.id
+                localDraftId ? undefined : updatedTrip.id
             );
 
             const persistedTrip = normalizeTripDays({
@@ -141,6 +210,9 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
 
             if (persistedTrip.id) {
                 upsertTripDraft(persistedTrip);
+            }
+            if (localDraftId) {
+                removeTripDraft(localDraftId);
             }
 
             navigation.navigate({
@@ -162,10 +234,18 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
 
         setRecommendationActionByUser((prev) => ({ ...prev, [candidate.userId]: true }));
         try {
+            const tripForApi = activeTrip && isLocalTripId(tripId)
+                ? await persistTripForCollaboration(activeTrip)
+                : activeTrip;
+
+            if (!tripForApi?.id) {
+                return;
+            }
+
             if (candidate.isInvitedByUser) {
-                await removeTripInvitation(tripId, candidate.userId);
+                await removeTripInvitation(tripForApi.id, candidate.userId);
             } else {
-                await inviteTripMember(tripId, candidate.userId);
+                await inviteTripMember(tripForApi.id, candidate.userId);
             }
 
             setRecommendations((prev) =>
@@ -232,7 +312,7 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
         <SafeAreaView style={screenStyles.container}>
             <View style={screenStyles.scrollContent}>
                 <View style={screenStyles.header}>
-                    <TouchableOpacity onPress={() => navigation.goBack()}>
+                    <TouchableOpacity onPress={returnToEditingTrip}>
                         <Feather name="arrow-left" size={24} color="#003A70" />
                     </TouchableOpacity>
                     <Text style={screenStyles.headerTitle}>Add Collaborators</Text>
@@ -263,8 +343,10 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
                             </Text>
                         </View>
 
-                        {isLoadingRecommendations ? (
-                            <Text style={screenStyles.noResultText}>Loading users...</Text>
+                        {isLoadingRecommendations || isPreparingTrip ? (
+                            <Text style={screenStyles.noResultText}>
+                                {isPreparingTrip ? 'Preparing trip...' : 'Loading users...'}
+                            </Text>
                         ) : recommendations.length > 0 ? (
                             recommendations.map((userItem) => (
                                 <View key={userItem.userId} style={screenStyles.card}>
@@ -286,9 +368,9 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
                             <Text style={screenStyles.sectionTitle}>Members</Text>
                         </View>
 
-                        {(trip?.members || []).length > 0 ? (
+                        {(activeTrip?.members || []).length > 0 ? (
                             <View style={screenStyles.recentRow}>
-                                {(trip?.members || []).map((member) => {
+                                {(activeTrip?.members || []).map((member) => {
                                     const canTransferOwner =
                                         canManageTrip &&
                                         getPersonKey(member) !== currentUserId &&

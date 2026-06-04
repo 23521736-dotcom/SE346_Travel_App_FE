@@ -27,7 +27,7 @@ const SimpleModal = ({ visible, onClose, title, children }: Props) => {
         </View>
 
         <TouchableOpacity style={modalStyles.button} onPress={onClose}>
-          <Text style={{ }}>Đóng</Text>
+          <Text style={{ }}>Close</Text>
         </TouchableOpacity>
       </View>
     </View>

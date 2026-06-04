@@ -146,12 +146,12 @@ export default function SavedPlaces({ navigation }: any) {
         // Show confirmation when unfavoriting
         if (wasSaved) {
             Alert.alert(
-                "Bỏ lưu",
-                "Bạn có chắc muốn bỏ lưu địa điểm này?",
+                "Unsave",
+                "Are you sure you want to unsave this place?",
                 [
-                    { text: "Hủy", style: "cancel" },
+                    { text: "Cancel", style: "cancel" },
                     {
-                        text: "Bỏ lưu",
+                        text: "Unsave",
                         style: "destructive",
                         onPress: async () => {
                             setSavingIds((current) => new Set(current).add(placeId));

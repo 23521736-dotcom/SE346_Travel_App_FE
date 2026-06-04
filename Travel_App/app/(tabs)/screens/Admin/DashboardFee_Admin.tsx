@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
     SafeAreaView,
     ScrollView,
@@ -127,7 +128,7 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                         <View style={styles.settingRow}>
                             <View style={styles.settingRowLeft}>
                                 <View style={[styles.settingIconMock, { backgroundColor: '#e0f2fe' }]}>
-                                    <Text style={{ color: '#0284c7', fontSize: 14 }}>📍</Text>
+                                    <Ionicons name="location-outline" size={16} color="#0284c7" />
                                 </View>
                                 <Text style={styles.settingLabel}>Create Place Fee</Text>
                             </View>
@@ -137,7 +138,7 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                         <View style={styles.settingRow}>
                             <View style={styles.settingRowLeft}>
                                 <View style={[styles.settingIconMock, { backgroundColor: '#fef3c7' }]}>
-                                    <Text style={{ color: '#b45309', fontSize: 14 }}>🎯</Text>
+                                    <Ionicons name="megaphone-outline" size={16} color="#b45309" />
                                 </View>
                                 <Text style={styles.settingLabel}>Create Promotion Fee</Text>
                             </View>
@@ -153,7 +154,7 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                             </View>
 
                             <View style={styles.smallSearchBox}>
-                                <Text style={styles.smallSearchIcon}>🔍</Text>
+                                <Ionicons name="search" size={16} color="#64748b" style={{ marginRight: 8 }} />
                                 <TextInput
                                     style={styles.smallSearchInput}
                                     placeholder="Search owner..."

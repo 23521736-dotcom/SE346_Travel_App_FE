@@ -1,4 +1,5 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
     ActivityIndicator,
     Alert,
@@ -24,82 +25,110 @@ import {
     type AdminUser
 } from '../../../../lib/api/admin';
 
+type UserTab = 'Active Accounts' | 'Banned Accounts';
+
+const tabs: UserTab[] = ['Active Accounts', 'Banned Accounts'];
+const ITEMS_PER_PAGE = 10;
+
+function parseDateValue(value?: string | number | null) {
+    if (value === null || value === undefined || value === '') {
+        return null;
+    }
+
+    if (typeof value === 'number' || /^\d+$/.test(value)) {
+        const timestamp = Number(value);
+        const date = new Date(timestamp < 10000000000 ? timestamp * 1000 : timestamp);
+        return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    const dateOnlyMatch = value.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (dateOnlyMatch) {
+        const [, year, month, day] = dateOnlyMatch;
+        return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    const slashDateMatch = value.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+    if (slashDateMatch) {
+        const [, day, month, year] = slashDateMatch;
+        return new Date(Number(year), Number(month) - 1, Number(day));
+    }
+
+    const parsedDate = new Date(value);
+    return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+}
+
+function formatJoinedDate(dateString?: string | null) {
+    const date = parseDateValue(dateString);
+    if (!date) {
+        return 'Joined date unavailable';
+    }
+
+    return `Joined ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
+}
+
 function getRoleBadgeColor(role: string) {
     switch (role) {
         case 'ADMIN':
-            return { text: 'Admin', color: '#713f12', bgColor: '#fef08a' };
+            return { text: 'Admin', color: '#7c2d12', bgColor: '#ffedd5' };
         case 'OWNER':
-            return { text: 'Owner', color: '#14532d', bgColor: '#bbf7d0' };
+            return { text: 'Owner', color: '#166534', bgColor: '#dcfce7' };
         case 'TRAVELER':
-            return { text: 'Traveler', color: '#1e3a8a', bgColor: '#bfdbfe' };
+            return { text: 'Traveler', color: '#075985', bgColor: '#e0f2fe' };
         default:
             return { text: 'Unknown', color: '#525252', bgColor: '#e4e4e7' };
     }
 }
 
-function getStatusBadge(isBanned: boolean) {
-    if (isBanned) {
-        return { text: 'Banned', color: '#991b1b', bgColor: '#fecaca' };
-    }
-    return { text: 'Active', color: '#14532d', bgColor: '#bbf7d0' };
+function getStatusCopy(isBanned: boolean) {
+    return isBanned
+        ? { label: 'Banned', icon: 'lock-closed-outline' as const }
+        : { label: 'Active', icon: 'checkmark-circle-outline' as const };
 }
 
-export default function DashboardUser_Admin({ navigation }: any) {
+export default function DashboardUser_Admin() {
     const { logout } = useAuth();
 
-    const tabs = ['Active Accounts', 'Banned Accounts'];
-    const [activeTab, setActiveTab] = useState<string>('Active Accounts');
-
+    const [activeTab, setActiveTab] = useState<UserTab>('Active Accounts');
     const [users, setUsers] = useState<AdminUser[]>([]);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [totalUsers, setTotalUsers] = useState(0);
-
-    // Pagination
     const [currentPage, setCurrentPage] = useState(1);
-    const ITEMS_PER_PAGE = 10;
     const [totalPages, setTotalPages] = useState(1);
+    const [updatingUserId, setUpdatingUserId] = useState<number | null>(null);
 
-    // Ban/Unban modal
-    const [banModalUserId, setBanModalUserId] = useState<number | null>(null);
-    const [banReason, setBanReason] = useState('');
-    const [isBanning, setIsBanning] = useState(false);
-    const [actionLoading, setActionLoading] = useState(false);
-
-    // Change role modal
     const [roleModalUserId, setRoleModalUserId] = useState<number | null>(null);
     const [selectedRole, setSelectedRole] = useState<'TRAVELER' | 'OWNER' | 'ADMIN'>('TRAVELER');
+    const [actionLoading, setActionLoading] = useState(false);
+    const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    const loadUsers = useCallback(async (page?: number, search?: string) => {
+    const isBannedTab = activeTab === 'Banned Accounts';
+
+    const loadUsers = useCallback(async (page = currentPage, search = searchQuery, tab = activeTab, quiet = false) => {
         try {
-            setLoading(true);
-            const pageNum = page ?? currentPage;
-            const searchVal = search ?? searchQuery;
-            const offset = (pageNum - 1) * ITEMS_PER_PAGE;
-
+            if (!quiet) setLoading(true);
+            const offset = (page - 1) * ITEMS_PER_PAGE;
             const response = await fetchAdminUsers({
-                search: searchVal || undefined,
+                search: search.trim() || undefined,
+                isBanned: tab === 'Banned Accounts',
                 limit: ITEMS_PER_PAGE,
                 offset,
             });
 
-            // Filter users based on active tab
-            const filteredUsers = response.items.filter(user => {
-                if (activeTab === 'Active Accounts') return !user.isBanned;
-                if (activeTab === 'Banned Accounts') return user.isBanned;
-                return true;
-            });
-
-            setUsers(filteredUsers);
+            setUsers(response.items);
             setTotalUsers(response.meta.total);
-            setTotalPages(Math.ceil(response.meta.total / ITEMS_PER_PAGE));
+            setTotalPages(Math.max(1, Math.ceil(response.meta.total / ITEMS_PER_PAGE)));
         } catch (err: any) {
             Alert.alert('Error', err?.message || 'Failed to load users');
             setUsers([]);
+            setTotalUsers(0);
+            setTotalPages(1);
         } finally {
             setLoading(false);
+            setRefreshing(false);
         }
-    }, [currentPage, searchQuery, activeTab]);
+    }, [activeTab, currentPage, searchQuery]);
 
     useFocusEffect(
         useCallback(() => {
@@ -107,44 +136,67 @@ export default function DashboardUser_Admin({ navigation }: any) {
         }, [loadUsers])
     );
 
-    const handleSearch = (text: string) => {
+    const handleSearchChange = (text: string) => {
         setSearchQuery(text);
         setCurrentPage(1);
-        // Debounce search
-        const timeoutId = setTimeout(() => {
+
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+
+        searchTimeoutRef.current = setTimeout(() => {
             loadUsers(1, text);
         }, 300);
-        return () => clearTimeout(timeoutId);
     };
 
-    const handleTabChange = (tab: string) => {
+    const handleTabChange = (tab: UserTab) => {
         setActiveTab(tab);
         setCurrentPage(1);
+        loadUsers(1, searchQuery, tab);
     };
 
-    const handleBanPress = (userId: number, currentIsBanned: boolean) => {
-        setBanModalUserId(userId);
-        setIsBanning(!currentIsBanned);
-        setBanReason('');
+    const handleRefresh = () => {
+        setRefreshing(true);
+        loadUsers(currentPage, searchQuery, activeTab, true);
     };
 
-    const handleBanConfirm = async () => {
-        if (!banModalUserId) return;
+    const updateBanStatus = async (user: AdminUser, nextIsBanned: boolean) => {
         try {
-            setActionLoading(true);
-            await banUser(banModalUserId, isBanning, banReason.trim() || undefined);
-            Alert.alert(
-                'Success',
-                isBanning ? 'User has been banned.' : 'User has been unbanned.'
-            );
-            setBanModalUserId(null);
-            setBanReason('');
-            loadUsers();
+            setUpdatingUserId(user.id);
+            await banUser(user.id, nextIsBanned);
+
+            setUsers((current) => current.filter((item) => item.id !== user.id));
+            setTotalUsers((total) => Math.max(0, total - 1));
+
+            const remainingOnPage = users.length - 1;
+            const shouldStepBack = remainingOnPage === 0 && currentPage > 1;
+            const nextPage = shouldStepBack ? currentPage - 1 : currentPage;
+            if (shouldStepBack) setCurrentPage(nextPage);
+
+            await loadUsers(nextPage, searchQuery, activeTab, true);
         } catch (err: any) {
             Alert.alert('Error', err?.message || 'Failed to update user status');
         } finally {
-            setActionLoading(false);
+            setUpdatingUserId(null);
         }
+    };
+
+    const handleStatusPress = (user: AdminUser) => {
+        const nextIsBanned = !user.isBanned;
+        Alert.alert(
+            nextIsBanned ? 'Ban account?' : 'Active account?',
+            nextIsBanned
+                ? `${getDisplayName(user)} will move to Banned Accounts.`
+                : `${getDisplayName(user)} will move back to Active Accounts.`,
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: nextIsBanned ? 'Ban' : 'Active',
+                    style: nextIsBanned ? 'destructive' : 'default',
+                    onPress: () => updateBanStatus(user, nextIsBanned),
+                },
+            ]
+        );
     };
 
     const handleRolePress = (userId: number, currentRole: string) => {
@@ -157,9 +209,8 @@ export default function DashboardUser_Admin({ navigation }: any) {
         try {
             setActionLoading(true);
             await changeUserRole(roleModalUserId, selectedRole);
-            Alert.alert('Success', 'User role has been updated.');
             setRoleModalUserId(null);
-            loadUsers();
+            loadUsers(currentPage, searchQuery, activeTab, true);
         } catch (err: any) {
             Alert.alert('Error', err?.message || 'Failed to update user role');
         } finally {
@@ -183,51 +234,59 @@ export default function DashboardUser_Admin({ navigation }: any) {
         }
     };
 
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return `Joined ${date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}`;
-    };
-
     const getAvatarUrl = (user: AdminUser) => {
-        // Use a placeholder avatar since we don't have avatarUrl in the AdminUser type
-        return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || user.username || user.email)}&background=0D8ABC&color=fff`;
-    };
-
-    const getDisplayName = (user: AdminUser) => {
-        return user.fullName || user.username || user.email.split('@')[0];
+        return `https://ui-avatars.com/api/?name=${encodeURIComponent(getDisplayName(user))}&background=0284c7&color=fff`;
     };
 
     const startItemIndex = users.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1;
     const endItemIndex = Math.min(currentPage * ITEMS_PER_PAGE, totalUsers);
 
+    const summaryText = useMemo(() => {
+        if (loading) return 'Loading accounts';
+        return `${totalUsers} ${isBannedTab ? 'banned' : 'active'} account${totalUsers === 1 ? '' : 's'}`;
+    }, [isBannedTab, loading, totalUsers]);
+
     return (
         <SafeAreaView style={styles.safeArea}>
-            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+            <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
 
             <View style={styles.container}>
                 <View style={styles.header}>
-                    <View style={styles.headerLeft}>
+                    <View>
                         <Text style={styles.headerTitle}>Admin Dashboard</Text>
                     </View>
                     <TouchableOpacity style={styles.logoutButton} onPress={logout}>
+                        <Ionicons name="log-out-outline" size={16} color="#dc2626" />
                         <Text style={styles.logoutText}>Logout</Text>
                     </TouchableOpacity>
                 </View>
 
                 <View style={styles.contentArea}>
-                    {/* Search Bar */}
+                    <View style={styles.summaryCard}>
+                        <View>
+                            <Text style={styles.summaryLabel}>{activeTab}</Text>
+                            <Text style={styles.summaryValue}>{summaryText}</Text>
+                        </View>
+                        <View style={[styles.summaryIconWrap, isBannedTab && styles.summaryIconWrapDanger]}>
+                            <Ionicons
+                                name={isBannedTab ? 'ban-outline' : 'people-outline'}
+                                size={24}
+                                color={isBannedTab ? '#dc2626' : '#0284c7'}
+                            />
+                        </View>
+                    </View>
+
                     <View style={styles.searchContainer}>
-                        <Text style={styles.searchIcon}>🔍</Text>
+                        <Ionicons name="search" size={18} color="#64748b" style={styles.searchIcon} />
                         <TextInput
                             style={styles.searchInput}
-                            placeholder="Search by name, email..."
+                            placeholder="Search by name or email"
                             placeholderTextColor="#94a3b8"
                             value={searchQuery}
-                            onChangeText={handleSearch}
+                            onChangeText={handleSearchChange}
                         />
                     </View>
 
-                    {/* Tabs */}
                     <View style={styles.tabContainer}>
                         {tabs.map((tab) => (
                             <TouchableOpacity
@@ -243,9 +302,9 @@ export default function DashboardUser_Admin({ navigation }: any) {
                     </View>
 
                     {loading ? (
-                        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                        <View style={styles.loadingState}>
                             <ActivityIndicator size="large" color="#0284c7" />
-                            <Text style={{ marginTop: 12, color: '#71717a' }}>Loading users...</Text>
+                            <Text style={styles.loadingText}>Loading users...</Text>
                         </View>
                     ) : (
                         <ScrollView
@@ -253,98 +312,38 @@ export default function DashboardUser_Admin({ navigation }: any) {
                             contentContainerStyle={styles.scrollContent}
                             refreshControl={
                                 <RefreshControl
-                                    refreshing={loading}
-                                    onRefresh={() => loadUsers()}
-                                    colors={["#0284c7"]}
+                                    refreshing={refreshing}
+                                    onRefresh={handleRefresh}
+                                    colors={['#0284c7']}
                                     tintColor="#0284c7"
                                 />
                             }
                         >
-                            {/* Users Table */}
-                            <View style={styles.tableCard}>
-                                {/* Table Header */}
-                                <View style={styles.tableHeader}>
-                                    <Text style={[styles.tableHeaderText, { flex: 1.5 }]}>User Profile</Text>
-                                    <Text style={[styles.tableHeaderText, { flex: 1 }]}>Email</Text>
-                                    <Text style={[styles.tableHeaderText, { flex: 0.8 }]}>Role</Text>
-                                    <Text style={[styles.tableHeaderText, { flex: 0.6, textAlign: 'center' }]}>Action</Text>
-                                </View>
-
-                                {users.map((user, index) => {
-                                    const roleBadge = getRoleBadgeColor(user.role);
-                                    const statusBadge = getStatusBadge(user.isBanned);
-
-                                    return (
-                                        <View
+                                <View style={styles.cardList}>
+                                    {users.map((user) => (
+                                        <UserCard
                                             key={user.id}
-                                            style={[styles.tableRow, index === users.length - 1 && { borderBottomWidth: 0 }]}
-                                        >
-                                            {/* Profile Column */}
-                                            <View style={styles.userInfoCol}>
-                                                <Image
-                                                    source={{ uri: getAvatarUrl(user) }}
-                                                    style={[styles.avatar, user.isBanned && styles.avatarBanned]}
-                                                />
-                                                <View style={styles.userNameBlock}>
-                                                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                                                        <Text style={[styles.userName, user.isBanned && styles.textBanned]} numberOfLines={1}>
-                                                            {getDisplayName(user)}
-                                                        </Text>
-                                                        <View style={[styles.badge, { backgroundColor: statusBadge.bgColor }]}>
-                                                            <Text style={[styles.badgeText, { color: statusBadge.color }]}>
-                                                                {statusBadge.text}
-                                                            </Text>
-                                                        </View>
-                                                    </View>
-                                                    <Text style={styles.userJoined}>{formatDate(user.createdAt)}</Text>
-                                                    <Text style={styles.userStats}>
-                                                        {user.ownedPlacesCount} places · {user.reviewsCount} reviews
-                                                    </Text>
-                                                </View>
-                                            </View>
+                                        user={user}
+                                        avatarUrl={getAvatarUrl(user)}
+                                        joinedText={formatJoinedDate(user.createdAt)}
+                                        isUpdating={updatingUserId === user.id}
+                                        onStatusPress={() => handleStatusPress(user)}
+                                        onRolePress={() => handleRolePress(user.id, user.role)}
+                                    />
+                                ))}
 
-                                            {/* Email Column */}
-                                            <View style={styles.userEmailCol}>
-                                                <Text style={styles.userEmail} numberOfLines={2} ellipsizeMode="tail">
-                                                    {user.email}
-                                                </Text>
-                                            </View>
-
-                                            {/* Role Column */}
-                                            <View style={styles.userRoleCol}>
-                                                <TouchableOpacity
-                                                    onPress={() => handleRolePress(user.id, user.role)}
-                                                    style={[styles.badge, { backgroundColor: roleBadge.bgColor }]}
-                                                >
-                                                    <Text style={[styles.badgeText, { color: roleBadge.color }]}>
-                                                        {roleBadge.text}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            </View>
-
-                                            {/* Action Column */}
-                                            <View style={styles.userActionCol}>
-                                                <TouchableOpacity
-                                                    style={[
-                                                        styles.statusBtn,
-                                                        user.isBanned ? styles.btnUnban : styles.btnBan
-                                                    ]}
-                                                    onPress={() => handleBanPress(user.id, user.isBanned)}
-                                                >
-                                                    <Text style={user.isBanned ? styles.btnUnbanText : styles.btnBanText}>
-                                                        {user.isBanned ? 'Unban' : 'Ban'}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            </View>
+                                    {users.length === 0 && (
+                                        <View style={styles.emptyState}>
+                                            <Ionicons name="people-outline" size={34} color="#94a3b8" />
+                                            <Text style={styles.emptyTitle}>No users found</Text>
+                                            <Text style={styles.emptyText}>
+                                                {isBannedTab
+                                                    ? 'Banned users will appear here after you ban an active account.'
+                                                    : 'Active users will appear here when they are not banned.'}
+                                            </Text>
                                         </View>
-                                    );
-                                })}
-
-                                {users.length === 0 && (
-                                    <Text style={styles.emptyText}>No users found.</Text>
                                 )}
 
-                                {/* Pagination */}
                                 {users.length > 0 && (
                                     <View style={styles.paginationRow}>
                                         <Text style={styles.paginationText}>
@@ -352,32 +351,29 @@ export default function DashboardUser_Admin({ navigation }: any) {
                                         </Text>
                                         <View style={styles.paginationControls}>
                                             <TouchableOpacity
+                                                    style={styles.pageArrowBtn}
                                                 onPress={handlePrevPage}
                                                 disabled={currentPage === 1}
                                             >
-                                                <Text style={[styles.pageArrow, currentPage === 1 && styles.pageArrowDisabled]}>{'<'}</Text>
+                                                    <Ionicons
+                                                        name="chevron-back"
+                                                        size={18}
+                                                        color={currentPage === 1 ? '#cbd5e1' : '#0369a1'}
+                                                    />
                                             </TouchableOpacity>
 
-                                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNumber => (
-                                                <TouchableOpacity
-                                                    key={pageNumber}
-                                                    style={[styles.pageNumberBtn, currentPage === pageNumber && styles.pageNumberActive]}
-                                                    onPress={() => {
-                                                        setCurrentPage(pageNumber);
-                                                        loadUsers(pageNumber);
-                                                    }}
-                                                >
-                                                    <Text style={[styles.pageNumberText, currentPage === pageNumber && styles.pageNumberTextActive]}>
-                                                        {pageNumber}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            ))}
+                                                <Text style={styles.pageIndicator}>{currentPage} / {totalPages}</Text>
 
                                             <TouchableOpacity
+                                                    style={styles.pageArrowBtn}
                                                 onPress={handleNextPage}
                                                 disabled={currentPage === totalPages}
                                             >
-                                                <Text style={[styles.pageArrow, currentPage === totalPages && styles.pageArrowDisabled]}>{'>'}</Text>
+                                                    <Ionicons
+                                                        name="chevron-forward"
+                                                        size={18}
+                                                        color={currentPage === totalPages ? '#cbd5e1' : '#0369a1'}
+                                                    />
                                             </TouchableOpacity>
                                         </View>
                                     </View>
@@ -388,113 +384,17 @@ export default function DashboardUser_Admin({ navigation }: any) {
                 </View>
             </View>
 
-            {/* Ban/Unban Modal */}
-            <Modal
-                visible={banModalUserId !== null}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setBanModalUserId(null)}
-            >
-                <View style={{
-                    flex: 1,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: 24,
-                }}>
-                    <View style={{
-                        backgroundColor: '#fff',
-                        borderRadius: 16,
-                        padding: 24,
-                        width: '100%',
-                        maxWidth: 400,
-                    }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#09090b', marginBottom: 8 }}>
-                            {isBanning ? 'Ban User' : 'Unban User'}
-                        </Text>
-                        <Text style={{ fontSize: 14, color: '#71717a', marginBottom: 16 }}>
-                            {isBanning
-                                ? 'Please provide a reason for banning this user (optional):'
-                                : 'Are you sure you want to unban this user?'}
-                        </Text>
-                        {isBanning && (
-                            <TextInput
-                                style={{
-                                    borderWidth: 1,
-                                    borderColor: '#e4e4e7',
-                                    borderRadius: 12,
-                                    padding: 12,
-                                    fontSize: 14,
-                                    minHeight: 80,
-                                    textAlignVertical: 'top',
-                                    marginBottom: 16,
-                                }}
-                                placeholder="e.g. Violation of community guidelines..."
-                                placeholderTextColor="#a1a1aa"
-                                multiline
-                                value={banReason}
-                                onChangeText={setBanReason}
-                            />
-                        )}
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
-                            <TouchableOpacity
-                                onPress={() => setBanModalUserId(null)}
-                                style={{
-                                    paddingHorizontal: 16,
-                                    paddingVertical: 10,
-                                    borderRadius: 10,
-                                    backgroundColor: '#f4f4f5',
-                                }}
-                            >
-                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#52525b' }}>Cancel</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity
-                                onPress={handleBanConfirm}
-                                disabled={actionLoading}
-                                style={{
-                                    paddingHorizontal: 16,
-                                    paddingVertical: 10,
-                                    borderRadius: 10,
-                                    backgroundColor: isBanning ? '#dc2626' : '#0284c7',
-                                }}
-                            >
-                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>
-                                    {actionLoading ? 'Processing...' : (isBanning ? 'Ban' : 'Unban')}
-                                </Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-
-            {/* Change Role Modal */}
             <Modal
                 visible={roleModalUserId !== null}
                 transparent={true}
                 animationType="fade"
                 onRequestClose={() => setRoleModalUserId(null)}
             >
-                <View style={{
-                    flex: 1,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    padding: 24,
-                }}>
-                    <View style={{
-                        backgroundColor: '#fff',
-                        borderRadius: 16,
-                        padding: 24,
-                        width: '100%',
-                        maxWidth: 400,
-                    }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#09090b', marginBottom: 8 }}>
-                            Change User Role
-                        </Text>
-                        <Text style={{ fontSize: 14, color: '#71717a', marginBottom: 16 }}>
-                            Select the new role for this user:
-                        </Text>
-                        <View style={{ gap: 8, marginBottom: 16 }}>
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalCard}>
+                        <Text style={styles.modalTitle}>Change User Role</Text>
+                        <Text style={styles.modalBody}>Select the new role for this user.</Text>
+                        <View style={styles.roleOptions}>
                             {(['TRAVELER', 'OWNER', 'ADMIN'] as const).map((role) => {
                                 const badge = getRoleBadgeColor(role);
                                 return (
@@ -502,18 +402,11 @@ export default function DashboardUser_Admin({ navigation }: any) {
                                         key={role}
                                         onPress={() => setSelectedRole(role)}
                                         style={[
-                                            {
-                                                borderWidth: 2,
-                                                borderColor: selectedRole === role ? '#0284c7' : '#e4e4e7',
-                                                borderRadius: 12,
-                                                padding: 12,
-                                                flexDirection: 'row',
-                                                alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                            }
+                                            styles.roleOption,
+                                            selectedRole === role && styles.roleOptionActive
                                         ]}
                                     >
-                                        <Text style={{ fontSize: 15, fontWeight: '500', color: '#09090b' }}>
+                                        <Text style={styles.roleOptionText}>
                                             {role.charAt(0) + role.slice(1).toLowerCase()}
                                         </Text>
                                         <View style={[styles.badge, { backgroundColor: badge.bgColor }]}>
@@ -525,29 +418,19 @@ export default function DashboardUser_Admin({ navigation }: any) {
                                 );
                             })}
                         </View>
-                        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+                        <View style={styles.modalActions}>
                             <TouchableOpacity
                                 onPress={() => setRoleModalUserId(null)}
-                                style={{
-                                    paddingHorizontal: 16,
-                                    paddingVertical: 10,
-                                    borderRadius: 10,
-                                    backgroundColor: '#f4f4f5',
-                                }}
+                                style={styles.modalCancelButton}
                             >
-                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#52525b' }}>Cancel</Text>
+                                <Text style={styles.modalCancelText}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={handleRoleConfirm}
                                 disabled={actionLoading}
-                                style={{
-                                    paddingHorizontal: 16,
-                                    paddingVertical: 10,
-                                    borderRadius: 10,
-                                    backgroundColor: '#0284c7',
-                                }}
+                                style={styles.modalPrimaryButton}
                             >
-                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>
+                                <Text style={styles.modalPrimaryText}>
                                     {actionLoading ? 'Updating...' : 'Update Role'}
                                 </Text>
                             </TouchableOpacity>
@@ -556,5 +439,93 @@ export default function DashboardUser_Admin({ navigation }: any) {
                 </View>
             </Modal>
         </SafeAreaView>
+    );
+}
+
+function getDisplayName(user: AdminUser) {
+    return user.fullName || user.username || user.email.split('@')[0];
+}
+
+function UserCard({
+    user,
+    avatarUrl,
+    joinedText,
+    isUpdating,
+    onStatusPress,
+    onRolePress,
+}: {
+    user: AdminUser;
+    avatarUrl: string;
+    joinedText: string;
+    isUpdating: boolean;
+    onStatusPress: () => void;
+    onRolePress: () => void;
+}) {
+    const roleBadge = getRoleBadgeColor(user.role);
+    const status = getStatusCopy(user.isBanned);
+
+    return (
+        <View style={[styles.userCard, user.isBanned && styles.userCardBanned]}>
+            <View style={styles.cardTopRow}>
+                <Image source={{ uri: avatarUrl }} style={[styles.avatar, user.isBanned && styles.avatarBanned]} />
+                <View style={styles.userMainInfo}>
+                    <View style={styles.nameRow}>
+                        <Text style={[styles.userName, user.isBanned && styles.textBanned]} numberOfLines={1}>
+                            {getDisplayName(user)}
+                        </Text>
+                        <View style={[styles.statusBadge, user.isBanned && styles.statusBadgeBanned]}>
+                            <Ionicons
+                                name={status.icon}
+                                size={12}
+                                color={user.isBanned ? '#dc2626' : '#16a34a'}
+                            />
+                            <Text style={[styles.statusBadgeText, user.isBanned && styles.statusBadgeTextBanned]}>
+                                {status.label}
+                            </Text>
+                        </View>
+                    </View>
+                    <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
+                    <Text style={styles.userJoined}>{joinedText}</Text>
+                </View>
+            </View>
+
+            <View style={styles.metaRow}>
+                <View style={styles.metricPill}>
+                    <Text style={styles.metricValue}>{user.ownedPlacesCount}</Text>
+                    <Text style={styles.metricLabel}>places</Text>
+                </View>
+                <View style={styles.metricPill}>
+                    <Text style={styles.metricValue}>{user.reviewsCount}</Text>
+                    <Text style={styles.metricLabel}>reviews</Text>
+                </View>
+                <TouchableOpacity
+                    onPress={onRolePress}
+                    style={[styles.roleBadge, { backgroundColor: roleBadge.bgColor }]}
+                >
+                    <Text style={[styles.badgeText, { color: roleBadge.color }]}>{roleBadge.text}</Text>
+                </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+                style={[styles.statusBtn, user.isBanned ? styles.btnActive : styles.btnBan]}
+                onPress={onStatusPress}
+                disabled={isUpdating}
+            >
+                {isUpdating ? (
+                    <ActivityIndicator size="small" color={user.isBanned ? '#166534' : '#ffffff'} />
+                ) : (
+                    <>
+                        <Ionicons
+                            name={user.isBanned ? 'checkmark-circle-outline' : 'ban-outline'}
+                            size={17}
+                            color={user.isBanned ? '#166534' : '#ffffff'}
+                        />
+                        <Text style={user.isBanned ? styles.btnActiveText : styles.btnBanText}>
+                            {user.isBanned ? 'Active' : 'Ban'}
+                        </Text>
+                    </>
+                )}
+            </TouchableOpacity>
+        </View>
     );
 }

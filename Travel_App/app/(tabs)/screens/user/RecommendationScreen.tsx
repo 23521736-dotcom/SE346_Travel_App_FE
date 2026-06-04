@@ -23,11 +23,11 @@ type SectionData = {
 };
 
 const SECTIONS: SectionData[] = [
-  { key: 'contentBased', title: 'Vì bạn thích...', icon: 'heart-outline' },
-  { key: 'serendipity', title: 'Khám phá điều mới', icon: 'compass-outline' },
-  { key: 'collaborative', title: 'Người dùng tương tự cũng thích', icon: 'people-outline' },
-  { key: 'tfidfSimilar', title: 'Địa điểm tương tự', icon: 'locate-outline' },
-  { key: 'trending', title: 'Đang thịnh hành', icon: 'trending-up-outline' },
+  { key: 'contentBased', title: 'Because you liked...', icon: 'heart-outline' },
+  { key: 'serendipity', title: 'Discover something new', icon: 'compass-outline' },
+  { key: 'collaborative', title: 'Similar users also liked', icon: 'people-outline' },
+  { key: 'tfidfSimilar', title: 'Similar places', icon: 'locate-outline' },
+  { key: 'trending', title: 'Trending now', icon: 'trending-up-outline' },
 ];
 
 export default function RecommendationScreen({ navigation }: any) {
@@ -110,7 +110,7 @@ export default function RecommendationScreen({ navigation }: any) {
             renderItem={renderPlaceCard}
             ListEmptyComponent={
               <View style={styles.emptyState}>
-                <Text style={styles.emptyText}>Chưa có gợi ý</Text>
+                <Text style={styles.emptyText}>No recommendations yet</Text>
               </View>
             }
           />
@@ -124,7 +124,7 @@ export default function RecommendationScreen({ navigation }: any) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text style={styles.loadingText}>Đang tải gợi ý cho bạn...</Text>
+        <Text style={styles.loadingText}>Loading recommendations for you...</Text>
       </View>
     );
   }
@@ -137,8 +137,8 @@ export default function RecommendationScreen({ navigation }: any) {
             <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
           </Pressable>
           <View style={{ flex: 1 }}>
-            <Text style={styles.headerTitle}>Gợi ý cho bạn</Text>
-            <Text style={styles.headerSubtitle}>Cá nhân hóa dựa trên sở thích của bạn</Text>
+            <Text style={styles.headerTitle}>Recommendations for You</Text>
+            <Text style={styles.headerSubtitle}>Personalized based on your preferences</Text>
           </View>
         </View>
       </View>

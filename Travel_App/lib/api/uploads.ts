@@ -78,36 +78,45 @@ async function parseUploadResponse(res: Response, endpoint: string): Promise<str
     : data.publicUrl as string;
 }
 
+async function uploadForm(endpoint: string, form: FormData, token: string | null): Promise<Response> {
+  const url = `${API_V1}${endpoint}`;
+
+  try {
+    return await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: form,
+    });
+  } catch (err) {
+    throw new Error(`Cannot connect to upload API at ${url}. Please check the backend server, port, Wi-Fi IP, and firewall.`);
+  }
+}
+
 export async function uploadPlaceCover(uri: string): Promise<string> {
   const token = await getAccessToken();
   const form = new FormData();
   await appendImageFile(form, 'file', { uri }, 'cover.jpg');
 
   const endpoint = '/uploads/place-cover';
-  const res = await fetch(`${API_V1}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: form,
-  });
+  const res = await uploadForm(endpoint, form, token);
   const uploadedUrl = await parseUploadResponse(res, endpoint);
   return Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl;
 }
 
-export async function uploadReviewImage(uri: string): Promise<string> {
+export async function uploadReviewImage(input: string | UploadImageInput): Promise<string> {
   const token = await getAccessToken();
   const form = new FormData();
-  await appendImageFile(form, 'file', { uri }, 'review.jpg');
+  await appendImageFile(
+    form,
+    'file',
+    typeof input === 'string' ? { uri: input } : input,
+    'review.jpg'
+  );
 
   const endpoint = '/uploads/review-image';
-  const res = await fetch(`${API_V1}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: form,
-  });
+  const res = await uploadForm(endpoint, form, token);
   const uploadedUrl = await parseUploadResponse(res, endpoint);
   return Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl;
 }
@@ -127,24 +136,8 @@ export async function uploadReviewImages(images: UploadImageInput[]): Promise<st
     return remoteUrls;
   }
 
-  const token = await getAccessToken();
-  const form = new FormData();
-
-  for (const image of localImages) {
-    await appendImageFile(form, 'files', image, 'review.jpg');
-  }
-
-  const endpoint = '/uploads/review-images';
-  const res = await fetch(`${API_V1}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: form,
-  });
-
-  const uploadedUrls = await parseUploadResponse(res, endpoint);
-  return [...remoteUrls, ...(Array.isArray(uploadedUrls) ? uploadedUrls : [uploadedUrls])];
+  const uploadedUrls = await Promise.all(localImages.map((item) => uploadReviewImage(item)));
+  return [...remoteUrls, ...uploadedUrls];
 }
 
 export async function uploadDiaryImage(input: string | UploadImageInput): Promise<string> {
@@ -158,13 +151,7 @@ export async function uploadDiaryImage(input: string | UploadImageInput): Promis
   );
 
   const endpoint = '/uploads/diary-image';
-  const res = await fetch(`${API_V1}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: form,
-  });
+  const res = await uploadForm(endpoint, form, token);
   const uploadedUrl = await parseUploadResponse(res, endpoint);
   return Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl;
 }
@@ -193,13 +180,7 @@ export async function uploadAvatar(uri: string): Promise<string> {
   await appendImageFile(form, 'file', { uri }, 'avatar.jpg');
 
   const endpoint = '/uploads/avatar';
-  const res = await fetch(`${API_V1}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: form,
-  });
+  const res = await uploadForm(endpoint, form, token);
   const uploadedUrl = await parseUploadResponse(res, endpoint);
   return Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl;
 }

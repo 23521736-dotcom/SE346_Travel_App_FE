@@ -144,21 +144,21 @@ export async function fetchMyTripInvitations(): Promise<ApiTripInvitation[]> {
   return normalizeTripInvitationsResponse(payload);
 }
 
-// export async function acceptTripInvitation(tripId: string | number): Promise<ApiTripMember> {
-//   const res = await apiClient.post<ApiOk<ApiTripMember> | ApiTripMember>(
-//     `${TRIPS_PATH}/${tripId}/invitations/accept`
-//   );
+export async function acceptTripInvitation(tripId: string | number): Promise<ApiTripMember> {
+  const res = await apiClient.post<ApiOk<ApiTripMember> | ApiTripMember>(
+    `${TRIPS_PATH}/${tripId}/invitations/accept`
+  );
 
-//   return unwrapApiData(res.data as ApiOk<ApiTripMember> | ApiTripMember);
-// }
+  return unwrapApiData(res.data as ApiOk<ApiTripMember> | ApiTripMember);
+}
 
-// export async function rejectTripInvitation(tripId: string | number): Promise<ApiTripMember> {
-//   const res = await apiClient.post<ApiOk<ApiTripMember> | ApiTripMember>(
-//     `${TRIPS_PATH}/${tripId}/invitations/reject`
-//   );
+export async function rejectTripInvitation(tripId: string | number): Promise<ApiTripMember> {
+  const res = await apiClient.post<ApiOk<ApiTripMember> | ApiTripMember>(
+    `${TRIPS_PATH}/${tripId}/invitations/reject`
+  );
 
-//   return unwrapApiData(res.data as ApiOk<ApiTripMember> | ApiTripMember);
-// }
+  return unwrapApiData(res.data as ApiOk<ApiTripMember> | ApiTripMember);
+}
 
 export async function removeTripMember(
   tripId: string | number,

@@ -144,7 +144,7 @@ function updateDayDates(days: ItineraryDay[] | undefined, duration: number, star
 
 function getVietnameseDayTitle(title: string, index: number) {
   const dayNumber = title.match(/\d+/)?.[0] ?? String(index + 1);
-  return `Ngày ${dayNumber}`;
+  return `Day ${dayNumber}`;
 }
 
 function getCostValue(cost: string) {
@@ -868,7 +868,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
                   <Feather name="map-pin" size={15} color="#1E88E5" />
                 </View>
                 <Text style={styles.addLocationText}>
-                  Thêm địa điểm cho {getVietnameseDayTitle(day.title, index)}
+                  Add place for {getVietnameseDayTitle(day.title, index)}
                 </Text>
               </TouchableOpacity>
             </View>
