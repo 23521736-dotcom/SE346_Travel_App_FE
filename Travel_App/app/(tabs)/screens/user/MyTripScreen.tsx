@@ -196,6 +196,9 @@ function TripCard({
     <Pressable
       onPress={onPress}
       disabled={isDeleting}
+      accessibilityLabel={`${trip.title}, ${trip.date}`}
+      accessibilityRole="button"
+      accessibilityHint={activeFilter === "Past" ? "View trip diary" : "Open trip planning"}
       style={({ pressed }) => [
         styles.tripCard,
         { backgroundColor: theme.card },
@@ -583,6 +586,10 @@ export default function MyTripScreen({ navigation }: any) {
           onPress={createEmptyPlanningTrip}
         >
           <Ionicons name="add" size={28} color={theme.primary} />
+          accessibilityLabel="Create new trip"
+          accessibilityRole="button"
+          accessibilityHint="Tap to create a new trip">
+          <Ionicons name="add" size={28} color={colors.primary} />
         </Pressable>
       </View>
 
@@ -593,6 +600,9 @@ export default function MyTripScreen({ navigation }: any) {
       >
         <Pressable
           onPress={() => navigation.navigate('SmartPlanning' as never)}
+          accessibilityLabel="Smart planning"
+          accessibilityRole="button"
+          accessibilityHint="Tap to use AI-powered trip planning"
           style={({ pressed }) => [
             {
               flexDirection: 'row',
@@ -652,6 +662,8 @@ export default function MyTripScreen({ navigation }: any) {
               <View style={styles.featuredActions}>
                 <Pressable
                   onPress={planTrip}
+                  accessibilityLabel="Plan this trip"
+                  accessibilityRole="button"
                   style={({ pressed }) => [
                     styles.featuredPrimaryButton,
                     pressed && styles.buttonPressed,
@@ -662,6 +674,8 @@ export default function MyTripScreen({ navigation }: any) {
 
                 <Pressable
                   onPress={writeDiaryTrip}
+                  accessibilityLabel="Write trip diary"
+                  accessibilityRole="button"
                   style={({ pressed }) => [
                     styles.featuredSecondaryButton,
                     pressed && styles.buttonPressed,
@@ -686,6 +700,9 @@ export default function MyTripScreen({ navigation }: any) {
                   setActiveFilter(filter);
                 }}
                 style={[styles.tabButton, isActive && styles.activeTab]}
+                accessibilityLabel={`${filter} trips`}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: isActive }}
               >
                 <Text style={[styles.tabText, isActive && styles.activeTabText]}>
                   {filter}

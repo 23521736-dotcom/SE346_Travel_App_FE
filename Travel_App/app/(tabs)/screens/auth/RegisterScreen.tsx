@@ -103,6 +103,8 @@ export default function RegisterScreen({ navigation }: any) {
                                 value={fullName}
                                 onChangeText={setFullName}
                                 autoCapitalize="none"
+                                accessibilityLabel="Full name"
+                                accessibilityHint="Enter your full name"
                             />
                         </View>
                         <View style={styles.inputContainer}>
@@ -124,6 +126,8 @@ export default function RegisterScreen({ navigation }: any) {
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
+                                accessibilityLabel="Email address"
+                                accessibilityHint="Enter your email address"
                             />
                         </View>
 
@@ -149,9 +153,13 @@ export default function RegisterScreen({ navigation }: any) {
                                 autoCapitalize="none"
                                 value={password}
                                 onChangeText={setPassword}
+                                accessibilityLabel="Password"
+                                accessibilityHint="Enter a password with at least 8 characters"
                             />
                             <TouchableOpacity
-                                onPress={() => setPasswordVisible(!isPasswordVisible)} >
+                                onPress={() => setPasswordVisible(!isPasswordVisible)}
+                                accessibilityLabel={isPasswordVisible ? "Hide password" : "Show password"}
+                                accessibilityRole="button">
                         <Image
                             source={
                                 isPasswordVisible
@@ -180,9 +188,13 @@ export default function RegisterScreen({ navigation }: any) {
                                 placeholderTextColor="#94a3b8"
                                 value={confirmPassword}
                                 onChangeText={setConfirmPassword}
+                                accessibilityLabel="Confirm password"
+                                accessibilityHint="Re-enter your password to confirm"
                             />
                             <TouchableOpacity
-                                onPress={() => setCfPasswordVisible(!isCfPasswordVisible)} >
+                                onPress={() => setCfPasswordVisible(!isCfPasswordVisible)}
+                                accessibilityLabel={isCfPasswordVisible ? "Hide confirm password" : "Show confirm password"}
+                                accessibilityRole="button">
                                 <Image
                                     source={
                                         isCfPasswordVisible
@@ -202,7 +214,10 @@ export default function RegisterScreen({ navigation }: any) {
                                         selectedRole === 'TRAVELER' && styles.roleCardActive,
                                     ]}
                                     onPress={() => setSelectedRole('TRAVELER')}
-                                >
+                                    accessibilityLabel="Traveler account type"
+                                    accessibilityRole="radio"
+                                    accessibilityState={{ selected: selectedRole === 'TRAVELER' }}
+                                    accessibilityHint="Select traveler account to explore places and write reviews">
                                     <Text
                                         style={[
                                             styles.roleName,
@@ -222,7 +237,10 @@ export default function RegisterScreen({ navigation }: any) {
                                         selectedRole === 'OWNER' && styles.roleCardActive,
                                     ]}
                                     onPress={() => setSelectedRole('OWNER')}
-                                >
+                                    accessibilityLabel="Place Owner account type"
+                                    accessibilityRole="radio"
+                                    accessibilityState={{ selected: selectedRole === 'OWNER' }}
+                                    accessibilityHint="Select owner account to manage and promote your locations">
                                     <Text
                                         style={[
                                             styles.roleName,
@@ -243,22 +261,33 @@ export default function RegisterScreen({ navigation }: any) {
                         style={styles.checkbox}
                         value={isChecked}
                         onValueChange={setChecked}
-                            color={isChecked ? '#4630EB' : undefined} 
+                            color={isChecked ? '#4630EB' : undefined}
+                        accessibilityLabel="Agree to terms of service"
+                        accessibilityHint="Check this box to agree to the terms of service"
                     />
                         <Text style={styles.text}>
                         I agree to the{' '}
-                        <Text
+                        <Pressable
                             style={styles.linkText}
-                                onPress={() => nav.navigate('Terms of Service')}>
+                            onPress={() => nav.navigate('Terms of Service')}
+                            accessibilityLabel="Terms of Service"
+                            accessibilityRole="link"
+                            accessibilityHint="Tap to read the terms of service">
+                            <Text style={styles.linkText}>
                                 Terms of Service
-                        </Text>
+                            </Text>
+                        </Pressable>
                     </Text>
                 </View>
 
                     <View style={styles.containerChild}>
-                        <Pressable style={styles.button}
+                        <Pressable
+                            style={styles.button}
                             onPress={handleRegister}
-                            disabled={submitting}>
+                            disabled={submitting}
+                            accessibilityLabel="Create account"
+                            accessibilityRole="button"
+                            accessibilityHint="Tap to create your account">
                             {submitting ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
@@ -276,14 +305,20 @@ export default function RegisterScreen({ navigation }: any) {
                         </View>
 
                         <View style={styles.containerGG_Apple}>
-                            <Pressable style={styles.buttonGG_Apple}>
+                            <Pressable
+                                style={styles.buttonGG_Apple}
+                                accessibilityLabel="Sign up with Google"
+                                accessibilityRole="button">
                                 <View style={styles.containerImageGG_Apple}>
                                     <Image source={require('../../../../assets/images/google-icon.png')} style={{ width: 20, height: 20 }} />
                                     <Text style={styles.buttonGG_AppleText}>Google</Text>
                                 </View>
                             </Pressable>
 
-                            <Pressable style={styles.buttonGG_Apple} >
+                            <Pressable
+                                style={styles.buttonGG_Apple}
+                                accessibilityLabel="Sign up with Apple"
+                                accessibilityRole="button" >
                                 <View style={styles.containerImageGG_Apple}>
                                     <Image source={require('../../../../assets/images/apple-icon.png')} style={{ width: 20, height: 20 }} />
                                     <Text style={styles.buttonGG_AppleText}>Apple</Text>
@@ -293,9 +328,14 @@ export default function RegisterScreen({ navigation }: any) {
 
                         <Text style={styles.loginFooterText}>
                             Already have an account? {''}
-                            <Text style={styles.linkText} onPress={() => nav.navigate("Login")}>
-                                Login
-                            </Text>
+                            <Pressable
+                                onPress={() => nav.navigate("Login")}
+                                accessibilityLabel="Login"
+                                accessibilityRole="link">
+                                <Text style={styles.linkText}>
+                                    Login
+                                </Text>
+                            </Pressable>
                         </Text>
                     </View>
 

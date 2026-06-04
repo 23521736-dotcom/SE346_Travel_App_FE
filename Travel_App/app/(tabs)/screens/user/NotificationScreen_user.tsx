@@ -278,7 +278,8 @@ function NotificationCard({
           event.stopPropagation();
           onDelete(item);
         }}
-      >
+        accessibilityLabel="Delete notification"
+        accessibilityRole="button">
         <Ionicons name="trash" size={20} color={colors.white} />
         <Text style={styles.deleteActionText}>Delete</Text>
       </Pressable>
@@ -299,6 +300,10 @@ function NotificationCard({
             styles.cardPressArea,
             pressed && styles.cardPressed,
           ]}
+          accessibilityLabel={`${display.titleBeforeHighlight}${display.highlight || ""}${display.titleAfterHighlight || ""}`}
+          accessibilityRole="button"
+          accessibilityHint={item.unread ? "Tap to view and mark as read" : "Tap to view details"}
+          accessibilityState={{ checked: item.unread ? "mixed" : false }}
         >
           <View style={[styles.iconCircle, iconStyle.wrap]}>
             <Ionicons name={display.icon} size={24} color={iconStyle.color} />
@@ -326,10 +331,18 @@ function NotificationCard({
 
         {item.type === "invited" ? (
           <View style={styles.actionsRow}>
-            <Pressable style={styles.acceptButton} onPress={handleAccept}>
+            <Pressable
+              style={styles.acceptButton}
+              onPress={handleAccept}
+              accessibilityLabel="Accept trip invitation"
+              accessibilityRole="button">
               <Text style={styles.acceptButtonText}>Accept</Text>
             </Pressable>
-            <Pressable style={styles.declineButton} onPress={handleDecline}>
+            <Pressable
+              style={styles.declineButton}
+              onPress={handleDecline}
+              accessibilityLabel="Decline trip invitation"
+              accessibilityRole="button">
               <Text style={styles.declineButtonText}>Decline</Text>
             </Pressable>
           </View>
@@ -494,7 +507,9 @@ export default function NotificationScreenUser() {
         <Pressable
           onPress={() => setActiveTab("all")}
           style={[styles.tabButton, activeTab === "all" && styles.activeTab]}
-        >
+          accessibilityLabel="All notifications"
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === "all" }}>
           <Text
             style={[
               styles.tabText,
@@ -507,7 +522,9 @@ export default function NotificationScreenUser() {
         <Pressable
           onPress={() => setActiveTab("unread")}
           style={[styles.tabButton, activeTab === "unread" && styles.activeTab]}
-        >
+          accessibilityLabel="Unread notifications"
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === "unread" }}>
           <Text
             style={[
               styles.tabText,
@@ -547,7 +564,11 @@ export default function NotificationScreenUser() {
               ) : (
                 <>
                   <Text style={styles.statusText}>{errorMessage}</Text>
-                  <Pressable style={styles.retryButton} onPress={() => fetchNotifications()}>
+                  <Pressable
+                    style={styles.retryButton}
+                    onPress={() => fetchNotifications()}
+                    accessibilityLabel="Retry loading notifications"
+                    accessibilityRole="button">
                     <Text style={styles.retryButtonText}>Retry</Text>
                   </Pressable>
                 </>

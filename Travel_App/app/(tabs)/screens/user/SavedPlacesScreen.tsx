@@ -235,6 +235,9 @@ export default function SavedPlaces({ navigation }: any) {
                         placeData: toPlaceDetail(item, isSaved),
                     })
                 }
+                accessibilityLabel={`${item.Name}, located in ${item.Located}`}
+                accessibilityRole="button"
+                accessibilityHint="Tap to view place details"
             >
                 <View style={styles.imageContainer}>
                     <Image source={{ uri: item.image }} style={styles.cardImage} />
@@ -248,7 +251,9 @@ export default function SavedPlaces({ navigation }: any) {
                         style={styles.heartButton}
                         disabled={savingIds.has(item.Id)}
                         onPress={() => toggleFavorite(item.Id)}
-                    >
+                        accessibilityLabel={isSaved ? "Remove from saved" : "Add to saved"}
+                        accessibilityRole="button"
+                        accessibilityHint={isSaved ? "Tap to remove this place from your saved list" : "Tap to save this place"}>
                         <Ionicons name="heart" size={20} color={isSaved ? "#ef4444" : "#ffffff"} />
                     </TouchableOpacity>
                 </View>
@@ -277,6 +282,9 @@ export default function SavedPlaces({ navigation }: any) {
                                 }
                             >
                                 <Text style={[styles.detailText, { color: theme.primary }]}>Review</Text>
+                                accessibilityLabel={`Write review for ${item.Name}`}
+                                accessibilityRole="button">
+                                <Text style={styles.detailText}>Review</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() =>
@@ -287,6 +295,9 @@ export default function SavedPlaces({ navigation }: any) {
                                 }
                             >
                                 <Text style={[styles.detailText, { color: theme.primary }]}>Detail</Text>
+                                accessibilityLabel={`View details for ${item.Name}`}
+                                accessibilityRole="button">
+                                <Text style={styles.detailText}>Detail</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -311,10 +322,18 @@ export default function SavedPlaces({ navigation }: any) {
                         placeholderTextColor={theme.textMuted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
+                        accessibilityLabel="Search saved places"
+                        accessibilityHint="Enter a place name to search your saved list"
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity style={styles.clearIcon} onPress={() => setSearchQuery('')}>
                             <Ionicons name="close-circle" size={20} color={theme.textMuted} />
+                        <TouchableOpacity
+                            style={styles.clearIcon}
+                            onPress={() => setSearchQuery('')}
+                            accessibilityLabel="Clear search"
+                            accessibilityRole="button">
+                            <Ionicons name="close-circle" size={20} color="#9ca3af" />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -327,6 +346,11 @@ export default function SavedPlaces({ navigation }: any) {
                             style={[styles.filterChip, { backgroundColor: theme.surface, borderColor: theme.border }, activeFilter === filter.value && { backgroundColor: theme.primary, borderColor: theme.primary }]}
                         >
                             <Text style={[styles.filterText, { color: activeFilter === filter.value ? theme.textOnPrimary : theme.text }]}>
+                            style={[styles.filterChip, activeFilter === filter.value && styles.filterChipActive]}
+                            accessibilityLabel={`Filter by ${filter.label}`}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected: activeFilter === filter.value }}>
+                            <Text style={[styles.filterText, activeFilter === filter.value && styles.filterTextActive]}>
                                 {filter.label}
                             </Text>
                         </TouchableOpacity>
