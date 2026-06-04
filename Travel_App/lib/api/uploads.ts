@@ -54,7 +54,7 @@ async function appendImageFile(
   } as unknown as Blob);
 }
 
-async function parseUploadResponse(res: Response, endpoint: string): Promise<string | string[]> {
+async function parseUploadResponse(res: Response, endpoint: string): Promise<string> {
   const text = await res.text();
   let json: any = null;
 

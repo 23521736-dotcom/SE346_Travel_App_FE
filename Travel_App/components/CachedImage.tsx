@@ -1,11 +1,11 @@
 import { Image } from "expo-image";
-import { View, ActivityIndicator, StyleSheet } from "react-native";
+import React from "react";
 
 interface CachedImageProps {
   uri: string;
   style?: any;
   contentFit?: "cover" | "contain" | "fill" | "scale-down";
-  placeholder?: React.ReactNode;
+  placeholder?: any;
 }
 
 export function CachedImage({ uri, style, contentFit = "cover", placeholder }: CachedImageProps) {

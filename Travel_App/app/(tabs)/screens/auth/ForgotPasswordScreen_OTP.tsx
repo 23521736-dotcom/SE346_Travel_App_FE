@@ -122,7 +122,7 @@ export default function ForgotPasswordScreen_OTP({ navigation, route }: any) {
 
                             {/* Footer Link */}
                             <View style={styles.footer}>
-                                <Text style={styles.footerText}>Didn't receive the code? </Text>
+                                <Text style={styles.footerText}>Didn&apos;t receive the code? </Text>
                                 <TouchableOpacity activeOpacity={0.7}>
                                     <Text style={styles.resendText}>Resend Code</Text>
                                 </TouchableOpacity>

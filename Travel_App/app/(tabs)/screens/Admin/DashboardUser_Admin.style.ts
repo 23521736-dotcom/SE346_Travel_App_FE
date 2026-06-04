@@ -79,4 +79,17 @@ export const styles = StyleSheet.create({
     navText: { fontSize: 10, fontWeight: '500', color: '#94a3b8' },
     navTextActive: { color: '#0ea5e9', fontWeight: 'bold' },
     navDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#0ea5e9', marginTop: 4 },
+
+    // Content area
+    contentArea: { flex: 1, paddingHorizontal: 20 },
+
+    // Badge styles
+    badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start' },
+    badgeText: { fontSize: 10, fontWeight: '700' },
+
+    // User stats
+    userStats: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
+
+    // User role column
+    userRoleCol: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });

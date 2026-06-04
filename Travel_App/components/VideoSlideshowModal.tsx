@@ -23,7 +23,7 @@ export default function VideoSlideshowModal({ visible, images, onClose }: Props)
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     if (!visible || isPaused || images.length === 0) {

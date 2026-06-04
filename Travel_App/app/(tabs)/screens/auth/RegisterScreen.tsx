@@ -269,16 +269,11 @@ export default function RegisterScreen({ navigation }: any) {
                     />
                         <Text style={styles.text}>
                         I agree to the{' '}
-                        <Pressable
+                        <Text
                             style={styles.linkText}
-                            onPress={() => nav.navigate('Terms of Service')}
-                            accessibilityLabel="Terms of Service"
-                            accessibilityRole="link"
-                            accessibilityHint="Tap to read the terms of service">
-                            <Text style={styles.linkText}>
-                                Terms of Service
-                            </Text>
-                        </Pressable>
+                            onPress={() => nav.navigate('Terms of Service')}>
+                            Terms of Service
+                        </Text>
                     </Text>
                 </View>
 

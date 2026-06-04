@@ -7,7 +7,7 @@ export default function ExploreScreen() {
 			<View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
 				<Text style={{ fontSize: 22, fontWeight: '700', marginBottom: 8 }}>Explore</Text>
 				<Text style={{ color: '#6b7280', textAlign: 'center' }}>
-					This tab route is now valid so Expo Router won\'t 404 or warn on web.
+					This tab route is now valid so Expo Router won&apos;t 404 or warn on web.
 				</Text>
 			</View>
 		</SafeAreaView>

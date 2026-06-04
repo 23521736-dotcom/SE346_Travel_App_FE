@@ -187,7 +187,7 @@ export type ReviewListItem = {
 export type ApiOk<T> = { ok: true; data: T; meta?: { total: number; limit: number; offset: number } };
 export type ApiErr = { ok: false; error: string };
 
-const firstString = (...values: Array<unknown>): string => {
+const firstString = (...values: unknown[]): string => {
   for (const value of values) {
     if (typeof value === 'string' && value.trim()) {
       return value;
@@ -196,7 +196,7 @@ const firstString = (...values: Array<unknown>): string => {
   return '';
 };
 
-const firstNumber = (...values: Array<unknown>): number => {
+const firstNumber = (...values: unknown[]): number => {
   for (const value of values) {
     if (typeof value === 'number' && Number.isFinite(value)) {
       return value;
@@ -205,7 +205,7 @@ const firstNumber = (...values: Array<unknown>): number => {
   return 0;
 };
 
-const firstFiniteNumber = (...values: Array<unknown>): number | undefined => {
+const firstFiniteNumber = (...values: unknown[]): number | undefined => {
   for (const value of values) {
     if (typeof value === 'number' && Number.isFinite(value)) {
       return value;
@@ -216,7 +216,7 @@ const firstFiniteNumber = (...values: Array<unknown>): number | undefined => {
 
 const readPointCoordinate = (
   point: any,
-  keys: Array<'lat' | 'lng' | 'lon' | 'latitude' | 'longitude'>
+  keys: ('lat' | 'lng' | 'lon' | 'latitude' | 'longitude')[]
 ): number | undefined => {
   if (!point || typeof point !== 'object') {
     return undefined;
@@ -311,7 +311,7 @@ const normalizePlaceCoordinates = (raw: ApiFavoritePlaceItem): { latitude?: numb
   return { latitude, longitude };
 };
 
-const firstArray = <T>(...values: Array<unknown>): T[] => {
+const firstArray = <T>(...values: unknown[]): T[] => {
   for (const value of values) {
     if (Array.isArray(value)) {
       return value as T[];

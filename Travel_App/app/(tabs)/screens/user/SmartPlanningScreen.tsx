@@ -523,7 +523,7 @@ export default function SmartPlanningScreen() {
           { key: 'SHOPPING', label: 'Mua sắm' },
         ].map((item) => {
           const weight = preferenceWeights[item.key as keyof typeof preferenceWeights];
-          const hasError = weightErrors[item.key] || (weight !== '' && weight <= 0);
+          const hasError = weightErrors[item.key] || (String(weight) !== '' && Number(weight) <= 0);
           return (
             <View key={item.key} style={styles.preferenceWeightRow}>
               <Text style={{ flex: 1 }}>{item.label}</Text>

@@ -16,7 +16,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(async (config) => {
   const token = await getAccessToken();
   if (token) {
-    // eslint-disable-next-line no-param-reassign
+     
     config.headers = config.headers || {};
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -25,7 +25,7 @@ apiClient.interceptors.request.use(async (config) => {
 
 // Response interceptor for automatic token refresh
 let isRefreshing = false;
-let failedQueue: Array<{ resolve: (value: string) => void; reject: (reason: unknown) => void }> = [];
+let failedQueue: { resolve: (value: string) => void; reject: (reason: unknown) => void }[] = [];
 
 apiClient.interceptors.response.use(
   (response) => response,
@@ -126,7 +126,7 @@ export async function setAccessToken(token: string | null): Promise<void> {
       }
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
+     
     console.warn('setAccessToken fallback failed', e);
   }
 }
@@ -148,7 +148,7 @@ export async function getAccessToken(): Promise<string | null> {
       return await (SecureStore as any).getValueWithKeyAsync(TOKEN_KEY);
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
+     
     console.warn('getAccessToken failed', e);
   }
 
@@ -186,7 +186,7 @@ export async function setRefreshToken(token: string | null): Promise<void> {
       }
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
+     
     console.warn('setRefreshToken fallback failed', e);
   }
 }
@@ -208,7 +208,7 @@ export async function getRefreshToken(): Promise<string | null> {
       return await (SecureStore as any).getValueWithKeyAsync(REFRESH_TOKEN_KEY);
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
+     
     console.warn('getRefreshToken failed', e);
   }
 

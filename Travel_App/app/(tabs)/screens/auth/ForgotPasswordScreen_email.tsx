@@ -60,7 +60,7 @@ export default function ForgotPasswordScreen_email({ navigation, route }: any) {
                             {/* Tiêu đề & Mô tả */}
                             <Text style={styles.title}>Forgot Password?</Text>
                             <Text style={styles.subtitle}>
-                                Enter your email address and we'll send you a code to reset your password.
+                                Enter your email address and we&apos;ll send you a code to reset your password.
                             </Text>
 
                             {/* Form nhập liệu */}
