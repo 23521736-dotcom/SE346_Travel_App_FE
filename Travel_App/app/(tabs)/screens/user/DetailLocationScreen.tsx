@@ -10,6 +10,7 @@ import { colors } from '../../common/colors';
 import { RatingStartBar } from '../../components/Rating';
 import { PicturesContainer } from '../../components/ReviewPicture';
 import styles from './DetailLocationScreen.styles';
+import { CachedImage } from '../../../../components/CachedImage';
 
 const dayLabelMap: Record<string, string> = {
     M: 'Mon',
@@ -246,8 +247,8 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                 <View style={{ margin: 0, position: 'relative' }}>
                     <View style={[styles.imageFrame, { height: 350, borderRadius: 0, borderWidth: 0 }]}>
                         {currentImage ? (
-                            <Image
-                                source={{ uri: currentImage }}
+                            <CachedImage
+                                uri={currentImage}
                                 style={{ width: "100%", height: "100%" }} />
                         ) : (
                             <View style={{ width: "100%", height: "100%", alignItems: 'center', justifyContent: 'center', backgroundColor: '#E5E7EB' }}>
@@ -519,10 +520,10 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                             <View style={[styles.detailCard, { flexDirection: 'column', margin: 0, marginTop: 30, padding: 10, rowGap: 10 }]}>
                                 <View style={{ flexDirection: 'row' }}>
                                     <View style={[styles.imageFrame, { width: 60, height: 60, borderRadius: 30, borderWidth: 0 }]}>
-                                        <Image
-                                            source={{ uri: firstReview.ava }}
+                                        <CachedImage
+                                            uri={firstReview.ava}
                                             style={{ width: "100%", height: "100%" }}
-                                            resizeMode="cover" />
+                                            contentFit="cover" />
                                     </View>
                                     <View style={{ flexDirection: 'column', marginHorizontal: 10, justifyContent: 'center' }}>
                                         <Text style={{ fontSize: 20, fontWeight: '700' }}>

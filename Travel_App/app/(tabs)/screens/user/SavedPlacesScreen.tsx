@@ -19,6 +19,7 @@ import { normalizePlaceCategory, PLACE_CATEGORIES } from '../../../../lib/placeC
 import { colors } from '../../common/colors';
 import { getApiErrorMessage } from '../../context/AuthContext';
 import styles from "./SavedPlacesScreen.style";
+import { CachedImage } from '../../../../components/CachedImage';
 
 const FILTERS = [{ value: 'All', label: 'All' }, ...PLACE_CATEGORIES];
 
@@ -112,31 +113,61 @@ export default function SavedPlaces({ navigation }: any) {
         if (savingIds.has(placeId)) return;
 
         const wasSaved = savedIds.has(placeId);
+
+        // Show confirmation when unfavoriting
+        if (wasSaved) {
+            Alert.alert(
+                "Bỏ lưu",
+                "Bạn có chắc muốn bỏ lưu địa điểm này?",
+                [
+                    { text: "Hủy", style: "cancel" },
+                    {
+                        text: "Bỏ lưu",
+                        style: "destructive",
+                        onPress: async () => {
+                            setSavingIds((current) => new Set(current).add(placeId));
+                            setSavedIds((current) => {
+                                const next = new Set(current);
+                                next.delete(placeId);
+                                return next;
+                            });
+
+                            try {
+                                await removeFavorite(placeId);
+                            } catch (err) {
+                                setSavedIds((current) => {
+                                    const next = new Set(current);
+                                    next.add(placeId);
+                                    return next;
+                                });
+                                Alert.alert('Loi', getApiErrorMessage(err));
+                            } finally {
+                                setSavingIds((current) => {
+                                    const next = new Set(current);
+                                    next.delete(placeId);
+                                    return next;
+                                });
+                            }
+                        }
+                    }
+                ]
+            );
+            return;
+        }
+
         setSavingIds((current) => new Set(current).add(placeId));
         setSavedIds((current) => {
             const next = new Set(current);
-            if (wasSaved) {
-                next.delete(placeId);
-            } else {
-                next.add(placeId);
-            }
+            next.add(placeId);
             return next;
         });
 
         try {
-            if (wasSaved) {
-                await removeFavorite(placeId);
-            } else {
-                await addFavorite(placeId);
-            }
+            await addFavorite(placeId);
         } catch (err) {
             setSavedIds((current) => {
                 const next = new Set(current);
-                if (wasSaved) {
-                    next.add(placeId);
-                } else {
-                    next.delete(placeId);
-                }
+                next.delete(placeId);
                 return next;
             });
             Alert.alert('Loi', getApiErrorMessage(err));
@@ -225,7 +256,7 @@ export default function SavedPlaces({ navigation }: any) {
                                 }
                             >
                                 <View style={styles.imageContainer}>
-                                    <Image source={{ uri: place.image }} style={styles.cardImage} />
+                                    <CachedImage uri={place.image} style={styles.cardImage} />
                                     {promotionPlaceIds.has(place.Id) && (
                                         <View style={styles.discountBadge}>
                                             <Ionicons name="pricetag" size={12} color="#ffffff" />

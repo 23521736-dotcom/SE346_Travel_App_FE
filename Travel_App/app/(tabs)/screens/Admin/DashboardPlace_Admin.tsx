@@ -4,6 +4,7 @@ import {
     Alert,
     Image,
     Modal,
+    RefreshControl,
     SafeAreaView,
     ScrollView,
     StatusBar,
@@ -185,8 +186,14 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                         <ScrollView
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={styles.scrollContent}
-                            refreshing={loading}
-                            onRefresh={loadPlaces}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={loading}
+                                    onRefresh={loadPlaces}
+                                    colors={["#0284c7"]}
+                                    tintColor="#0284c7"
+                                />
+                            }
                         >
                             {places.map((item) => {
                                 const isExpanded = expandedDescIds.includes(item.Id);
