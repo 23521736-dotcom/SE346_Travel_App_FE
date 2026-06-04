@@ -9,6 +9,7 @@ import {
     Modal,
     Platform,
     Pressable,
+    RefreshControl,
     ScrollView,
     Text,
     TextInput,
@@ -132,6 +133,9 @@ export default function HomeScreen({ navigation }: any) {
     const [places, setPlaces] = useState<Place[]>([]);
     const [promotionPlaceIds, setPromotionPlaceIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const [aiLoading, setAiLoading] = useState(false);
     const [modalVisible, setModalVisible] = useState(false);
@@ -139,6 +143,7 @@ export default function HomeScreen({ navigation }: any) {
     const [budget, setBudget] = useState('');
     const [duration, setDuration] = useState('');
     const [recommendations, setRecommendations] = useState<RecommendationPlace[]>([]);
+    const PAGE_SIZE = 20;
 
     // Advanced filters
     const [minRating, setMinRating] = useState<number | undefined>();
@@ -172,10 +177,57 @@ export default function HomeScreen({ navigation }: any) {
             setLoading(false);
         }
     }, [activeCategory, debouncedSearch, minRating, maxPrice]);
+    const loadPlaces = useCallback(async (offset = 0) => {
+        if (offset === 0) {
+            setLoading(true);
+        }
+        try {
+            const data = await fetchPlaces({
+                category: activeCategory !== 'All' ? activeCategory : undefined,
+                search: debouncedSearch || undefined,
+                limit: PAGE_SIZE,
+                offset,
+            });
+            if (offset === 0) {
+                setPlaces(data);
+                setPromotionPlaceIds(await fetchPromotionPlaceIds(data.map((place) => place.Id)));
+                setHasMore(data.length === PAGE_SIZE);
+            } else {
+                setPlaces(prev => [...prev, ...data]);
+                const newPromotionIds = await fetchPromotionPlaceIds(data.map((place) => place.Id));
+                setPromotionPlaceIds(prev => new Set([...prev, ...newPromotionIds]));
+                setHasMore(data.length === PAGE_SIZE);
+            }
+        } catch {
+            if (offset === 0) {
+                setPlaces([]);
+                setPromotionPlaceIds(new Set());
+            }
+            setHasMore(false);
+        } finally {
+            if (offset === 0) {
+                setLoading(false);
+            }
+        }
+    }, [activeCategory, debouncedSearch, PAGE_SIZE]);
 
-    const renderPlaceItem = ({ item }: { item: Place }) => (
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        setHasMore(true);
+        await loadPlaces(0);
+        setRefreshing(false);
+    }, [loadPlaces]);
+
+    const handleLoadMore = useCallback(() => {
+        if (!loadingMore && hasMore) {
+            setLoadingMore(true);
+            loadPlaces(places.length).finally(() => setLoadingMore(false));
+        }
+    }, [loadingMore, hasMore, places.length, loadPlaces]);
+
+    const renderPlaceItem = useCallback(({ item }: { item: Place }) => (
         renderPlaceCard(item, navigation, promotionPlaceIds.has(item.Id))
-    );
+    ), [navigation, promotionPlaceIds]);
 
     useEffect(() => {
         loadPlaces();
@@ -404,12 +456,18 @@ export default function HomeScreen({ navigation }: any) {
                     keyExtractor={(item) => item.Id}
                     ListHeaderComponent={listHeader}
                     showsVerticalScrollIndicator={false}
-                    refreshing={loading}
-                    onRefresh={loadPlaces}
+                    refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+                    onEndReached={handleLoadMore}
+                    onEndReachedThreshold={0.5}
+                    ListFooterComponent={loadingMore ? (
+                        <ActivityIndicator size="small" color={colors.primary} style={{ margin: 16 }} />
+                    ) : null}
                     ListEmptyComponent={
-                        <Text style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>
-                            Khong co dia diem nao
-                        </Text>
+                        !loading ? (
+                            <Text style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>
+                                Khong co dia diem nao
+                            </Text>
+                        ) : null
                     }
                 />
             </View>

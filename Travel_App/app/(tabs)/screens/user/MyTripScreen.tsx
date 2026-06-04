@@ -4,6 +4,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  FlatList,
   ImageBackground,
   Pressable,
   RefreshControl,
@@ -274,6 +275,10 @@ export default function MyTripScreen({ navigation }: any) {
   const [upcomingTripList, setUpcomingTripList] = useState<Trip[]>([]);
   const [pastTripList, setPastTripList] = useState<Trip[]>([]);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
+  const [loadingMoreUpcoming, setLoadingMoreUpcoming] = useState(false);
+  const [loadingMorePast, setLoadingMorePast] = useState(false);
+  const [hasMoreUpcoming, setHasMoreUpcoming] = useState(true);
+  const [hasMorePast, setHasMorePast] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [openingTripId, setOpeningTripId] = useState<string | null>(null);
   const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
@@ -281,50 +286,94 @@ export default function MyTripScreen({ navigation }: any) {
   const [activeFilter, setActiveFilter] = useState<"Upcoming" | "Past">(
     "Upcoming"
   );
+  const PAGE_SIZE = 20;
+
   const trips = activeFilter === "Upcoming" ? upcomingTripList : pastTripList;
   const featuredTrip = upcomingTripList[0];
   const currentUserId = user?.id;
 
-  const loadTrips = useCallback(() => {
-    let isMounted = true;
-
-    async function fetchTrips() {
+  const loadTrips = useCallback(async (offset = 0) => {
+    if (offset === 0) {
       setIsLoadingTrips(true);
       setTripLoadError(null);
+    }
 
-      try {
-        const apiTrips = await fetchMyTrips();
-        if (!isMounted) {
-          return;
-        }
+    try {
+      const apiTrips = await fetchMyTrips(PAGE_SIZE, offset);
 
         const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
 
         const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
         const pastTrips = mappedTrips.filter(isPastTrip);
+      const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
+      console.log(
+        "[MyTripScreen] mapped trips owner check",
+        mappedTrips.map((trip) => ({
+          id: trip.id,
+          title: trip.title,
+          ownerId: trip.ownerId,
+          currentUserId,
+          isOwner: currentUserId !== undefined && String(trip.ownerId) === String(currentUserId),
+        }))
+      );
 
+      const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
+      const pastTrips = mappedTrips.filter(isPastTrip);
+
+      if (offset === 0) {
         setUpcomingTripList(upcomingTrips);
         setPastTripList(pastTrips);
+        setHasMoreUpcoming(upcomingTrips.length === PAGE_SIZE);
+        setHasMorePast(pastTrips.length === PAGE_SIZE);
         if (!upcomingTrips.length && pastTrips.length) {
           setActiveFilter("Past");
         }
-      } catch (error) {
-        if (isMounted) {
-          setTripLoadError(getApiErrorMessage(error));
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingTrips(false);
-        }
+      } else {
+        setUpcomingTripList(prev => {
+          const existingIds = new Set(prev.map(t => t.id));
+          const newUpcoming = upcomingTrips.filter(t => !existingIds.has(t.id));
+          return [...prev, ...newUpcoming];
+        });
+        setPastTripList(prev => {
+          const existingIds = new Set(prev.map(t => t.id));
+          const newPast = pastTrips.filter(t => !existingIds.has(t.id));
+          return [...prev, ...newPast];
+        });
+        setHasMoreUpcoming(upcomingTrips.length === PAGE_SIZE || pastTrips.length === PAGE_SIZE);
+        setHasMorePast(pastTrips.length === PAGE_SIZE || upcomingTrips.length === PAGE_SIZE);
+      }
+    } catch (error) {
+      setTripLoadError(getApiErrorMessage(error));
+      if (offset === 0) {
+        setUpcomingTripList([]);
+        setPastTripList([]);
+        setHasMoreUpcoming(false);
+        setHasMorePast(false);
+      }
+    } finally {
+      if (offset === 0) {
+        setIsLoadingTrips(false);
       }
     }
+  }, [PAGE_SIZE, currentUserId]);
 
-    fetchTrips();
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setHasMoreUpcoming(true);
+    setHasMorePast(true);
+    await loadTrips(0);
+    setRefreshing(false);
+  }, [loadTrips]);
 
-    return () => {
-      isMounted = false;
-    };
-  }, [currentUserId]);
+  const handleLoadMore = useCallback(() => {
+    if (activeFilter === "Upcoming" && !loadingMoreUpcoming && hasMoreUpcoming) {
+      setLoadingMoreUpcoming(true);
+      loadTrips(upcomingTripList.length).finally(() => setLoadingMoreUpcoming(false));
+    } else if (activeFilter === "Past" && !loadingMorePast && hasMorePast) {
+      setLoadingMorePast(true);
+      loadTrips(pastTripList.length).finally(() => setLoadingMorePast(false));
+    }
+  }, [activeFilter, loadingMoreUpcoming, loadingMorePast, hasMoreUpcoming, hasMorePast, upcomingTripList.length, pastTripList.length, loadTrips]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -363,6 +412,11 @@ export default function MyTripScreen({ navigation }: any) {
   }, [currentUserId]);
 
   useFocusEffect(loadTrips);
+  useFocusEffect(
+    useCallback(() => {
+      loadTrips();
+    }, [loadTrips])
+  );
 
   useEffect(() => {
     const unsubscribeDrafts = subscribeTripDrafts((updatedTrip) => {
@@ -642,22 +696,30 @@ export default function MyTripScreen({ navigation }: any) {
               <ActivityIndicator color={colors.primary} />
               <Text style={styles.tripStateText}>Loading trips...</Text>
             </View>
-          ) : null}
-          {tripLoadError ? (
+          ) : tripLoadError ? (
             <Text style={styles.tripErrorText}>{tripLoadError}</Text>
-          ) : null}
-          {!isLoadingTrips && trips.length === 0 ? (
+          ) : !isLoadingTrips && trips.length === 0 ? (
             <Text style={styles.tripStateText}>No trips yet</Text>
-          ) : null}
-          {trips.map((trip) => (
-            <TripCard
-              key={trip.id}
-              trip={trip}
-              onPress={openingTripId || deletingTripId ? undefined : () => openTrip(trip)}
-              onDelete={() => confirmDeleteTrip(trip)}
-              isDeleting={deletingTripId === trip.id}
+          ) : (
+            <FlatList
+              data={trips}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => (
+                <TripCard
+                  trip={item}
+                  onPress={openingTripId || deletingTripId ? undefined : () => openTrip(item)}
+                  onDelete={() => confirmDeleteTrip(item)}
+                  isDeleting={deletingTripId === item.id}
+                />
+              )}
+              onEndReached={handleLoadMore}
+              onEndReachedThreshold={0.5}
+              ListFooterComponent={(loadingMoreUpcoming || loadingMorePast) ? (
+                <ActivityIndicator size="small" color={colors.primary} style={{ margin: 16 }} />
+              ) : null}
+              scrollEnabled={false}
             />
-          ))}
+          )}
         </View>
       </ScrollView>
 
