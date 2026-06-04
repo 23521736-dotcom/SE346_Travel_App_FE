@@ -18,6 +18,7 @@ import {
     View,
 } from 'react-native';
 import { colors } from "../../common/colors";
+import { useTheme } from '../../context/ThemeContext';
 import styles from './HomeScreen.styles';
 import { fetchPlaces, fetchPromotionPlaceIds } from '../../../../lib/api/places';
 import { planTrip } from '../../../../lib/api/ai';
@@ -46,6 +47,7 @@ function CustomInput({
     value,
     onChangeText,
     keyboardType,
+    theme,
 }: {
     label: string;
     iconName: React.ComponentProps<typeof Feather>['name'];
@@ -53,16 +55,17 @@ function CustomInput({
     value: string;
     onChangeText: (value: string) => void;
     keyboardType?: React.ComponentProps<typeof TextInput>['keyboardType'];
+    theme: any;
 }) {
     return (
         <View style={styles.inputContainer}>
             <Text style={styles.label}>{label}</Text>
-            <View style={styles.inputWrapper}>
-                <Feather name={iconName} size={18} color="#718096" style={styles.icon} />
+            <View style={[styles.inputWrapper, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Feather name={iconName} size={18} color={theme.textSecondary} style={styles.icon} />
                 <TextInput
-                    style={styles.textInput}
+                    style={[styles.textInput, { color: theme.text }]}
                     placeholder={placeholder}
-                    placeholderTextColor="#A0AEC0"
+                    placeholderTextColor={theme.textMuted}
                     value={value}
                     onChangeText={onChangeText}
                     keyboardType={keyboardType}
@@ -72,10 +75,9 @@ function CustomInput({
     );
 }
 
-const renderPlaceCard = (item: Place, navigation: any, hasPromotion: boolean) => {
-    //  const navigation = useNavigation<any>();
+const renderPlaceCard = (item: Place, navigation: any, hasPromotion: boolean, theme: any) => {
     return (
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: theme.card, borderColor: theme.borderLight }]}>
             <View style={styles.imageFrame}>
                 <CachedImage
                     uri={item.image}
@@ -84,21 +86,19 @@ const renderPlaceCard = (item: Place, navigation: any, hasPromotion: boolean) =>
             </View>
             <View style={styles.contentContainer}>
                 <View style={{ flexDirection: 'column', flex: 1 }}>
-                    <Text style={{ fontSize: 22, fontWeight: '600' }}>
+                    <Text style={{ fontSize: 22, fontWeight: '600', color: theme.text }}>
                         {item.Name}
                     </Text>
-                    <Text style={{ color: colors.textSecondary }}>
+                    <Text style={{ color: theme.textSecondary }}>
                         {item.Located}
                     </Text>
                 </View>
-                <View style={styles.ratingBadge}>
-                    <Text>
-                        ⭐
-                    </Text>
-                    <Text style={{ fontWeight: '700' }}>
+                <View style={[styles.ratingBadge, { backgroundColor: theme.surfaceMuted }]}>
+                    <Text>⭐</Text>
+                    <Text style={{ fontWeight: '700', color: theme.text }}>
                         {item.Rate}
                     </Text>
-                    <Text style={{ fontWeight: '400', color: colors.textMuted }}>
+                    <Text style={{ fontWeight: '400', color: theme.textMuted }}>
                         ({item.NumberOfRate})
                     </Text>
                 </View>
@@ -114,12 +114,12 @@ const renderPlaceCard = (item: Place, navigation: any, hasPromotion: boolean) =>
 
                 <View style={{ flexDirection: 'row', columnGap: 14, alignItems: 'center' }}>
                     <Pressable onPress={() => navigation.navigate("Write Review", { placeId: item.Id, placeName: item.Name })}>
-                        <Text style={styles.placeActionText}>
+                        <Text style={[styles.placeActionText, { color: theme.primary }]}>
                             Review
                         </Text>
                     </Pressable>
                     <Pressable onPress={() => navigation.navigate("Detail Location", { placeId: item.Id })}>
-                        <Text style={styles.placeActionText}>
+                        <Text style={[styles.placeActionText, { color: theme.primary }]}>
                             Detail
                         </Text>
                     </Pressable>
@@ -129,6 +129,7 @@ const renderPlaceCard = (item: Place, navigation: any, hasPromotion: boolean) =>
     );
 };
 export default function HomeScreen({ navigation }: any) {
+    const { theme } = useTheme();
     const [activeCategory, setActiveCategory] = useState('All');
     const [places, setPlaces] = useState<Place[]>([]);
     const [promotionPlaceIds, setPromotionPlaceIds] = useState<Set<string>>(new Set());
@@ -226,8 +227,8 @@ export default function HomeScreen({ navigation }: any) {
     }, [loadingMore, hasMore, places.length, loadPlaces]);
 
     const renderPlaceItem = useCallback(({ item }: { item: Place }) => (
-        renderPlaceCard(item, navigation, promotionPlaceIds.has(item.Id))
-    ), [navigation, promotionPlaceIds]);
+        renderPlaceCard(item, navigation, promotionPlaceIds.has(item.Id), theme)
+    ), [navigation, promotionPlaceIds, theme]);
 
     useEffect(() => {
         loadPlaces();
@@ -274,32 +275,32 @@ export default function HomeScreen({ navigation }: any) {
     const listHeader = useMemo(() => (
             <View style={styles.container}>
                 <View style={{ flexDirection: 'column', marginBottom: -15}}>
-                    <Text style={{ color: colors.textSecondary }}> Location</Text>
+                    <Text style={{ color: theme.textSecondary }}> Location</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                        <Ionicons name="location-sharp" size={18} color={colors.primary} />
-                        <Text style={{ fontWeight: 'bold', fontSize: 20 }}> Near me</Text>
+                        <Ionicons name="location-sharp" size={18} color={theme.primary} />
+                        <Text style={{ fontWeight: 'bold', fontSize: 20, color: theme.text }}> Near me</Text>
                         <Pressable
                             onPress={() => alert('pressed down')}>
                             <Ionicons
                                 name="chevron-down"
                                 size={20}
-                                color={colors.primary}
+                                color={theme.primary}
                                 style={{ marginLeft: 2 }}
                             />
                         </Pressable>
                     </View>
                     <View style={styles.searchContainer}>
-                    <Ionicons name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
+                    <Ionicons name="search" size={20} color={theme.textMuted} style={styles.searchIcon} />
                         <TextInput
                             placeholder="Where to next ?"
-                        placeholderTextColor="#9ca3af"
-                        style={styles.searchInput}
+                        placeholderTextColor={theme.textMuted}
+                        style={[styles.searchInput, { backgroundColor: theme.surface, borderColor: theme.borderLight, color: theme.text }]}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                         />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity style={styles.clearIcon} onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={20} color="#9ca3af" />
+                            <Ionicons name="close-circle" size={20} color={theme.textMuted} />
                         </TouchableOpacity>
                     )}
                     </View>
@@ -375,7 +376,7 @@ export default function HomeScreen({ navigation }: any) {
                 <View
                     style={{ marginTop: 20, flexDirection: 'row', justifyContent: 'center' }}>
                     <Pressable
-                        style={{ flex: 1, borderRadius: 8, borderWidth: 2, borderColor: colors.primary, padding: 10 }}
+                        style={{ flex: 1, borderRadius: 8, borderWidth: 2, borderColor: theme.primary, padding: 10 }}
                     onPress={() => setModalVisible(true)}
                         disabled={aiLoading}>
                         <View style={[styles.containerCategoryButton, { height: 40 }]}>
@@ -383,15 +384,15 @@ export default function HomeScreen({ navigation }: any) {
                                 style={{ width: 25, height: 25, marginRight: 2 }}>
                             </Image>
                             <View style={{ flexDirection: 'column', flex: 1 }}>
-                                <Text style={[styles.categoryButtonText, { flex: 1, fontSize: 15 }]}>
+                                <Text style={[styles.categoryButtonText, { flex: 1, fontSize: 15, color: theme.text }]}>
                                     {aiLoading ? 'Planning...' : 'Plan with AI'}
                                 </Text>
-                                <Text style={[styles.linkText, { fontSize: 12, color: 'gray' }]}>
+                                <Text style={[styles.linkText, { fontSize: 12, color: theme.textMuted }]}>
                                     Get personalized trip ideas
                                 </Text>
                             </View>
                             <Image source={require('../../../../assets/images/right-arrow-icon.png')}
-                                style={{ width: 25, height: 25, marginRight: 2, tintColor: colors.primary }}>
+                                style={{ width: 25, height: 25, marginRight: 2, tintColor: theme.primary }}>
                             </Image>
                         </View>
                     </Pressable>
@@ -400,30 +401,30 @@ export default function HomeScreen({ navigation }: any) {
                 {recommendations.length > 0 && (
                     <View style={{ marginTop: 8, marginBottom: 4 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 10, marginBottom: 8 }}>
-                            <Text style={{ fontWeight: '600', fontSize: 18 }}>
+                            <Text style={{ fontWeight: '600', fontSize: 18, color: theme.text }}>
                                 Gợi ý cho bạn
                             </Text>
                             <Pressable onPress={() => navigation.navigate('Recommendations')}>
-                                <Text style={{ color: colors.primary, fontWeight: '500', fontSize: 13 }}>Xem tất cả</Text>
+                                <Text style={{ color: theme.primary, fontWeight: '500', fontSize: 13 }}>Xem tất cả</Text>
                             </Pressable>
                         </View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 10 }}>
                             {recommendations.map((rec) => (
                                 <Pressable
                                     key={rec.placeId}
-                                    style={{ width: 160, marginRight: 12, backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 }}
+                                    style={{ width: 160, marginRight: 12, backgroundColor: theme.card, borderRadius: 12, overflow: 'hidden', elevation: 2, shadowColor: theme.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 }}
                                     onPress={() => navigation.navigate('Detail Location', { placeId: rec.placeId })}
                                 >
                                     <CachedImage uri={rec.coverImageUrl} style={{ width: '100%', height: 100 }} />
-                                    <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
-                                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{rec.matchPercentage}%</Text>
+                                    <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: theme.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
+                                        <Text style={{ color: theme.textOnPrimary, fontSize: 10, fontWeight: '700' }}>{rec.matchPercentage}%</Text>
                                     </View>
                                     <View style={{ padding: 8 }}>
-                                        <Text style={{ fontSize: 13, fontWeight: '600', color: colors.textPrimary }} numberOfLines={1}>{rec.name}</Text>
-                                        <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 2 }} numberOfLines={1}>{rec.explanation}</Text>
+                                        <Text style={{ fontSize: 13, fontWeight: '600', color: theme.textPrimary }} numberOfLines={1}>{rec.name}</Text>
+                                        <Text style={{ fontSize: 10, color: theme.textMuted, marginTop: 2 }} numberOfLines={1}>{rec.explanation}</Text>
                                         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
                                             <Ionicons name="star" size={12} color="#FFB800" />
-                                            <Text style={{ fontSize: 11, marginLeft: 2, color: colors.textSecondary }}>{rec.averageRating.toFixed(1)}</Text>
+                                            <Text style={{ fontSize: 11, marginLeft: 2, color: theme.textSecondary }}>{rec.averageRating.toFixed(1)}</Text>
                                         </View>
                                     </View>
                                 </Pressable>
@@ -432,23 +433,23 @@ export default function HomeScreen({ navigation }: any) {
                     </View>
                 )}
                 <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
-                    <Text style={{ flex: 1, fontWeight: '500', fontSize: 23 }}>
+                    <Text style={{ flex: 1, fontWeight: '500', fontSize: 23, color: theme.text }}>
                         Popular this week
                     </Text>
                 </View>
             </View>
-    ), [activeCategory, aiLoading, searchQuery, recommendations]);
+    ), [activeCategory, aiLoading, searchQuery, recommendations, theme]);
 
     if (loading && places.length === 0) {
         return (
-            <View style={[styles.background, { justifyContent: 'center', alignItems: 'center', marginTop: 35 }]}>
-                <ActivityIndicator size="large" color={colors.primary} />
+            <View style={[styles.background, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center', marginTop: 35 }]}>
+                <ActivityIndicator size="large" color={theme.primary} />
             </View>
         );
     }
 
     return (
-        <View style={[styles.background, { justifyContent: 'center', marginTop: 35 }]}>
+        <View style={[styles.background, { backgroundColor: theme.background, justifyContent: 'center', marginTop: 35 }]}>
             <View style={styles.container}>
                 <FlatList
                     data={places}
@@ -460,11 +461,11 @@ export default function HomeScreen({ navigation }: any) {
                     onEndReached={handleLoadMore}
                     onEndReachedThreshold={0.5}
                     ListFooterComponent={loadingMore ? (
-                        <ActivityIndicator size="small" color={colors.primary} style={{ margin: 16 }} />
+                        <ActivityIndicator size="small" color={theme.primary} style={{ margin: 16 }} />
                     ) : null}
                     ListEmptyComponent={
                         !loading ? (
-                            <Text style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>
+                            <Text style={{ textAlign: 'center', marginTop: 20, color: theme.textSecondary }}>
                                 Khong co dia diem nao
                             </Text>
                         ) : null
@@ -486,14 +487,14 @@ export default function HomeScreen({ navigation }: any) {
                             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                             style={styles.bottomSheetContainer}
                         >
-                            <View style={styles.bottomSheet}>
+                            <View style={[styles.bottomSheet, { backgroundColor: theme.surface }]}>
                                 <View style={styles.modalHeader}>
                                     <View style={styles.headerTitleRow}>
-                                        <Feather name="map-pin" size={20} color="#0EB4D3" />
-                                        <Text style={styles.modalTitle}>Add New Destination</Text>
+                                        <Feather name="map-pin" size={20} color={theme.primary} />
+                                        <Text style={[styles.modalTitle, { color: theme.text }]}>Add New Destination</Text>
                                     </View>
                                     <Pressable onPress={() => setModalVisible(false)} style={styles.closeButton}>
-                                        <Feather name="x" size={24} color="#4A5568" />
+                                        <Feather name="x" size={24} color={theme.textSecondary} />
                                     </Pressable>
                                 </View>
 
@@ -504,6 +505,7 @@ export default function HomeScreen({ navigation }: any) {
                                         placeholder="Where do you want to go?"
                                         value={destination}
                                         onChangeText={setDestination}
+                                        theme={theme}
                                     />
                                     <CustomInput
                                         label="Estimated Budget"
@@ -512,6 +514,7 @@ export default function HomeScreen({ navigation }: any) {
                                         keyboardType="numeric"
                                         value={budget}
                                         onChangeText={setBudget}
+                                        theme={theme}
                                     />
                                     <CustomInput
                                         label="Duration (Days)"
@@ -520,6 +523,7 @@ export default function HomeScreen({ navigation }: any) {
                                         keyboardType="numeric"
                                         value={duration}
                                         onChangeText={setDuration}
+                                        theme={theme}
                                     />
                                 </View>
 
@@ -532,10 +536,10 @@ export default function HomeScreen({ navigation }: any) {
                                             setDuration('');
                                         }}
                                     >
-                                        <Text style={styles.cancelButtonText}>Cancel</Text>
+                                        <Text style={[styles.cancelButtonText, { color: theme.textSecondary }]}>Cancel</Text>
                                     </Pressable>
 
-                                    <Pressable style={styles.primaryButton} onPress={handlePlanWithAi} disabled={aiLoading}>
+                                    <Pressable style={[styles.primaryButton, { backgroundColor: theme.primary }]} onPress={handlePlanWithAi} disabled={aiLoading}>
                                         <Text style={styles.primaryButtonText}>
                                             {aiLoading ? 'Planning...' : '✨ Plan with AI'}
                                         </Text>

@@ -8,6 +8,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { FloatingChatbot } from '@/components/chatbot/FloatingChatbot';
 import { AuthProvider, useAuth } from './(tabs)/context/AuthContext';
+import { ThemeProvider as AppThemeProvider } from './(tabs)/context/ThemeContext';
 import { ErrorBoundary } from './(tabs)/components/ErrorBoundary';
 
 export const unstable_settings = {
@@ -20,15 +21,17 @@ function RootLayoutContent() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-        <ErrorBoundary>
-          <Stack>
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          </Stack>
-          <StatusBar style="auto" />
-          {user && <FloatingChatbot />}
-        </ErrorBoundary>
-      </ThemeProvider>
+      <AppThemeProvider>
+        <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+          <ErrorBoundary>
+            <Stack>
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            </Stack>
+            <StatusBar style="auto" />
+            {user && <FloatingChatbot />}
+          </ErrorBoundary>
+        </ThemeProvider>
+      </AppThemeProvider>
     </GestureHandlerRootView>
   );
 }
