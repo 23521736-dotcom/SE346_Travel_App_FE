@@ -31,7 +31,11 @@ export async function forgotPassword(email: string): Promise<{ message: string }
   return res.data.data;
 }
 
-export async function oauthLogin(provider: 'google' | 'apple'): Promise<unknown> {
-  const res = await apiClient.post(`/auth/oauth/${provider}`, {});
-  return res.data;
+export async function oauthLogin(provider: 'google' | 'apple', idToken: string, role?: string): Promise<AuthResponse & { isNewUser?: boolean }> {
+  const res = await apiClient.post<ApiOk<AuthResponse & { isNewUser?: boolean }>>(`/auth/oauth/${provider}`, {
+    idToken,
+    role,
+  });
+  await setAccessToken(res.data.data.accessToken);
+  return res.data.data;
 }
