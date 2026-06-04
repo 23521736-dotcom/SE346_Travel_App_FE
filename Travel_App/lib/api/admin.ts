@@ -68,10 +68,13 @@ const firstBoolean = (...values: unknown[]): boolean => {
     if (typeof value === 'boolean') {
       return value;
     }
+    if (typeof value === 'number' && Number.isFinite(value)) {
+      return value !== 0;
+    }
     if (typeof value === 'string') {
       const normalized = value.trim().toLowerCase();
-      if (normalized === 'true') return true;
-      if (normalized === 'false') return false;
+      if (['true', '1', 'yes', 'y', 'banned', 'ban', 'inactive', 'disabled'].includes(normalized)) return true;
+      if (['false', '0', 'no', 'n', 'active', 'enabled'].includes(normalized)) return false;
     }
   }
   return false;
@@ -88,7 +91,7 @@ const normalizeAdminUser = (raw: any): AdminUser => ({
   email: firstString(raw?.email, raw?.Email),
   fullName: firstString(raw?.fullName, raw?.FullName, raw?.name, raw?.Name) || null,
   role: normalizeRole(raw?.role ?? raw?.Role),
-  isBanned: firstBoolean(raw?.isBanned, raw?.IsBanned, raw?.is_banned),
+  isBanned: firstBoolean(raw?.isBanned, raw?.IsBanned, raw?.is_banned, raw?.banned, raw?.Banned, raw?.status, raw?.Status),
   createdAt: firstString(raw?.createdAt, raw?.CreatedAt, raw?.created_at, raw?.joinDate, raw?.JoinDate),
   ownedPlacesCount: firstNumber(raw?.ownedPlacesCount, raw?.OwnedPlacesCount, raw?.placesCount, raw?.PlacesCount),
   reviewsCount: firstNumber(raw?.reviewsCount, raw?.ReviewsCount, raw?.reviewCount, raw?.ReviewCount),

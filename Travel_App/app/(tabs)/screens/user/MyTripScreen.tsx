@@ -15,6 +15,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from "../../../../lib/api/client";
 import { ApiTrip, deleteTrip, fetchMyTrips, leaveTrip, mapApiTripToDraft } from "../../../../lib/api/trips";
+import { REALTIME_EVENTS } from "../../../../lib/realtime/events";
+import { useRealtimeEvent } from "../../../../lib/realtime/hooks";
 import { colors } from "../../common/colors";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
@@ -384,6 +386,16 @@ export default function MyTripScreen({ navigation }: any) {
       loadTrips();
     }, [loadTrips])
   );
+
+  const reloadTripsFromRealtime = useCallback(() => {
+    void loadTrips(0);
+  }, [loadTrips]);
+
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_INVITATION_ACCEPTED, reloadTripsFromRealtime);
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_MEMBER_JOINED, reloadTripsFromRealtime);
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_MEMBER_LEFT, reloadTripsFromRealtime);
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_UPDATED, reloadTripsFromRealtime);
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_DELETED, reloadTripsFromRealtime);
 
   useEffect(() => {
     const unsubscribeDrafts = subscribeTripDrafts((updatedTrip) => {

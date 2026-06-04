@@ -13,12 +13,15 @@ import {
 import { getApiErrorMessage } from '../../../../lib/api/client';
 import {
     type ApiTripMemberRecommendation,
+    fetchTripById,
     fetchTripMemberRecommendations,
     inviteTripMember,
     mapApiTripToDraft,
     removeTripInvitation,
     upsertTripToBackend
 } from '../../../../lib/api/trips';
+import { REALTIME_EVENTS } from '../../../../lib/realtime/events';
+import { useRealtimeEvent, useRealtimeTripRoom } from '../../../../lib/realtime/hooks';
 import { useAuth } from '../../context/AuthContext';
 import { Collaborator, normalizeTripDays, removeTripDraft, TripData, upsertTripDraft } from '../../store/tripDraftStore';
 import screenStyles from './AddCollaboratorsScreen.style';
@@ -57,6 +60,31 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
     const tripOwnerId = selectedOwnerId ?? originalOwnerId;
     const canManageTrip = Boolean(currentUserId) && (!originalOwnerId || originalOwnerId === currentUserId);
     const tripId = activeTrip?.id;
+
+    useRealtimeTripRoom(tripId);
+
+    const reloadActiveTripFromRealtime = useCallback(async (payload: { tripId?: string | number }) => {
+        if (!tripId || !payload.tripId || String(payload.tripId) !== String(tripId)) {
+            return;
+        }
+
+        try {
+            const apiTrip = await fetchTripById(tripId);
+            const nextTrip = normalizeTripDays(mapApiTripToDraft(apiTrip) as TripData);
+            setActiveTrip(nextTrip);
+            upsertTripDraft(nextTrip);
+            if (typeof navigation.setParams === 'function') {
+                navigation.setParams({ tripData: nextTrip });
+            }
+        } catch (error) {
+            console.warn('Failed to refresh collaborators from realtime event', error);
+        }
+    }, [navigation, tripId]);
+
+    useRealtimeEvent(REALTIME_EVENTS.TRIP_INVITATION_ACCEPTED, reloadActiveTripFromRealtime, Boolean(tripId));
+    useRealtimeEvent(REALTIME_EVENTS.TRIP_MEMBER_JOINED, reloadActiveTripFromRealtime, Boolean(tripId));
+    useRealtimeEvent(REALTIME_EVENTS.TRIP_MEMBER_LEFT, reloadActiveTripFromRealtime, Boolean(tripId));
+    useRealtimeEvent(REALTIME_EVENTS.TRIP_UPDATED, reloadActiveTripFromRealtime, Boolean(tripId));
 
     const persistTripForCollaboration = useCallback(async (sourceTrip: TripData) => {
         setIsPreparingTrip(true);

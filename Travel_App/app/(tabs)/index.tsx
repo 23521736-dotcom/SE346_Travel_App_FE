@@ -36,12 +36,15 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { colors } from './common/colors';
-import { AuthProvider, useAuth } from './context/AuthContext';
+import { useAuth } from './context/AuthContext';
+import { useRealtimeNotifications } from './context/RealtimeContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const MainTabs = () => {
+  const { unreadCount } = useRealtimeNotifications();
+
   return (
     <Tab.Navigator screenOptions={() => ({
       tabBarActiveTintColor: '#00B4D8',
@@ -82,6 +85,7 @@ const MainTabs = () => {
         component={NotificationScreenUser}
         options={{
           headerShown: false,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="notifications" size={size} color={color} />
           ),

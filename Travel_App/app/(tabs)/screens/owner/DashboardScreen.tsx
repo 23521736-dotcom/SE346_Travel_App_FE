@@ -19,6 +19,8 @@ import {
   type DashboardPromotionImpact,
   type OwnerDashboardData,
 } from '@/lib/api/dashboard';
+import { REALTIME_EVENTS } from '@/lib/realtime/events';
+import { useRealtimeEvent, useRealtimeOwnerRoom } from '@/lib/realtime/hooks';
 import { useAuth } from '../../context/AuthContext';
 import styles from './DashboardScreen.style';
 
@@ -111,6 +113,8 @@ export default function DashboardScreen({ navigation }: any) {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  useRealtimeOwnerRoom(user?.id);
+
   const places = dashboard.places;
   const selectedPlace = useMemo(
     () => places.find((place) => place.id === selectedPlaceId) ?? places[0] ?? null,
@@ -163,6 +167,24 @@ export default function DashboardScreen({ navigation }: any) {
   useEffect(() => {
     loadDashboard();
   }, [loadDashboard]);
+
+  const reloadDashboardFromRealtime = useCallback(
+    (payload: { ownerId?: string | number }) => {
+      if (payload.ownerId && user?.id && String(payload.ownerId) !== String(user.id)) {
+        return;
+      }
+
+      void loadDashboard(true);
+    },
+    [loadDashboard, user?.id]
+  );
+
+  useRealtimeEvent(REALTIME_EVENTS.OWNER_DASHBOARD_UPDATED, reloadDashboardFromRealtime, Boolean(user?.id));
+  useRealtimeEvent(REALTIME_EVENTS.PLACE_SAVED, reloadDashboardFromRealtime, Boolean(user?.id));
+  useRealtimeEvent(REALTIME_EVENTS.PLACE_UNSAVED, reloadDashboardFromRealtime, Boolean(user?.id));
+  useRealtimeEvent(REALTIME_EVENTS.PLACE_REVIEW_CREATED, reloadDashboardFromRealtime, Boolean(user?.id));
+  useRealtimeEvent(REALTIME_EVENTS.PLACE_REVIEW_UPDATED, reloadDashboardFromRealtime, Boolean(user?.id));
+  useRealtimeEvent(REALTIME_EVENTS.PLACE_REVIEW_DELETED, reloadDashboardFromRealtime, Boolean(user?.id));
 
   useEffect(() => {
     if (campaigns.length === 0) {

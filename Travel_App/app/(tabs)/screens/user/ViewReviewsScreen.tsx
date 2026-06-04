@@ -22,6 +22,8 @@ import { deleteReview, fetchPlaceReviews, toggleReviewLike } from '../../../../l
 import type { ReviewListItem } from '../../../../lib/api/types';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
+import { REALTIME_EVENTS } from '../../../../lib/realtime/events';
+import { useRealtimeEvent } from '../../../../lib/realtime/hooks';
 
 function ReviewItem({
   item,
@@ -148,6 +150,21 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
       loadData();
     }, [loadData])
   );
+
+  const reloadReviewsFromRealtime = useCallback(
+    (payload: { placeId?: string | number }) => {
+      if (!placeId || !payload.placeId || String(payload.placeId) !== String(placeId)) {
+        return;
+      }
+
+      void loadData(0);
+    },
+    [loadData, placeId]
+  );
+
+  useRealtimeEvent(REALTIME_EVENTS.PLACE_REVIEW_CREATED, reloadReviewsFromRealtime, Boolean(placeId));
+  useRealtimeEvent(REALTIME_EVENTS.PLACE_REVIEW_UPDATED, reloadReviewsFromRealtime, Boolean(placeId));
+  useRealtimeEvent(REALTIME_EVENTS.PLACE_REVIEW_DELETED, reloadReviewsFromRealtime, Boolean(placeId));
 
   const handleLoadMore = () => {
     if (!loadingMore && hasMore) {

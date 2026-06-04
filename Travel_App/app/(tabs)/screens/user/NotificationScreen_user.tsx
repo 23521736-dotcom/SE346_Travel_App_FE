@@ -24,7 +24,10 @@ import {
   type ApiNotificationItem,
   type NotificationTab,
 } from "../../../../lib/api/notification";
+import { REALTIME_EVENTS, type RealtimeNotificationPayload } from "../../../../lib/realtime/events";
+import { useRealtimeEvent } from "../../../../lib/realtime/hooks";
 import { colors } from "../../common/colors";
+import { useRealtimeNotifications } from "../../context/RealtimeContext";
 import styles from "./NotificationScreen_user.styles";
 
 type NotificationType =
@@ -373,6 +376,7 @@ function NotificationCard({
 
 export default function NotificationScreenUser() {
   const navigation = useNavigation<any>();
+  const { refreshUnreadCount, setUnreadCount } = useRealtimeNotifications();
   const [activeTab, setActiveTab] = useState<NotificationTab>("all");
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -382,11 +386,18 @@ export default function NotificationScreenUser() {
   const [errorMessage, setErrorMessage] = useState("");
   const PAGE_SIZE = 20;
   const notificationRequestKeysRef = useRef<Set<string>>(new Set());
+  const pendingFirstPageReloadRef = useRef(false);
 
   const fetchNotifications = useCallback(async (offset = 0) => {
     const requestKey = `${activeTab}:${offset}`;
     if (notificationRequestKeysRef.current.has(requestKey)) {
+      if (offset === 0) {
+        pendingFirstPageReloadRef.current = true;
+      }
       return;
+    }
+    if (offset === 0) {
+      pendingFirstPageReloadRef.current = false;
     }
     notificationRequestKeysRef.current.add(requestKey);
 
@@ -414,6 +425,10 @@ export default function NotificationScreenUser() {
       notificationRequestKeysRef.current.delete(requestKey);
       if (offset === 0) {
         setLoading(false);
+        if (pendingFirstPageReloadRef.current) {
+          pendingFirstPageReloadRef.current = false;
+          void fetchNotifications(0);
+        }
       }
     }
   }, [activeTab, PAGE_SIZE]);
@@ -447,6 +462,55 @@ export default function NotificationScreenUser() {
     fetchNotifications();
   }, [fetchNotifications]);
 
+  const upsertRealtimeNotification = useCallback((notification: NotificationItem) => {
+    if (activeTab === "unread" && !notification.unread) {
+      setItems((prev) =>
+        prev.filter(
+          (item) =>
+            item.id !== notification.id &&
+            item.notificationId !== notification.notificationId
+        )
+      );
+      return;
+    }
+
+    setItems((prev) => {
+      const withoutDuplicate = prev.filter(
+        (item) =>
+          item.id !== notification.id &&
+          item.notificationId !== notification.notificationId
+      );
+      return [notification, ...withoutDuplicate];
+    });
+  }, [activeTab]);
+
+  const reloadFirstPage = useCallback(() => {
+    void fetchNotifications(0);
+    void refreshUnreadCount();
+  }, [fetchNotifications, refreshUnreadCount]);
+
+  const handleRealtimeNotification = useCallback((payload: RealtimeNotificationPayload) => {
+    const notification = payload.notification ? mapApiNotification(payload.notification) : null;
+    if (notification) {
+      upsertRealtimeNotification(notification);
+      if (typeof payload.unreadCount === "number") {
+        setUnreadCount(Math.max(0, payload.unreadCount));
+      } else {
+        void refreshUnreadCount();
+      }
+      return;
+    }
+
+    reloadFirstPage();
+  }, [refreshUnreadCount, reloadFirstPage, setUnreadCount, upsertRealtimeNotification]);
+
+  useRealtimeEvent(REALTIME_EVENTS.NOTIFICATION_CREATED, handleRealtimeNotification);
+  useRealtimeEvent(REALTIME_EVENTS.NOTIFICATION_UPDATED, reloadFirstPage);
+  useRealtimeEvent(REALTIME_EVENTS.NOTIFICATION_DELETED, reloadFirstPage);
+  useRealtimeEvent(REALTIME_EVENTS.NOTIFICATIONS_READ, reloadFirstPage);
+  useRealtimeEvent(REALTIME_EVENTS.NOTIFICATIONS_READ_ALL, reloadFirstPage);
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_INVITATION_CREATED, handleRealtimeNotification);
+
   const handleCardPress = async (item: NotificationItem) => {
     if (item.unread) {
       try {
@@ -456,6 +520,7 @@ export default function NotificationScreenUser() {
             notification.id === item.id ? { ...notification, unread: false } : notification
           )
         );
+        setUnreadCount((count) => Math.max(0, count - 1));
       } catch (error) {
         console.warn("Failed to mark notification as read", error);
       }
@@ -480,6 +545,7 @@ export default function NotificationScreenUser() {
             notification.notificationId !== notificationId
         )
       );
+      void refreshUnreadCount();
     } catch (error) {
       console.warn("Failed to accept trip invitation", error);
       Alert.alert("Unable to accept", getApiErrorMessage(error));
@@ -501,6 +567,7 @@ export default function NotificationScreenUser() {
             notification.notificationId !== notificationId
         )
       );
+      void refreshUnreadCount();
     } catch (error) {
       console.warn("Failed to reject trip invitation", error);
       Alert.alert("Unable to decline", getApiErrorMessage(error));
@@ -520,6 +587,7 @@ export default function NotificationScreenUser() {
             try {
               await deleteNotification(item.id);
               setItems((prev) => prev.filter((notification) => notification.id !== item.id));
+              void refreshUnreadCount();
             } catch (error) {
               console.warn("Failed to delete notification", error);
             }

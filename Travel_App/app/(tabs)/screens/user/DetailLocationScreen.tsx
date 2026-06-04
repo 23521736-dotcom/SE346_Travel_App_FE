@@ -5,7 +5,7 @@ import { getApiErrorMessage } from '../../../../lib/api/client';
 import { addFavorite, removeFavorite } from '../../../../lib/api/favorites';
 import { fetchPlaceDetail, fetchPlacePromotions } from '../../../../lib/api/places';
 import type { PlaceDetail } from '../../../../lib/api/types';
-import { getScheduleString } from '../../../../lib/service/PromotionShedule';
+import { formatPromotionDate, getScheduleString } from '../../../../lib/service/PromotionShedule';
 import type { PromotionItem } from '../../../../lib/types/promotion';
 import { colors } from '../../common/colors';
 import { RatingStartBar } from '../../components/Rating';
@@ -45,7 +45,7 @@ function getPromotionSchedule(promotion: PromotionItem) {
 
     return {
         range: fullSchedule.startDate && fullSchedule.endDate
-            ? `${fullSchedule.startDate} - ${fullSchedule.endDate}`
+            ? `${formatPromotionDate(fullSchedule.startDate)} - ${formatPromotionDate(fullSchedule.endDate)}`
             : 'No date range',
         days: fullSchedule.days.length > 0
             ? fullSchedule.days.map((day) => dayLabelMap[day] || day).join(', ')
@@ -215,7 +215,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
                 <Text>Khong tim thay dia diem</Text>
-                <Pressable onPress={() => navigation.goaack()}>
+                <Pressable onPress={() => navigation.goBack()}>
                     <Text style={{ color: colors.primary, marginTop: 10 }}>uuay lai</Text>
                 </Pressable>
             </View>
@@ -303,7 +303,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                     )}
                     <Pressable
                         style={styles.roundButton}
-                        onPress={() => navigation.goaack()}
+                        onPress={() => navigation.goBack()}
                         accessibilityLabel="Go back"
                         accessibilityRole="button">
                         <Ionicons name="chevron-back" size={25}

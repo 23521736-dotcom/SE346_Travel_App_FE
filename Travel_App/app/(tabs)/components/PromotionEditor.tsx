@@ -1,4 +1,4 @@
-import { formatDate, getTimeValue } from '@/lib/service/PromotionShedule';
+import { formatDate, formatPromotionDate, getTimeValue, parsePromotionDate, toPromotionApiDateTime } from '@/lib/service/PromotionShedule';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -16,8 +16,8 @@ interface EditorProps {
 const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel }) => {
 
   const [title, setTitle] = useState(initialData?.title || '');
-  const [startDate, setStartDate] = useState(initialData?.schedule?.startDate || '');
-  const [endDate, setEndDate] = useState(initialData?.schedule?.endDate || '');
+  const [startDate, setStartDate] = useState(formatPromotionDate(initialData?.schedule?.startDate || ''));
+  const [endDate, setEndDate] = useState(formatPromotionDate(initialData?.schedule?.endDate || ''));
   const [endTime, setEndTime] = useState(initialData?.schedule?.endTime || '');
   const [startTime, setStartTime] = useState(initialData?.schedule?.startTime || '');
   const [selectedDays, setSelectedDays] = useState(initialData?.schedule?.days || []);
@@ -81,6 +81,8 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
 
   const parseDateString = (dateStr: string): Date | null => {
     if (!dateStr) return null;
+    const parsedDate = parsePromotionDate(dateStr);
+    if (parsedDate) return parsedDate;
 
     const monthMap: { [key: string]: number } = {
       "Jan": 0, "Feb": 1, "Mar": 2, "Apr": 3, "May": 4, "Jun": 5,
@@ -134,6 +136,10 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
     }
     const startD = parseDateString(startDate);
     const endD = parseDateString(endDate);
+    if (!startD || !endD) {
+      alert("Please select valid Start Date and End Date.");
+      return;
+    }
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Đưa về 0h sáng để chỉ so sánh ngày
     // 2. Kiểm tra ngày bắt đầu không được ở quá khứ
@@ -163,8 +169,8 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
     const finalData = {
       title,
       schedule: {
-        startDate,
-        endDate,
+        startDate: toPromotionApiDateTime(startDate),
+        endDate: toPromotionApiDateTime(endDate),
         days: selectedDays,
         startTime,
         endTime,

@@ -29,6 +29,7 @@ type UserTab = 'Active Accounts' | 'Banned Accounts';
 
 const tabs: UserTab[] = ['Active Accounts', 'Banned Accounts'];
 const ITEMS_PER_PAGE = 10;
+const USERS_FETCH_BATCH_SIZE = 100;
 
 function parseDateValue(value?: string | number | null) {
     if (value === null || value === undefined || value === '') {
@@ -85,6 +86,46 @@ function getStatusCopy(isBanned: boolean) {
         : { label: 'Active', icon: 'checkmark-circle-outline' as const };
 }
 
+function matchesUserSearch(user: AdminUser, search: string) {
+    const normalizedSearch = search.trim().toLowerCase();
+    if (!normalizedSearch) {
+        return true;
+    }
+
+    return [
+        user.fullName,
+        user.username,
+        user.email,
+        user.role,
+    ].some((value) => value?.toLowerCase().includes(normalizedSearch));
+}
+
+async function fetchAllAdminUsers(search: string) {
+    const allUsers: AdminUser[] = [];
+    let offset = 0;
+    let expectedTotal: number | null = null;
+
+    do {
+        const response = await fetchAdminUsers({
+            search: search.trim() || undefined,
+            limit: USERS_FETCH_BATCH_SIZE,
+            offset,
+        });
+
+        const nextItems = response.items.filter((user) => matchesUserSearch(user, search));
+        allUsers.push(...nextItems);
+
+        expectedTotal = response.meta.total;
+        offset += response.items.length;
+
+        if (response.items.length < USERS_FETCH_BATCH_SIZE) {
+            break;
+        }
+    } while (expectedTotal === null || offset < expectedTotal);
+
+    return allUsers;
+}
+
 export default function DashboardUser_Admin() {
     const { logout } = useAuth();
 
@@ -108,17 +149,18 @@ export default function DashboardUser_Admin() {
     const loadUsers = useCallback(async (page = currentPage, search = searchQuery, tab = activeTab, quiet = false) => {
         try {
             if (!quiet) setLoading(true);
-            const offset = (page - 1) * ITEMS_PER_PAGE;
-            const response = await fetchAdminUsers({
-                search: search.trim() || undefined,
-                isBanned: tab === 'Banned Accounts',
-                limit: ITEMS_PER_PAGE,
-                offset,
-            });
+            const allUsers = await fetchAllAdminUsers(search);
+            const tabUsers = allUsers.filter((user) => user.isBanned === (tab === 'Banned Accounts'));
+            const nextTotalPages = Math.max(1, Math.ceil(tabUsers.length / ITEMS_PER_PAGE));
+            const safePage = Math.min(Math.max(1, page), nextTotalPages);
+            const startIndex = (safePage - 1) * ITEMS_PER_PAGE;
 
-            setUsers(response.items);
-            setTotalUsers(response.meta.total);
-            setTotalPages(Math.max(1, Math.ceil(response.meta.total / ITEMS_PER_PAGE)));
+            setUsers(tabUsers.slice(startIndex, startIndex + ITEMS_PER_PAGE));
+            setTotalUsers(tabUsers.length);
+            setTotalPages(nextTotalPages);
+            if (safePage !== page) {
+                setCurrentPage(safePage);
+            }
         } catch (err: any) {
             Alert.alert('Error', err?.message || 'Failed to load users');
             setUsers([]);

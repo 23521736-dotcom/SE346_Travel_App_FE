@@ -1,5 +1,5 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -26,6 +26,8 @@ import {
   upsertTripDraft,
 } from "../../store/tripDraftStore";
 import { getApiErrorMessage } from '../../../../lib/api/client';
+import { REALTIME_EVENTS } from '../../../../lib/realtime/events';
+import { useRealtimeEvent, useRealtimeTripRoom } from '../../../../lib/realtime/hooks';
 import styles from "./PlanningTrip.styles";
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
@@ -220,6 +222,37 @@ export default function PlanningTrip({ navigation, route }: any) {
     ...routeTrip,
     title: routeTrip?.title || route?.params?.title || defaultTrip.title,
   }));
+  const activeTripId = trip.id ?? routeTripId;
+
+  useRealtimeTripRoom(activeTripId);
+
+  const reloadTripFromRealtime = useCallback(
+    async (payload: { tripId?: string | number }) => {
+      if (!activeTripId || !payload.tripId || String(payload.tripId) !== String(activeTripId)) {
+        return;
+      }
+
+      try {
+        const apiTrip = await fetchTripById(activeTripId);
+        const draft = sortTripForPlanning({
+          ...mapApiTripToDraft(apiTrip),
+          id: String(activeTripId),
+        } as TripData);
+        setTrip(draft);
+        initialTripRef.current = draft;
+        setHasUnsavedChanges(false);
+        upsertTripDraft(draft);
+      } catch (error) {
+        console.warn('Failed to refresh trip from realtime event', error);
+      }
+    },
+    [activeTripId]
+  );
+
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_INVITATION_ACCEPTED, reloadTripFromRealtime, Boolean(activeTripId));
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_MEMBER_JOINED, reloadTripFromRealtime, Boolean(activeTripId));
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_MEMBER_LEFT, reloadTripFromRealtime, Boolean(activeTripId));
+  useRealtimeEvent(REALTIME_EVENTS.TRIP_UPDATED, reloadTripFromRealtime, Boolean(activeTripId));
 
   useEffect(() => {
     if (!routeTripId || routeTrip) {
@@ -570,7 +603,7 @@ export default function PlanningTrip({ navigation, route }: any) {
                         const periodLabel = getActivityPeriodLabel(loc.period, loc.time);
 
                         return (
-                          <View key={`timeline-${day.id}-${loc.id}-${locIndex}`} style={styles.timelineItem}>
+                          <View key={`timeline-${day.dayId}-${loc.id}-${locIndex}`} style={styles.timelineItem}>
                             <View style={styles.timeHeader}>
                               <View style={styles.timelineDot} />
                               <Text style={styles.timeTitle}>
