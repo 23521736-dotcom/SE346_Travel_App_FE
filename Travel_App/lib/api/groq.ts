@@ -1,69 +1,30 @@
-import axios from 'axios';
-
-const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+import { apiClient } from './client';
 
 export interface Message {
   role: 'system' | 'user' | 'assistant';
   content: string;
 }
 
-export interface GroqChatResponse {
-  id: string;
-  object: string;
-  created: number;
-  model: string;
-  choices: {
-    index: number;
-    message: {
-      role: string;
-      content: string;
-    };
-    finish_reason: string;
-  }[];
-  usage: {
-    prompt_tokens: number;
-    completion_tokens: number;
-    total_tokens: number;
-  };
-}
-
-const groqClient = axios.create({
-  baseURL: GROQ_API_URL,
-  headers: {
-    'Authorization': `Bearer ${GROQ_API_KEY}`,
-    'Content-Type': 'application/json',
-  },
-});
-
+/**
+ * Chat with AI via the backend proxy.
+ * The backend handles the Groq API call and keeps the API key secure.
+ */
 export async function chatWithGroq(messages: Message[]): Promise<string> {
-  if (!GROQ_API_KEY) {
-    throw new Error('Groq API Key is not configured');
-  }
-
   try {
-    const response = await axios.post<GroqChatResponse>(
-      GROQ_API_URL,
-      {
-        model: 'llama-3.3-70b-versatile', // Or another Groq supported model
-        messages,
-        temperature: 0.7,
-        max_tokens: 1024,
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-      }
-    );
+    // Filter out system messages as the backend has its own system prompt
+    const userMessages = messages.filter(m => m.role !== 'system');
 
-    return response.data.choices[0].message.content;
-  } catch (error) {
-    console.error('Groq API Error:', error);
-    if (axios.isAxiosError(error)) {
-      console.error('Data:', error.response?.data);
+    const response = await apiClient.post<{ ok: boolean; data: { content?: string } }>('/ai/chat', {
+      messages: userMessages,
+    });
+
+    if (response.data.ok && response.data.data?.content) {
+      return response.data.data.content;
     }
-    throw new Error('Failed to get response from Groq AI');
+
+    throw new Error('Invalid response from server');
+  } catch (error) {
+    console.error('AI Chat Error:', error);
+    throw new Error('Failed to get response from AI assistant');
   }
 }
