@@ -7,6 +7,7 @@ import {
   Image,
   Platform,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -140,6 +141,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
   const heroImage = route?.params?.image || fallbackHeroImage;
   const [entries, setEntries] = useState<TripDiaryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -181,6 +183,24 @@ export default function TripDiaryScreen({ navigation, route }: any) {
     return () => {
       isMounted = false;
     };
+  }, [tripId]);
+
+  const onRefresh = useCallback(async () => {
+    if (!tripId) {
+      setErrorMessage("Missing trip information for diary.");
+      return;
+    }
+
+    setRefreshing(true);
+    setErrorMessage(null);
+    try {
+      const data = await fetchTripDiary(String(tripId));
+      setEntries(data);
+    } catch (error) {
+      setErrorMessage(getApiErrorMessage(error));
+    } finally {
+      setRefreshing(false);
+    }
   }, [tripId]);
 
   useFocusEffect(loadDiary);
@@ -264,6 +284,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <View style={styles.heroCard}>
           <Image source={{ uri: heroImage }} style={styles.heroImage} />

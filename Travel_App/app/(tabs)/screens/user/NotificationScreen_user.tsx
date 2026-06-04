@@ -3,9 +3,11 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Image,
   Pressable,
   type GestureResponderEvent,
+  RefreshControl,
   SafeAreaView,
   ScrollView,
   Text,
@@ -341,23 +343,64 @@ export default function NotificationScreenUser() {
   const [activeTab, setActiveTab] = useState<NotificationTab>("all");
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
+  const PAGE_SIZE = 20;
 
-  const fetchNotifications = useCallback(async () => {
-    setLoading(true);
+  const fetchNotifications = useCallback(async (offset = 0) => {
+    if (offset === 0) {
+      setLoading(true);
+    }
+
     setErrorMessage("");
 
     try {
-      const apiItems = await listNotifications(activeTab);
-      setItems(apiItems.map(mapApiNotification).filter((item): item is NotificationItem => Boolean(item)));
+      const apiItems = await listNotifications({ tab: activeTab, limit: PAGE_SIZE, offset });
+      const filteredItems = apiItems.map(mapApiNotification).filter((item): item is NotificationItem => Boolean(item));
+
+      setItems(prev => offset === 0 ? filteredItems : [...prev, ...filteredItems]);
+      setHasMore(filteredItems.length === PAGE_SIZE);
     } catch (error) {
       const message = getApiErrorMessage(error);
       setErrorMessage(message);
       console.warn("Failed to load notifications", error);
+      if (offset === 0) {
+        setItems([]);
+      }
+      setHasMore(false);
     } finally {
-      setLoading(false);
+      if (offset === 0) {
+        setLoading(false);
+      }
     }
-  }, [activeTab]);
+  }, [activeTab, PAGE_SIZE]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setErrorMessage("");
+
+    try {
+      const apiItems = await listNotifications({ tab: activeTab, limit: PAGE_SIZE, offset: 0 });
+      const filteredItems = apiItems.map(mapApiNotification).filter((item): item is NotificationItem => Boolean(item));
+      setItems(filteredItems);
+      setHasMore(filteredItems.length === PAGE_SIZE);
+    } catch (error) {
+      const message = getApiErrorMessage(error);
+      setErrorMessage(message);
+      console.warn("Failed to refresh notifications", error);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [activeTab, PAGE_SIZE]);
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      setLoadingMore(true);
+      fetchNotifications(items.length).finally(() => setLoadingMore(false));
+    }
+  };
 
   useEffect(() => {
     fetchNotifications();
@@ -462,43 +505,47 @@ export default function NotificationScreenUser() {
         </Pressable>
       </View>
 
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.listContent}
-      >
-        {loading ? (
-          <View style={styles.statusWrap}>
-            <ActivityIndicator size="small" color={colors.primary} />
-            <Text style={styles.statusText}>Loading notifications...</Text>
-          </View>
-        ) : null}
-
-        {!loading && errorMessage ? (
-          <View style={styles.statusWrap}>
-            <Text style={styles.statusText}>{errorMessage}</Text>
-            <Pressable style={styles.retryButton} onPress={fetchNotifications}>
-              <Text style={styles.retryButtonText}>Retry</Text>
-            </Pressable>
-          </View>
-        ) : null}
-
-        {!loading && !errorMessage && items.length === 0 ? (
-          <Text style={styles.emptyText}>No notifications yet.</Text>
-        ) : null}
-
-        {!loading && !errorMessage
-          ? items.map((item) => (
-            <NotificationCard
-              key={item.id}
-              item={item}
-              onPress={handleCardPress}
-              onAccept={handleAccept}
-              onDecline={handleDecline}
-              onDelete={handleDelete}
-            />
-          ))
-          : null}
-      </ScrollView>
+      <FlatList
+        data={items}
+        renderItem={({ item }) => (
+          <NotificationCard
+            item={item}
+            onPress={handleCardPress}
+            onAccept={handleAccept}
+            onDecline={handleDecline}
+            onDelete={handleDelete}
+          />
+        )}
+        keyExtractor={(item) => item.id}
+        ListEmptyComponent={
+          !loading && !errorMessage ? (
+            <Text style={styles.emptyText}>No notifications yet.</Text>
+          ) : null
+        }
+        ListHeaderComponent={
+          loading || errorMessage ? (
+            <View style={styles.statusWrap}>
+              {loading ? (
+                <>
+                  <ActivityIndicator size="small" color={colors.primary} />
+                  <Text style={styles.statusText}>Loading notifications...</Text>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.statusText}>{errorMessage}</Text>
+                  <Pressable style={styles.retryButton} onPress={() => fetchNotifications()}>
+                    <Text style={styles.retryButtonText}>Retry</Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          ) : null
+        }
+        ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color={colors.primary} style={{ margin: 16 }} /> : null}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      />
     </SafeAreaView>
   );
 }

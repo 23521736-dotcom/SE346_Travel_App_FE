@@ -255,15 +255,19 @@ function unwrapApiData<T>(payload: ApiOk<T> | T): T {
     : payload.data;
 }
 
-export async function fetchMyTrips(): Promise<ApiTrip[]> {
+export async function fetchMyTrips(limit?: number, offset?: number): Promise<ApiTrip[]> {
+  const params: Record<string, any> = {};
+  if (limit !== undefined) params.limit = limit;
+  if (offset !== undefined) params.offset = offset;
+
   let res;
   try {
-    res = await apiClient.get<ApiOk<TripsResponse> | TripsResponse>(MY_TRIPS_PATH);
+    res = await apiClient.get<ApiOk<TripsResponse> | TripsResponse>(MY_TRIPS_PATH, { params });
   } catch (error: any) {
     if (error?.response?.status !== 404) {
       throw error;
     }
-    res = await apiClient.get<ApiOk<TripsResponse> | TripsResponse>(TRIPS_PATH);
+    res = await apiClient.get<ApiOk<TripsResponse> | TripsResponse>(TRIPS_PATH, { params });
   }
   const body = res.data as ApiOk<TripsResponse> | TripsResponse;
   const payload = Array.isArray(body) ? body : 'data' in body ? body.data : body;

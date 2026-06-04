@@ -4,11 +4,14 @@ import { normalizePlaceDetail, normalizePlaceListItem } from './types';
 import { apiClient } from './client';
 import { normalizePlaceCategory } from '../placeCategories';
 
-export async function fetchPlaces(category?: string): Promise<PlaceListItem[]> {
+export async function fetchPlaces(category?: string, limit?: number, offset?: number): Promise<PlaceListItem[]> {
   const q = normalizePlaceCategory(category);
-  const res = await apiClient.get<ApiOk<PlaceListItem[]>>('/places', {
-    params: q ? { category: q, limit: 50 } : { limit: 50 },
-  });
+  const params: Record<string, any> = q ? { category: q } : {};
+  if (limit !== undefined) params.limit = limit;
+  if (offset !== undefined) params.offset = offset;
+  if (!params.limit) params.limit = 50;
+
+  const res = await apiClient.get<ApiOk<PlaceListItem[]>>('/places', { params });
   return res.data.data.map((item) => normalizePlaceListItem(item as any));
 }
 

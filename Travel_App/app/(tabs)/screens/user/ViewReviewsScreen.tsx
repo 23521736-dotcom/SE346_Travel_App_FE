@@ -106,31 +106,55 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
     'https://i.pinimg.com/1200x/6f/54/22/6f542272eef1c2846c752192ff2cd542.jpg'
   );
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const PAGE_SIZE = 20;
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (offset = 0) => {
     if (!placeId) return;
-    setLoading(true);
+
+    if (offset === 0) {
+      setLoading(true);
+    }
+
     try {
       const [place, list] = await Promise.all([
         fetchPlaceDetail(placeId),
-        fetchPlaceReviews(placeId),
+        fetchPlaceReviews(placeId, PAGE_SIZE, offset),
       ]);
-      setPlaceRate(place.Rate);
-      setPlaceCount(place.NumberOfRate);
-      setCoverImage(place.Image);
-      setReviews(list);
+
+      if (offset === 0) {
+        setPlaceRate(place.Rate);
+        setPlaceCount(place.NumberOfRate);
+        setCoverImage(place.Image);
+      }
+
+      setReviews(prev => offset === 0 ? list : [...prev, ...list]);
+      setHasMore(list.length === PAGE_SIZE);
     } catch {
-      setReviews([]);
+      if (offset === 0) {
+        setReviews([]);
+      }
+      setHasMore(false);
     } finally {
-      setLoading(false);
+      if (offset === 0) {
+        setLoading(false);
+      }
     }
-  }, [placeId]);
+  }, [placeId, PAGE_SIZE]);
 
   useFocusEffect(
     useCallback(() => {
       loadData();
     }, [loadData])
   );
+
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore) {
+      setLoadingMore(true);
+      loadData(reviews.length).finally(() => setLoadingMore(false));
+    }
+  };
 
   const handleLikeToggle = async (reviewId: string) => {
     try {
@@ -251,11 +275,14 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
           </View>
         }
         contentContainerStyle={{ paddingBottom: 20 }}
-        ListEmptyComponent={
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
+        ListFooterComponent={loadingMore ? <ActivityIndicator size="small" color={colors.primary} style={{ margin: 16 }} /> : null}
+        ListEmptyComponent={!loading ? (
           <Text style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>
             Chua co danh gia nao. Hay la nguoi dau tien!
           </Text>
-        }
+        ) : null}
       />
 
       <View style={styles.bottomActionContainer}>

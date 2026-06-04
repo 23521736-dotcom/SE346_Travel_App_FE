@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Image, Linking, Pressable, ScrollView, Text, View } from 'react-native';
+import { ActivityIndicator, Image, Linking, Pressable, RefreshControl, ScrollView, Text, View } from 'react-native';
 import { addFavorite, removeFavorite } from '../../../../lib/api/favorites';
 import { fetchPlaceDetail, fetchPlacePromotions } from '../../../../lib/api/places';
 import type { PlaceDetail } from '../../../../lib/api/types';
@@ -115,6 +115,7 @@ export default function DetailLocationScreen({ navigation, route }: any) {
     const [place, setPlace] = useState<PlaceDetail | null>(fallbackPlace || null);
     const [promotions, setPromotions] = useState<PromotionItem[]>([]);
     const [loading, setLoading] = useState(Boolean(placeId));
+    const [refreshing, setRefreshing] = useState(false);
     const [isLiked, setIsLiked] = useState(Boolean(fallbackPlace?.isFavorite));
     const [imageIndex, setImageIndex] = useState(0);
 
@@ -139,6 +140,29 @@ export default function DetailLocationScreen({ navigation, route }: any) {
             setIsLiked(Boolean(fallbackPlace?.isFavorite));
         } finally {
             setLoading(false);
+        }
+    }, [fallbackPlace, placeId]);
+
+    const onRefresh = useCallback(async () => {
+        if (!placeId) {
+            return;
+        }
+
+        setRefreshing(true);
+        try {
+            const [data, promotionData] = await Promise.all([
+                fetchPlaceDetail(placeId),
+                fetchPlacePromotions(placeId).catch(() => []),
+            ]);
+            setPlace(data);
+            setPromotions(promotionData);
+            setIsLiked(Boolean(data.isFavorite));
+        } catch {
+            setPlace(fallbackPlace || null);
+            setPromotions([]);
+            setIsLiked(Boolean(fallbackPlace?.isFavorite));
+        } finally {
+            setRefreshing(false);
         }
     }, [fallbackPlace, placeId]);
 
@@ -215,7 +239,10 @@ export default function DetailLocationScreen({ navigation, route }: any) {
 
     return (
         <View style={{ flex: 1, justifyContent: 'center', backgroundColor: '#FFFFFF', marginVertical: 40 }}>
-            <ScrollView style={[styles.container, { margin: 0 }]}>
+            <ScrollView
+                style={[styles.container, { margin: 0 }]}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
                 <View style={{ margin: 0, position: 'relative' }}>
                     <View style={[styles.imageFrame, { height: 350, borderRadius: 0, borderWidth: 0 }]}>
                         {currentImage ? (

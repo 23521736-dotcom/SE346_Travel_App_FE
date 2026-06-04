@@ -4,6 +4,7 @@ import {
     ActivityIndicator,
     Alert,
     Image,
+    RefreshControl,
     SafeAreaView,
     ScrollView,
     Text,
@@ -69,6 +70,7 @@ export default function SavedPlaces({ navigation }: any) {
     const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
     const [promotionPlaceIds, setPromotionPlaceIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
 
     const loadFavorites = useCallback(async () => {
@@ -85,6 +87,20 @@ export default function SavedPlaces({ navigation }: any) {
             setPromotionPlaceIds(new Set());
         } finally {
             setLoading(false);
+        }
+    }, []);
+
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        try {
+            const data = await fetchFavorites();
+            setPlaces(data);
+            setSavedIds(new Set(data.map((place) => place.Id)));
+            setPromotionPlaceIds(await fetchPromotionPlaceIds(data.map((place) => place.Id)));
+        } catch (err) {
+            Alert.alert('Loi', getApiErrorMessage(err));
+        } finally {
+            setRefreshing(false);
         }
     }, []);
 
@@ -183,7 +199,11 @@ export default function SavedPlaces({ navigation }: any) {
                 </ScrollView>
             </View>
 
-            <ScrollView style={styles.listContainer} contentContainerStyle={styles.listContent}>
+            <ScrollView
+                style={styles.listContainer}
+                contentContainerStyle={styles.listContent}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            >
                 {loading && places.length === 0 ? (
                     <View style={styles.emptyStateContainer}>
                         <ActivityIndicator size="large" color={colors.primary} />
