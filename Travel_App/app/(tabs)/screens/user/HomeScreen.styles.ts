@@ -153,6 +153,25 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
 
+  inlineError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    columnGap: 6,
+    marginHorizontal: 10,
+    marginBottom: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderRadius: 8,
+  },
+
+  inlineErrorText: {
+    flex: 1,
+    color: '#B42318',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',

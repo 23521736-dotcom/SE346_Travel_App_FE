@@ -12,6 +12,8 @@ export async function fetchPlaces(params?: {
   maxPrice?: number;
   limit?: number;
   offset?: number;
+}, options?: {
+  signal?: AbortSignal;
 }): Promise<PlaceListItem[]> {
   const category = params?.category ? normalizePlaceCategory(params.category) : undefined;
 
@@ -28,6 +30,7 @@ export async function fetchPlaces(params?: {
 
   const res = await apiClient.get<ApiOk<PlaceListItem[]>>('/places', {
     params: queryParams,
+    signal: options?.signal,
   });
   return res.data.data.map((item) => normalizePlaceListItem(item as any));
 }

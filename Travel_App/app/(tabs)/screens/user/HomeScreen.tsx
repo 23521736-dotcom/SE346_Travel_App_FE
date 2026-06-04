@@ -18,14 +18,13 @@ import {
     View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { colors } from "../../common/colors";
 import { useTheme } from '../../context/ThemeContext';
 import styles from './HomeScreen.styles';
 import { fetchPlaces } from '../../../../lib/api/places';
 import { planTrip } from '../../../../lib/api/ai';
 import type { PlaceListItem } from '../../../../lib/api/types';
 import { getApiErrorMessage } from '../../context/AuthContext';
-import { getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../../lib/placeCategories';
+import { getPlaceCategoryLabel, PLACE_CATEGORIES } from '../../../../lib/placeCategories';
 import { fetchRecommendations } from '../../../../lib/api/recommendations';
 import type { RecommendationPlace } from '../../../../lib/api/recommendations';
 import { CachedImage } from '../../../../components/CachedImage';
@@ -144,6 +143,7 @@ export default function HomeScreen({ navigation }: any) {
     const [places, setPlaces] = useState<Place[]>([]);
     const [promotionPlaceIds, setPromotionPlaceIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
+    const [placesError, setPlacesError] = useState<string | null>(null);
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -159,7 +159,8 @@ export default function HomeScreen({ navigation }: any) {
     // Advanced filters
     const [minRating, setMinRating] = useState<number | undefined>();
     const [maxPrice, setMaxPrice] = useState<number | undefined>();
-    const placesRequestKeysRef = useRef<Set<string>>(new Set());
+    const placesAbortControllerRef = useRef<AbortController | null>(null);
+    const placesRequestIdRef = useRef(0);
 
     // Debounced search
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -171,16 +172,31 @@ export default function HomeScreen({ navigation }: any) {
         return () => clearTimeout(timeoutId);
     }, [searchQuery]);
 
-    const loadPlaces = useCallback(async (offset = 0) => {
-        const requestKey = JSON.stringify({ offset, activeCategory, debouncedSearch, minRating, maxPrice });
-        if (placesRequestKeysRef.current.has(requestKey)) {
-            return;
-        }
-        placesRequestKeysRef.current.add(requestKey);
+    const isCanceledPlaceRequest = useCallback((err: unknown) => {
+        const maybeError = err as { code?: string; name?: string; message?: string };
+        return (
+            maybeError?.code === 'ERR_CANCELED' ||
+            maybeError?.name === 'CanceledError' ||
+            maybeError?.name === 'AbortError' ||
+            maybeError?.message === 'canceled'
+        );
+    }, []);
 
-        if (offset === 0) {
+    const loadPlaces = useCallback(async (offset = 0) => {
+        const isReplacementRequest = offset === 0;
+        let requestId = placesRequestIdRef.current;
+        let abortController: AbortController | null = null;
+
+        if (isReplacementRequest) {
+            placesAbortControllerRef.current?.abort();
+            abortController = new AbortController();
+            placesAbortControllerRef.current = abortController;
+            requestId = placesRequestIdRef.current + 1;
+            placesRequestIdRef.current = requestId;
             setLoading(true);
+            setPlacesError(null);
         }
+
         try {
             const data = await fetchPlaces({
                 category: activeCategory !== 'All' ? activeCategory : undefined,
@@ -189,31 +205,39 @@ export default function HomeScreen({ navigation }: any) {
                 maxPrice,
                 limit: PAGE_SIZE,
                 offset,
-            });
+            }, { signal: abortController?.signal });
+            if (requestId !== placesRequestIdRef.current) {
+                return;
+            }
             const promotionIds = data
                 .filter((place) => place.hasActivePromotion)
                 .map((place) => place.Id);
-            if (offset === 0) {
+            if (isReplacementRequest) {
                 setPlaces(data);
                 setPromotionPlaceIds(new Set(promotionIds));
             } else {
                 setPlaces((prev) => [...prev, ...data]);
                 setPromotionPlaceIds((prev) => new Set([...prev, ...promotionIds]));
             }
+            setPlacesError(null);
             setHasMore(data.length === PAGE_SIZE);
-        } catch {
-            if (offset === 0) {
-                setPlaces([]);
-                setPromotionPlaceIds(new Set());
+        } catch (err) {
+            if (isCanceledPlaceRequest(err) || requestId !== placesRequestIdRef.current) {
+                return;
             }
-            setHasMore(false);
+            setPlacesError(getApiErrorMessage(err));
+            if (!isReplacementRequest) {
+                setHasMore(false);
+            }
         } finally {
-            placesRequestKeysRef.current.delete(requestKey);
-            if (offset === 0) {
+            if (requestId === placesRequestIdRef.current && isReplacementRequest) {
                 setLoading(false);
+                if (placesAbortControllerRef.current === abortController) {
+                    placesAbortControllerRef.current = null;
+                }
             }
         }
-    }, [activeCategory, debouncedSearch, minRating, maxPrice, PAGE_SIZE]);
+    }, [activeCategory, debouncedSearch, isCanceledPlaceRequest, minRating, maxPrice, PAGE_SIZE]);
 
     const onRefresh = useCallback(async () => {
         setRefreshing(true);
@@ -236,6 +260,10 @@ export default function HomeScreen({ navigation }: any) {
     useEffect(() => {
         loadPlaces();
     }, [loadPlaces]);
+
+    useEffect(() => () => {
+        placesAbortControllerRef.current?.abort();
+    }, []);
 
     // Load personalized recommendations
     useEffect(() => {
@@ -272,7 +300,7 @@ export default function HomeScreen({ navigation }: any) {
         } finally {
             setAiLoading(false);
         }
-    }, [budget, destination, duration, searchQuery]);
+    }, [budget, destination, duration, searchQuery, t]);
 
     const listHeader = useMemo(() => (
             <View style={styles.container}>
@@ -477,9 +505,20 @@ export default function HomeScreen({ navigation }: any) {
                     <Text style={{ flex: 1, fontWeight: '500', fontSize: 23, color: theme.text }}>
                         {t('home.popularThisWeek')}
                     </Text>
+                    {loading && places.length > 0 && (
+                        <ActivityIndicator size="small" color={theme.primary} />
+                    )}
                 </View>
+                {placesError && (
+                    <View style={[styles.inlineError, { borderColor: theme.borderLight, backgroundColor: theme.surface }]}>
+                        <Ionicons name="alert-circle-outline" size={16} color="#B42318" />
+                        <Text style={styles.inlineErrorText}>
+                            Could not refresh places. {placesError}
+                        </Text>
+                    </View>
+                )}
             </View>
-    ), [activeCategory, aiLoading, searchQuery, recommendations, theme, minRating, maxPrice]);
+    ), [activeCategory, aiLoading, searchQuery, recommendations, theme, minRating, maxPrice, loading, places.length, placesError, navigation, t]);
 
     if (loading && places.length === 0) {
         return (
