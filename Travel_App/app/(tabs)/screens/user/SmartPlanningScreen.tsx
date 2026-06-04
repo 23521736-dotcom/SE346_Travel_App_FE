@@ -547,7 +547,7 @@ export default function SmartPlanningScreen() {
               />
               {hasError && (
                 <Text style={{ color: '#ef4444', fontSize: 11, marginLeft: 8 }}>
-                  Phải > 0
+                  Phải {'>'} 0
                 </Text>
               )}
             </View>

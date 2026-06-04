@@ -114,8 +114,10 @@ export default function SavedPlaces({ navigation }: any) {
     }, [PAGE_SIZE]);
 
     const onRefresh = useCallback(async () => {
+        setRefreshing(true);
         setHasMore(true);
         await loadFavorites(0);
+        setRefreshing(false);
     }, [loadFavorites]);
 
     const handleLoadMore = useCallback(() => {
@@ -124,20 +126,6 @@ export default function SavedPlaces({ navigation }: any) {
             loadFavorites(places.length).finally(() => setLoadingMore(false));
         }
     }, [loadingMore, hasMore, places.length, loadFavorites]);
-
-    const onRefresh = useCallback(async () => {
-        setRefreshing(true);
-        try {
-            const data = await fetchFavorites();
-            setPlaces(data);
-            setSavedIds(new Set(data.map((place) => place.Id)));
-            setPromotionPlaceIds(await fetchPromotionPlaceIds(data.map((place) => place.Id)));
-        } catch (err) {
-            Alert.alert('Loi', getApiErrorMessage(err));
-        } finally {
-            setRefreshing(false);
-        }
-    }, []);
 
     useEffect(() => {
         loadFavorites();
@@ -280,11 +268,9 @@ export default function SavedPlaces({ navigation }: any) {
                                         placeName: item.Name,
                                     })
                                 }
-                            >
-                                <Text style={[styles.detailText, { color: theme.primary }]}>Review</Text>
                                 accessibilityLabel={`Write review for ${item.Name}`}
                                 accessibilityRole="button">
-                                <Text style={styles.detailText}>Review</Text>
+                                <Text style={[styles.detailText, { color: theme.primary }]}>Review</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={() =>
@@ -293,11 +279,9 @@ export default function SavedPlaces({ navigation }: any) {
                                         placeData: toPlaceDetail(item, isSaved),
                                     })
                                 }
-                            >
-                                <Text style={[styles.detailText, { color: theme.primary }]}>Detail</Text>
                                 accessibilityLabel={`View details for ${item.Name}`}
                                 accessibilityRole="button">
-                                <Text style={styles.detailText}>Detail</Text>
+                                <Text style={[styles.detailText, { color: theme.primary }]}>Detail</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -326,14 +310,12 @@ export default function SavedPlaces({ navigation }: any) {
                         accessibilityHint="Enter a place name to search your saved list"
                     />
                     {searchQuery.length > 0 && (
-                        <TouchableOpacity style={styles.clearIcon} onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={20} color={theme.textMuted} />
                         <TouchableOpacity
                             style={styles.clearIcon}
                             onPress={() => setSearchQuery('')}
                             accessibilityLabel="Clear search"
                             accessibilityRole="button">
-                            <Ionicons name="close-circle" size={20} color="#9ca3af" />
+                            <Ionicons name="close-circle" size={20} color={theme.textMuted} />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -344,13 +326,10 @@ export default function SavedPlaces({ navigation }: any) {
                             key={filter.value}
                             onPress={() => setActiveFilter(filter.value)}
                             style={[styles.filterChip, { backgroundColor: theme.surface, borderColor: theme.border }, activeFilter === filter.value && { backgroundColor: theme.primary, borderColor: theme.primary }]}
-                        >
-                            <Text style={[styles.filterText, { color: activeFilter === filter.value ? theme.textOnPrimary : theme.text }]}>
-                            style={[styles.filterChip, activeFilter === filter.value && styles.filterChipActive]}
                             accessibilityLabel={`Filter by ${filter.label}`}
                             accessibilityRole="button"
                             accessibilityState={{ selected: activeFilter === filter.value }}>
-                            <Text style={[styles.filterText, activeFilter === filter.value && styles.filterTextActive]}>
+                            <Text style={[styles.filterText, { color: activeFilter === filter.value ? theme.textOnPrimary : theme.text }]}>
                                 {filter.label}
                             </Text>
                         </TouchableOpacity>
@@ -358,103 +337,13 @@ export default function SavedPlaces({ navigation }: any) {
                 </ScrollView>
             </View>
 
-            <ScrollView
-                style={[styles.listContainer, { backgroundColor: theme.background }]}
-                contentContainerStyle={styles.listContent}
-                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-            >
-                {loading && places.length === 0 ? (
-                    <View style={styles.emptyStateContainer}>
-                        <ActivityIndicator size="large" color={theme.primary} />
-                    </View>
-                ) : filteredPlaces.length > 0 ? (
-                    filteredPlaces.map((place) => {
-                        const isSaved = savedIds.has(place.Id);
-
-                        return (
-                            <TouchableOpacity
-                                key={place.Id}
-                                activeOpacity={0.86}
-                                style={[styles.card, { backgroundColor: theme.card }]}
-                                onPress={() =>
-                                    navigation.navigate('Detail Location', {
-                                        placeId: place.Id,
-                                        placeData: toPlaceDetail(place, isSaved),
-                                    })
-                                }
-                            >
-                                <View style={styles.imageContainer}>
-                                    <CachedImage uri={place.image} style={styles.cardImage} />
-                                    {promotionPlaceIds.has(place.Id) && (
-                                        <View style={styles.discountBadge}>
-                                            <Ionicons name="pricetag" size={12} color="#ffffff" />
-                                            <Text style={styles.discountText}>Deal</Text>
-                                        </View>
-                                    )}
-                                    <TouchableOpacity
-                                        style={styles.heartButton}
-                                        disabled={savingIds.has(place.Id)}
-                                        onPress={() => toggleFavorite(place.Id)}
-                                    >
-                                        <Ionicons name="heart" size={20} color={isSaved ? "#ef4444" : "#ffffff"} />
-                                    </TouchableOpacity>
-                                </View>
-
-                                <View style={styles.cardBody}>
-                                    <View style={styles.cardHeader}>
-                                        <Text style={[styles.cardTitle, { color: theme.text }]} numberOfLines={1}>{place.Name}</Text>
-                                        <View style={styles.ratingBadge}>
-                                            <Ionicons name="star" size={12} color="#f97316" />
-                                            <Text style={[styles.ratingText, { color: theme.text }]}>{place.Rate}</Text>
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.locationRow}>
-                                        <View style={styles.locationInfo}>
-                                            <Ionicons name="location-outline" size={14} color="#6b7280" />
-                                            <Text style={styles.locationText}>{place.Located}</Text>
-                                        </View>
-                                        <View style={{ flexDirection: 'row', columnGap: 14, alignItems: 'center' }}>
-                                            <TouchableOpacity
-                                                onPress={() =>
-                                                    navigation.navigate('Write Review', {
-                                                        placeId: place.Id,
-                                                        placeName: place.Name,
-                                                    })
-                                                }
-                                            >
-                                                <Text style={styles.detailText}>Review</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                onPress={() =>
-                                                    navigation.navigate('Detail Location', {
-                                                        placeId: place.Id,
-                                                        placeData: toPlaceDetail(place, isSaved),
-                                                    })
-                                                }
-                                            >
-                                                <Text style={styles.detailText}>Detail</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        );
-                    })
-                ) : (
-                    <View style={styles.emptyStateContainer}>
-                        <Ionicons name="search-outline" size={48} color={theme.textMuted} />
-                        <Text style={[styles.emptyStateText, { color: theme.text }]}>No places found.</Text>
-                    </View>
-                )}
-            </ScrollView>
             <FlatList
                 style={[styles.listContainer, { backgroundColor: theme.background }]}
                 contentContainerStyle={styles.listContent}
                 data={filteredPlaces}
                 keyExtractor={(item) => item.Id}
                 renderItem={renderPlaceCard}
-                refreshControl={<RefreshControl refreshing={loading && places.length === 0} onRefresh={onRefresh} />}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 onEndReached={handleLoadMore}
                 onEndReachedThreshold={0.5}
                 ListFooterComponent={loadingMore ? (

@@ -200,7 +200,7 @@ function TripCard({
       disabled={isDeleting}
       accessibilityLabel={`${trip.title}, ${trip.date}`}
       accessibilityRole="button"
-      accessibilityHint={activeFilter === "Past" ? "View trip diary" : "Open trip planning"}
+      accessibilityHint="Open trip planning"
       style={({ pressed }) => [
         styles.tripCard,
         { backgroundColor: theme.card },
@@ -312,21 +312,7 @@ export default function MyTripScreen({ navigation }: any) {
     try {
       const apiTrips = await fetchMyTrips(PAGE_SIZE, offset);
 
-        const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
-
-        const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
-        const pastTrips = mappedTrips.filter(isPastTrip);
       const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
-      console.log(
-        "[MyTripScreen] mapped trips owner check",
-        mappedTrips.map((trip) => ({
-          id: trip.id,
-          title: trip.title,
-          ownerId: trip.ownerId,
-          currentUserId,
-          isOwner: currentUserId !== undefined && String(trip.ownerId) === String(currentUserId),
-        }))
-      );
 
       const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
       const pastTrips = mappedTrips.filter(isPastTrip);
@@ -350,8 +336,8 @@ export default function MyTripScreen({ navigation }: any) {
           const newPast = pastTrips.filter(t => !existingIds.has(t.id));
           return [...prev, ...newPast];
         });
-        setHasMoreUpcoming(upcomingTrips.length === PAGE_SIZE || pastTrips.length === PAGE_SIZE);
-        setHasMorePast(pastTrips.length === PAGE_SIZE || upcomingTrips.length === PAGE_SIZE);
+        setHasMoreUpcoming(upcomingTrips.length === PAGE_SIZE);
+        setHasMorePast(pastTrips.length === PAGE_SIZE);
       }
     } catch (error) {
       setTripLoadError(getApiErrorMessage(error));
@@ -386,43 +372,6 @@ export default function MyTripScreen({ navigation }: any) {
     }
   }, [activeFilter, loadingMoreUpcoming, loadingMorePast, hasMoreUpcoming, hasMorePast, upcomingTripList.length, pastTripList.length, loadTrips]);
 
-  const onRefresh = useCallback(async () => {
-    setRefreshing(true);
-    setTripLoadError(null);
-
-    try {
-      const apiTrips = await fetchMyTrips();
-
-      console.log(
-        "[MyTripScreen] refresh trips ownerId",
-        apiTrips.map((trip) => ({
-          id: trip.id ?? trip.Id ?? trip.tripId ?? trip.trip_id,
-          title: trip.title ?? trip.Title ?? trip.name ?? trip.Name,
-          ownerId: trip.ownerId,
-          OwnerId: trip.OwnerId,
-          owner_id: trip.owner_id,
-          owner: trip.owner,
-        }))
-      );
-
-      const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
-
-      const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
-      const pastTrips = mappedTrips.filter(isPastTrip);
-
-      setUpcomingTripList(upcomingTrips);
-      setPastTripList(pastTrips);
-      if (!upcomingTrips.length && pastTrips.length) {
-        setActiveFilter("Past");
-      }
-    } catch (error) {
-      setTripLoadError(getApiErrorMessage(error));
-    } finally {
-      setRefreshing(false);
-    }
-  }, [currentUserId]);
-
-  useFocusEffect(loadTrips);
   useFocusEffect(
     useCallback(() => {
       loadTrips();
@@ -583,17 +532,14 @@ export default function MyTripScreen({ navigation }: any) {
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>My Trips</Text>
-        <Text style={styles.title}>{t('trip.myTrips')}</Text>
+        <Text style={[styles.title, { color: theme.text }]}>{t('trip.myTrips')}</Text>
         <Pressable
           style={styles.iconButton}
           onPress={createEmptyPlanningTrip}
-        >
-          <Ionicons name="add" size={28} color={theme.primary} />
           accessibilityLabel="Create new trip"
           accessibilityRole="button"
           accessibilityHint="Tap to create a new trip">
-          <Ionicons name="add" size={28} color={colors.primary} />
+          <Ionicons name="add" size={28} color={theme.primary} />
         </Pressable>
       </View>
 
@@ -622,9 +568,6 @@ export default function MyTripScreen({ navigation }: any) {
         >
           <Ionicons name="bulb-outline" size={20} color={theme.textOnPrimary} style={{ marginRight: 8 }} />
           <Text style={{ color: theme.textOnPrimary, fontWeight: '600', fontSize: 16 }}>
-            Lập lịch thông minh
-          <Ionicons name="bulb-outline" size={20} color="white" style={{ marginRight: 8 }} />
-          <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>
             {t('trip.smartPlanning')}
           </Text>
         </Pressable>
@@ -654,21 +597,12 @@ export default function MyTripScreen({ navigation }: any) {
                   <View style={styles.featuredMetaRow}>
                     <Ionicons name="bed-outline" size={14} color={theme.textOnPrimary} />
                     <Text numberOfLines={1} style={[styles.featuredMetaText, { color: theme.textOnPrimary }]}>
-                      {featuredTrip.hotel || "Hotel not selected"} - {featuredTrip.duration || 1} days
+                      {featuredTrip.hotel || t('trip.hotelNotSelected')} - {featuredTrip.duration || 1} {t('trip.days')}
                     </Text>
                   </View>
                   <View style={styles.featuredMetaRow}>
                     <Ionicons name="wallet-outline" size={14} color={theme.textOnPrimary} />
                     <Text numberOfLines={1} style={[styles.featuredMetaText, { color: theme.textOnPrimary }]}>
-                      Total budget: VND: {formatVnd(featuredTrip.budget || 0)}
-                    <Ionicons name="bed-outline" size={14} color={colors.white} />
-                    <Text numberOfLines={1} style={styles.featuredMetaText}>
-                      {featuredTrip.hotel || t('trip.hotelNotSelected')} - {featuredTrip.duration || 1} {t('trip.days')}
-                    </Text>
-                  </View>
-                  <View style={styles.featuredMetaRow}>
-                    <Ionicons name="wallet-outline" size={14} color={colors.white} />
-                    <Text numberOfLines={1} style={styles.featuredMetaText}>
                       {t('trip.totalBudget')} {formatVnd(featuredTrip.budget || 0)}
                     </Text>
                   </View>
@@ -732,15 +666,12 @@ export default function MyTripScreen({ navigation }: any) {
           {isLoadingTrips ? (
             <View style={styles.tripState}>
               <ActivityIndicator color={theme.primary} />
-              <Text style={[styles.tripStateText, { color: theme.text }]}>Loading trips...</Text>
-              <ActivityIndicator color={colors.primary} />
-              <Text style={styles.tripStateText}>{t('trip.loadingTrips')}</Text>
+              <Text style={[styles.tripStateText, { color: theme.text }]}>{t('trip.loadingTrips')}</Text>
             </View>
           ) : tripLoadError ? (
             <Text style={[styles.tripErrorText, { color: theme.danger }]}>{tripLoadError}</Text>
           ) : !isLoadingTrips && trips.length === 0 ? (
-            <Text style={[styles.tripStateText, { color: theme.text }]}>No trips yet</Text>
-            <Text style={styles.tripStateText}>{t('trip.noTripsYet')}</Text>
+            <Text style={[styles.tripStateText, { color: theme.text }]}>{t('trip.noTripsYet')}</Text>
           ) : (
             <FlatList
               data={trips}

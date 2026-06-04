@@ -224,8 +224,6 @@ export default function LoginScreen({ navigation }: any) {
                                 accessibilityLabel="Forgot password"
                                 accessibilityRole="link"
                                 accessibilityHint="Tap to reset your password">
-                                <Text style={styles.linkText}>Forgot Password</Text>
-                            <TouchableOpacity onPress={handleForgotPassword}>
                                 <Text style={styles.linkText}>{t('auth.forgotPassword')}</Text>
                             </TouchableOpacity>
                         </View>
