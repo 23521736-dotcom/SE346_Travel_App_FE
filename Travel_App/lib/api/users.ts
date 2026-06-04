@@ -16,3 +16,7 @@ export async function updateMe(body: {
   const res = await apiClient.patch<ApiOk<ApiUser>>('/users/me', body);
   return res.data.data;
 }
+
+export async function updateFcmToken(token: string): Promise<void> {
+  await apiClient.patch('/users/me/fcm-token', { fcmToken: token });
+}
