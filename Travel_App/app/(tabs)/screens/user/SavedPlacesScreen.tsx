@@ -3,7 +3,9 @@ import React, { useCallback, useEffect, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
+    FlatList,
     Image,
+    RefreshControl,
     SafeAreaView,
     ScrollView,
     Text,
@@ -69,24 +71,55 @@ export default function SavedPlaces({ navigation }: any) {
     const [savedIds, setSavedIds] = useState<Set<string>>(new Set());
     const [promotionPlaceIds, setPromotionPlaceIds] = useState<Set<string>>(new Set());
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
     const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+    const PAGE_SIZE = 20;
 
-    const loadFavorites = useCallback(async () => {
-        setLoading(true);
+    const loadFavorites = useCallback(async (offset = 0) => {
+        if (offset === 0) {
+            setLoading(true);
+        }
         try {
-            const data = await fetchFavorites();
-            setPlaces(data);
-            setSavedIds(new Set(data.map((place) => place.Id)));
-            setPromotionPlaceIds(await fetchPromotionPlaceIds(data.map((place) => place.Id)));
+            const data = await fetchFavorites(PAGE_SIZE, offset);
+            if (offset === 0) {
+                setPlaces(data);
+                setSavedIds(new Set(data.map((place) => place.Id)));
+                setPromotionPlaceIds(await fetchPromotionPlaceIds(data.map((place) => place.Id)));
+            } else {
+                setPlaces(prev => [...prev, ...data]);
+                const newIds = new Set(data.map((place) => place.Id));
+                setSavedIds(prev => new Set([...prev, ...newIds]));
+                const newPromotionIds = await fetchPromotionPlaceIds(data.map((place) => place.Id));
+                setPromotionPlaceIds(prev => new Set([...prev, ...newPromotionIds]));
+            }
+            setHasMore(data.length === PAGE_SIZE);
         } catch (err) {
             Alert.alert('Loi', getApiErrorMessage(err));
-            setPlaces([]);
-            setSavedIds(new Set());
-            setPromotionPlaceIds(new Set());
+            if (offset === 0) {
+                setPlaces([]);
+                setSavedIds(new Set());
+                setPromotionPlaceIds(new Set());
+            }
+            setHasMore(false);
         } finally {
-            setLoading(false);
+            if (offset === 0) {
+                setLoading(false);
+            }
         }
-    }, []);
+    }, [PAGE_SIZE]);
+
+    const onRefresh = useCallback(async () => {
+        setHasMore(true);
+        await loadFavorites(0);
+    }, [loadFavorites]);
+
+    const handleLoadMore = useCallback(() => {
+        if (!loadingMore && hasMore) {
+            setLoadingMore(true);
+            loadFavorites(places.length).finally(() => setLoadingMore(false));
+        }
+    }, [loadingMore, hasMore, places.length, loadFavorites]);
 
     useEffect(() => {
         loadFavorites();
@@ -141,6 +174,79 @@ export default function SavedPlaces({ navigation }: any) {
         return matchCategory && matchSearch;
     });
 
+    const renderPlaceCard = useCallback(({ item }: { item: PlaceListItem }) => {
+        const isSaved = savedIds.has(item.Id);
+        return (
+            <TouchableOpacity
+                key={item.Id}
+                activeOpacity={0.86}
+                style={styles.card}
+                onPress={() =>
+                    navigation.navigate('Detail Location', {
+                        placeId: item.Id,
+                        placeData: toPlaceDetail(item, isSaved),
+                    })
+                }
+            >
+                <View style={styles.imageContainer}>
+                    <Image source={{ uri: item.image }} style={styles.cardImage} />
+                    {promotionPlaceIds.has(item.Id) && (
+                        <View style={styles.discountBadge}>
+                            <Ionicons name="pricetag" size={12} color="#ffffff" />
+                            <Text style={styles.discountText}>Deal</Text>
+                        </View>
+                    )}
+                    <TouchableOpacity
+                        style={styles.heartButton}
+                        disabled={savingIds.has(item.Id)}
+                        onPress={() => toggleFavorite(item.Id)}
+                    >
+                        <Ionicons name="heart" size={20} color={isSaved ? "#ef4444" : "#ffffff"} />
+                    </TouchableOpacity>
+                </View>
+
+                <View style={styles.cardBody}>
+                    <View style={styles.cardHeader}>
+                        <Text style={styles.cardTitle} numberOfLines={1}>{item.Name}</Text>
+                        <View style={styles.ratingBadge}>
+                            <Ionicons name="star" size={12} color="#f97316" />
+                            <Text style={styles.ratingText}>{item.Rate}</Text>
+                        </View>
+                    </View>
+
+                    <View style={styles.locationRow}>
+                        <View style={styles.locationInfo}>
+                            <Ionicons name="location-outline" size={14} color="#6b7280" />
+                            <Text style={styles.locationText}>{item.Located}</Text>
+                        </View>
+                        <View style={{ flexDirection: 'row', columnGap: 14, alignItems: 'center' }}>
+                            <TouchableOpacity
+                                onPress={() =>
+                                    navigation.navigate('Write Review', {
+                                        placeId: item.Id,
+                                        placeName: item.Name,
+                                    })
+                                }
+                            >
+                                <Text style={styles.detailText}>Review</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                onPress={() =>
+                                    navigation.navigate('Detail Location', {
+                                        placeId: item.Id,
+                                        placeData: toPlaceDetail(item, isSaved),
+                                    })
+                                }
+                            >
+                                <Text style={styles.detailText}>Detail</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </TouchableOpacity>
+        );
+    }, [savedIds, promotionPlaceIds, savingIds, navigation]);
+
     return (
         <SafeAreaView style={styles.container}>
             <View style={styles.headerContainer}>
@@ -183,92 +289,31 @@ export default function SavedPlaces({ navigation }: any) {
                 </ScrollView>
             </View>
 
-            <ScrollView style={styles.listContainer} contentContainerStyle={styles.listContent}>
-                {loading && places.length === 0 ? (
-                    <View style={styles.emptyStateContainer}>
-                        <ActivityIndicator size="large" color={colors.primary} />
-                    </View>
-                ) : filteredPlaces.length > 0 ? (
-                    filteredPlaces.map((place) => {
-                        const isSaved = savedIds.has(place.Id);
-
-                        return (
-                            <TouchableOpacity
-                                key={place.Id}
-                                activeOpacity={0.86}
-                                style={styles.card}
-                                onPress={() =>
-                                    navigation.navigate('Detail Location', {
-                                        placeId: place.Id,
-                                        placeData: toPlaceDetail(place, isSaved),
-                                    })
-                                }
-                            >
-                                <View style={styles.imageContainer}>
-                                    <Image source={{ uri: place.image }} style={styles.cardImage} />
-                                    {promotionPlaceIds.has(place.Id) && (
-                                        <View style={styles.discountBadge}>
-                                            <Ionicons name="pricetag" size={12} color="#ffffff" />
-                                            <Text style={styles.discountText}>Deal</Text>
-                                        </View>
-                                    )}
-                                    <TouchableOpacity
-                                        style={styles.heartButton}
-                                        disabled={savingIds.has(place.Id)}
-                                        onPress={() => toggleFavorite(place.Id)}
-                                    >
-                                        <Ionicons name="heart" size={20} color={isSaved ? "#ef4444" : "#ffffff"} />
-                                    </TouchableOpacity>
-                                </View>
-
-                                <View style={styles.cardBody}>
-                                    <View style={styles.cardHeader}>
-                                        <Text style={styles.cardTitle} numberOfLines={1}>{place.Name}</Text>
-                                        <View style={styles.ratingBadge}>
-                                            <Ionicons name="star" size={12} color="#f97316" />
-                                            <Text style={styles.ratingText}>{place.Rate}</Text>
-                                        </View>
-                                    </View>
-
-                                    <View style={styles.locationRow}>
-                                        <View style={styles.locationInfo}>
-                                            <Ionicons name="location-outline" size={14} color="#6b7280" />
-                                            <Text style={styles.locationText}>{place.Located}</Text>
-                                        </View>
-                                        <View style={{ flexDirection: 'row', columnGap: 14, alignItems: 'center' }}>
-                                            <TouchableOpacity
-                                                onPress={() =>
-                                                    navigation.navigate('Write Review', {
-                                                        placeId: place.Id,
-                                                        placeName: place.Name,
-                                                    })
-                                                }
-                                            >
-                                                <Text style={styles.detailText}>Review</Text>
-                                            </TouchableOpacity>
-                                            <TouchableOpacity
-                                                onPress={() =>
-                                                    navigation.navigate('Detail Location', {
-                                                        placeId: place.Id,
-                                                        placeData: toPlaceDetail(place, isSaved),
-                                                    })
-                                                }
-                                            >
-                                                <Text style={styles.detailText}>Detail</Text>
-                                            </TouchableOpacity>
-                                        </View>
-                                    </View>
-                                </View>
-                            </TouchableOpacity>
-                        );
-                    })
-                ) : (
-                    <View style={styles.emptyStateContainer}>
-                        <Ionicons name="search-outline" size={48} color="#cbd5e1" />
-                        <Text style={styles.emptyStateText}>No places found.</Text>
-                    </View>
-                )}
-            </ScrollView>
+            <FlatList
+                style={styles.listContainer}
+                contentContainerStyle={styles.listContent}
+                data={filteredPlaces}
+                keyExtractor={(item) => item.Id}
+                renderItem={renderPlaceCard}
+                refreshControl={<RefreshControl refreshing={loading && places.length === 0} onRefresh={onRefresh} />}
+                onEndReached={handleLoadMore}
+                onEndReachedThreshold={0.5}
+                ListFooterComponent={loadingMore ? (
+                    <ActivityIndicator size="small" color={colors.primary} style={{ margin: 16 }} />
+                ) : null}
+                ListEmptyComponent={
+                    loading ? (
+                        <View style={styles.emptyStateContainer}>
+                            <ActivityIndicator size="large" color={colors.primary} />
+                        </View>
+                    ) : (
+                        <View style={styles.emptyStateContainer}>
+                            <Ionicons name="search-outline" size={48} color="#cbd5e1" />
+                            <Text style={styles.emptyStateText}>No places found.</Text>
+                        </View>
+                    )
+                }
+            />
         </SafeAreaView>
     );
 }
