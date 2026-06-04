@@ -18,7 +18,7 @@ import { oauthLogin } from '../../../../lib/api/auth';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import styles from './LoginScreen.styles';
 
-WebBrowser.maybeCompleteAuthBrowserSession();
+WebBrowser.maybeCompleteAuthSession();
 
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
 const GOOGLE_REDIRECT_URI = AuthSession.makeRedirectUri({
@@ -55,14 +55,14 @@ export default function LoginScreen({ navigation }: any) {
             authUrl.searchParams.set('scope', 'openid email profile');
             authUrl.searchParams.set('nonce', Math.random().toString(36).substring(7));
 
-            const authResult = await AuthSession.startAsync({
-                authUrl: authUrl.toString(),
-                returnUrl: GOOGLE_REDIRECT_URI,
-            });
+            const authResult = await WebBrowser.openAuthSessionAsync(
+                authUrl.toString(),
+                GOOGLE_REDIRECT_URI,
+            );
 
             if (authResult.type === 'success') {
-                const { params } = authResult;
-                const idToken = params.id_token;
+                const redirectUrl = new URL(authResult.url);
+                const idToken = redirectUrl.searchParams.get('id_token');
 
                 if (!idToken) {
                     throw new Error('No ID token received from Google');
@@ -80,7 +80,7 @@ export default function LoginScreen({ navigation }: any) {
             } else if (authResult.type === 'cancel') {
                 // User cancelled - do nothing
             } else {
-                throw new Error(authResult.params?.error_description || 'OAuth failed');
+                throw new Error('OAuth failed');
             }
         } catch (err: any) {
             console.error('Google OAuth error:', err);
@@ -283,15 +283,6 @@ export default function LoginScreen({ navigation }: any) {
                         </View>
 
                         <Text style={[styles.text, { marginTop: 40, color: '#ccc2c2', marginBottom: 40 }]}>
-                            Don't have an account?{' '}
-                            <Pressable
-                                onPress={() => navigation.navigate("Register")}
-                                accessibilityLabel="Register"
-                                accessibilityRole="link">
-                                <Text style={styles.linkText}>
-                                    Register
-                                </Text>
-                            </Pressable>
                             {t('auth.noAccount')}{' '}
                             <Text style={styles.linkText} onPress={() => navigation.navigate("Register")}>
                                 {t('auth.register')}

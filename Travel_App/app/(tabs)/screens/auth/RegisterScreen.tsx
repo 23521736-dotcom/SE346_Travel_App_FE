@@ -16,7 +16,9 @@ import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import styles from './RegisterScreen.styles';
 
 export default function RegisterScreen({ navigation }: any) {
-    const nav = navigation ?? useNavigation<any>();
+    // Always call useNavigation to satisfy Rules of Hooks
+    const hookNav = useNavigation<any>();
+    const nav = navigation ?? hookNav;
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [isCfPasswordVisible, setCfPasswordVisible] = useState(false);
     const [isChecked, setChecked] = useState(false);

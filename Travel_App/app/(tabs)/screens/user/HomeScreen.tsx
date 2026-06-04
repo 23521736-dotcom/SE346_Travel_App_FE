@@ -470,7 +470,7 @@ export default function HomeScreen({ navigation }: any) {
                     </Text>
                 </View>
             </View>
-    ), [activeCategory, aiLoading, searchQuery, recommendations, theme]);
+    ), [activeCategory, aiLoading, searchQuery, recommendations, theme, minRating, maxPrice]);
 
     if (loading && places.length === 0) {
         return (
