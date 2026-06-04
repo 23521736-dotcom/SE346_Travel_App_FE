@@ -10,6 +10,7 @@ import {
   TextInput,
   TouchableOpacity,
   View,
+  Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
@@ -51,11 +52,31 @@ export default function RegisterScreen({ navigation }: any) {
 
     setSubmitting(true);
     try {
+      console.log('Attempting to register:', { email: email.trim(), fullName: fullName.trim(), role: selectedRole });
       await register(email.trim(), password, fullName.trim(), selectedRole);
-      nav.replace('Login');
+      console.log('Registration successful');
+
+      const successTitle = 'Đăng ký thành công';
+      const successMsg = 'Một email xác nhận đã được gửi đến địa chỉ của bạn. Vui lòng kiểm tra hộp thư và làm theo hướng dẫn để kích hoạt tài khoản.';
+
+      if (Platform.OS === 'web') {
+        window.alert(`${successTitle}\n\n${successMsg}`);
+        nav.replace('Login');
+      } else {
+        Alert.alert(
+          successTitle,
+          successMsg,
+          [{ text: 'OK', onPress: () => nav.replace('Login') }]
+        );
+      }
     } catch (err) {
+      console.error('Registration error:', err);
       const msg = getApiErrorMessage(err);
-      Alert.alert('Dang ky that bai', msg);
+      if (Platform.OS === 'web') {
+        window.alert(`Đăng ký thất bại: ${msg}`);
+      } else {
+        Alert.alert('Đăng ký thất bại', msg);
+      }
     } finally {
       setSubmitting(false);
     }

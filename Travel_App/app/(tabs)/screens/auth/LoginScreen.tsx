@@ -9,13 +9,16 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
+    Platform
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { oauthLogin } from '../../../../lib/api/auth';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import styles from './LoginScreen.styles';
 
 export default function LoginScreen({ navigation }: any) {
+    const nav = navigation ?? useNavigation<any>();
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -23,7 +26,7 @@ export default function LoginScreen({ navigation }: any) {
     const { login } = useAuth();
 
     const handleForgotPassword = () => {
-        navigation.navigate('ForgotPassword_email', { email: email.trim() });
+        nav.navigate('ForgotPassword_email', { email: email.trim() });
     };
 
     const handleOAuth = async (provider: 'google' | 'apple') => {
@@ -31,30 +34,46 @@ export default function LoginScreen({ navigation }: any) {
             await oauthLogin(provider);
         } catch (err) {
             const msg = getApiErrorMessage(err);
-            Alert.alert(
-                'Chua ho tro',
-                msg.includes('NOT_CONFIGURED')
-                    ? `Dang nhap ${provider} chua duoc cau hinh tren server`
-                    : msg
-            );
+            const text = msg.includes('NOT_CONFIGURED')
+                ? `Dang nhap ${provider} chua duoc cau hinh tren server`
+                : msg;
+
+            if (Platform.OS === 'web') window.alert(text);
+            else Alert.alert('Chua ho tro', text);
         }
     };
 
     const handleLogin = async () => {
         if (!email.trim() || !password) {
-            Alert.alert('Loi', 'Vui long nhap email va mat khau');
+            const msg = 'Vui lòng nhập email và mật khẩu';
+            if (Platform.OS === 'web') window.alert(msg);
+            else Alert.alert('Lỗi', msg);
             return;
         }
         setSubmitting(true);
         try {
+            console.log('Attempting login for:', email.trim());
             await login(email.trim(), password);
+            console.log('Login successful');
+
+            if (Platform.OS === 'web') {
+                // Hard reload to ensure navigation state is clean and RootNavigation picks up the user
+                console.log('Web environment detected, performing reload for navigation sync');
+                window.location.reload();
+            }
         } catch (err) {
+            console.error('Login error:', err);
             const msg = getApiErrorMessage(err);
-            const text =
-                msg === 'INVALID_CREDENTIALS'
-                    ? 'Email hoac mat khau khong dung'
-                    : msg;
-            Alert.alert('Dang nhap that bai', text);
+            let text = msg;
+
+            if (msg === 'INVALID_CREDENTIALS') {
+                text = 'Email hoặc mật khẩu không đúng';
+            } else if (msg.toLowerCase().includes('verify') || msg.toLowerCase().includes('activated')) {
+                text = 'Tài khoản chưa được kích hoạt. Vui lòng kiểm tra email để xác nhận.';
+            }
+
+            if (Platform.OS === 'web') window.alert(text);
+            else Alert.alert('Đăng nhập thất bại', text);
         } finally {
             setSubmitting(false);
         }
@@ -184,7 +203,7 @@ export default function LoginScreen({ navigation }: any) {
 
                         <Text style={[styles.text, { marginTop: 40, color: '#ccc2c2', marginBottom: 40 }]}>
                             Don't have an account?{' '}
-                            <Text style={styles.linkText} onPress={() => navigation.navigate("Register")}>
+                            <Text style={styles.linkText} onPress={() => nav.navigate("Register")}>
                                 Register
                             </Text>
                         </Text>

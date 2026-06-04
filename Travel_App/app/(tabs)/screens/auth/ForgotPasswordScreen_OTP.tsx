@@ -10,13 +10,17 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import { COLORS, styles } from './ForgotPasswordScreen_OTP.style';
-
+import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 
 export default function ForgotPasswordScreen_OTP({ navigation, route }: any) {
     const [code, setCode] = useState<string>('');
+    const [loading, setLoading] = useState(false);
+    const { forgotPassword } = useAuth();
     const inputRef = useRef<TextInput>(null);
     const email = route?.params?.email ?? 'user@example.com';
 
@@ -26,8 +30,29 @@ export default function ForgotPasswordScreen_OTP({ navigation, route }: any) {
     };
 
     const handleVerify = () => {
-        console.log('Verifying code:', code);
+        if (code.length < 6) {
+            const msg = 'Vui lòng nhập đầy đủ mã OTP 6 số';
+            if (Platform.OS === 'web') window.alert(msg);
+            else Alert.alert('Lỗi', msg);
+            return;
+        }
         navigation.navigate('ForgotPassword_resetPw', { email, code });
+    };
+
+    const handleResendCode = async () => {
+        setLoading(true);
+        try {
+            await forgotPassword(email);
+            const msg = 'Mã OTP mới đã được gửi.';
+            if (Platform.OS === 'web') window.alert(msg);
+            else Alert.alert('Thành công', msg);
+        } catch (err) {
+            const msg = getApiErrorMessage(err);
+            if (Platform.OS === 'web') window.alert(`Lỗi: ${msg}`);
+            else Alert.alert('Lỗi', msg);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -124,8 +149,16 @@ export default function ForgotPasswordScreen_OTP({ navigation, route }: any) {
                             {/* Footer Link */}
                             <View style={styles.footer}>
                                 <Text style={styles.footerText}>Didn't receive the code? </Text>
-                                <TouchableOpacity activeOpacity={0.7}>
-                                    <Text style={styles.resendText}>Resend Code</Text>
+                                <TouchableOpacity
+                                    activeOpacity={0.7}
+                                    onPress={handleResendCode}
+                                    disabled={loading}
+                                >
+                                    {loading ? (
+                                        <ActivityIndicator size="small" color={COLORS.cyan} />
+                                    ) : (
+                                        <Text style={styles.resendText}>Resend Code</Text>
+                                    )}
                                 </TouchableOpacity>
                             </View>
 
