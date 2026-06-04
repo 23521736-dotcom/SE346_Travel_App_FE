@@ -203,6 +203,7 @@ const AdminTabs = () => {
 
 const RootNavigation = () => {
   const { user, loading } = useAuth();
+  console.log('RootNavigation rendering, user:', user?.email, 'role:', user?.role);
 
   if (loading) {
     return (
@@ -213,6 +214,7 @@ const RootNavigation = () => {
   }
 
   if (!user) {
+    console.log('No user, showing Auth Stack');
     return (
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="Login" component={LoginScreen} />
@@ -226,10 +228,14 @@ const RootNavigation = () => {
   }
 
   const role = user.role.toLowerCase();
+  console.log('User detected, role normalized to:', role);
   const isAdmin = role === 'admin';
   const isOwner = role === 'owner';
 
+  console.log('isAdmin:', isAdmin, 'isOwner:', isOwner);
+
   if (isAdmin) {
+    console.log('Rendering AdminTabs');
     return (
       <Stack.Navigator>
         <Stack.Screen
@@ -241,64 +247,71 @@ const RootNavigation = () => {
     );
   }
 
-  return isOwner ? (
-    <Stack.Navigator>
-      <Stack.Screen
-        name="Main"
-        component={OwnerTabs}
-        options={{ headerShown: false }}
-      />
+  if (isOwner) {
+    console.log('Rendering OwnerTabs');
+    return (
+      <Stack.Navigator>
+        <Stack.Screen
+          name="Main"
+          component={OwnerTabs}
+          options={{ headerShown: false }}
+        />
+        {/* ... existing owner screens ... */}
+        <Stack.Screen
+          name="Add Location"
+          component={AddLocationScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="All Reviews"
+          component={ViewReviewsScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Write Review"
+          component={WriteReviewScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Log Out"
+          component={LogoutScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Privacy Policy"
+          component={PrivacyPolicyScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Terms of Service"
+          component={TermsOfServiceScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Edit Profile"
+          component={EditProfileScreen}
+          options={{
+            headerShown: true,
+            presentation: 'modal',
+            title: "Edit Profile",
+            headerStyle: { backgroundColor: '#FFFFFF' },
+            headerShadowVisible: false,
+            headerTintColor: '#000',
+          }}
+        />
+      </Stack.Navigator>
+    );
+  }
 
-      <Stack.Screen
-        name="Add Location"
-        component={AddLocationScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="All Reviews"
-        component={ViewReviewsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Write Review"
-        component={WriteReviewScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Log Out"
-        component={LogoutScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Privacy Policy"
-        component={PrivacyPolicyScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Terms of Service"
-        component={TermsOfServiceScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Edit Profile"
-        component={EditProfileScreen}
-        options={{
-          headerShown: true,
-          presentation: 'modal',
-          title: "Edit Profile",
-          headerStyle: { backgroundColor: '#FFFFFF' },
-          headerShadowVisible: false,
-          headerTintColor: '#000',
-        }}
-      />
-    </Stack.Navigator>
-  ) : (
+  console.log('Rendering MainTabs (Traveler)');
+  return (
     <Stack.Navigator>
       <Stack.Screen
         name="Main"
         component={MainTabs}
         options={{ headerShown: false }}
       />
+      {/* ... existing traveler screens ... */}
       <Stack.Screen
         name="Detail Location"
         component={DetailLocationScreen}

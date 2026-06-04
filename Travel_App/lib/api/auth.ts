@@ -18,6 +18,7 @@ export async function register(
     email,
     password,
     fullName,
+    name: fullName, // Add name for backend compatibility
     role,
   });
   // Note: registration may or may not return tokens depending on backend implementation
@@ -45,6 +46,15 @@ export async function logout(): Promise<void> {
 
 export async function forgotPassword(email: string): Promise<{ message: string }> {
   const res = await apiClient.post<ApiOk<{ message: string }>>('/auth/forgot-password', { email });
+  return res.data.data;
+}
+
+export async function resetPassword(email: string, otp: string, password: string): Promise<{ message: string }> {
+  const res = await apiClient.post<ApiOk<{ message: string }>>('/auth/reset-password', {
+    email,
+    otp,
+    password,
+  });
   return res.data.data;
 }
 

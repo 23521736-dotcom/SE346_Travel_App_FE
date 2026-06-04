@@ -9,18 +9,64 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import { COLORS, styles } from './ForgotPasswordScreen_resetPw.style';
+import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 
-export default function ForgotPasswordScreen_resetPw({ navigation }: any) {
+export default function ForgotPasswordScreen_resetPw({ navigation, route }: any) {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const { resetPassword } = useAuth();
 
-    const handleResetPassword = () => {
-        navigation.navigate('Login');
+    const { email, code } = route?.params || {};
+
+    const handleResetPassword = async () => {
+        if (!password || !confirmPassword) {
+            const msg = 'Vui lòng nhập đầy đủ thông tin';
+            if (Platform.OS === 'web') window.alert(msg);
+            else Alert.alert('Lỗi', msg);
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            const msg = 'Mật khẩu xác nhận không khớp';
+            if (Platform.OS === 'web') window.alert(msg);
+            else Alert.alert('Lỗi', msg);
+            return;
+        }
+
+        if (password.length < 8) {
+            const msg = 'Mật khẩu phải có ít nhất 8 ký tự';
+            if (Platform.OS === 'web') window.alert(msg);
+            else Alert.alert('Lỗi', msg);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await resetPassword(email, code, password);
+            const successMsg = 'Mật khẩu của bạn đã được thay đổi. Vui lòng đăng nhập lại.';
+            if (Platform.OS === 'web') {
+                window.alert(successMsg);
+                navigation.navigate('Login');
+            } else {
+                Alert.alert('Thành công', successMsg, [
+                    { text: 'Đăng nhập', onPress: () => navigation.navigate('Login') }
+                ]);
+            }
+        } catch (err) {
+            const msg = getApiErrorMessage(err);
+            if (Platform.OS === 'web') window.alert(`Lỗi: ${msg}`);
+            else Alert.alert('Lỗi', msg);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -125,9 +171,16 @@ export default function ForgotPasswordScreen_resetPw({ navigation }: any) {
                                     style={styles.submitButton}
                                     activeOpacity={0.8}
                                     onPress={handleResetPassword}
+                                    disabled={loading}
                                 >
-                                    <Text style={styles.submitText}>Reset Password</Text>
-                                    <Feather name="refresh-cw" size={20} color="#0a1a24" />
+                                    {loading ? (
+                                        <ActivityIndicator color="#0a1a24" />
+                                    ) : (
+                                        <>
+                                            <Text style={styles.submitText}>Reset Password</Text>
+                                            <Feather name="refresh-cw" size={20} color="#0a1a24" />
+                                        </>
+                                    )}
                                 </TouchableOpacity>
 
                                 <TouchableOpacity

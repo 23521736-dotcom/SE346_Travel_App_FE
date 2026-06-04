@@ -4,6 +4,7 @@ import {
     Alert,
     Image,
     ImageBackground,
+    Platform,
     Pressable,
     ScrollView,
     Text,
@@ -11,8 +12,9 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
+import * as WebBrowser from 'expo-web-browser';
+import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
 import { oauthLogin } from '../../../../lib/api/auth';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
@@ -27,6 +29,7 @@ const GOOGLE_REDIRECT_URI = AuthSession.makeRedirectUri({
 });
 
 export default function LoginScreen({ navigation }: any) {
+    const nav = navigation ?? useNavigation<any>();
     const { t } = useTranslation();
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [email, setEmail] = useState('');
@@ -35,19 +38,26 @@ export default function LoginScreen({ navigation }: any) {
     const [oauthSubmitting, setOauthSubmitting] = useState(false);
     const { login } = useAuth();
 
+    const showAlert = (title: string, message: string) => {
+        if (Platform.OS === 'web') {
+            window.alert(message);
+        } else {
+            Alert.alert(title, message);
+        }
+    };
+
     const handleForgotPassword = () => {
-        navigation.navigate('ForgotPassword_email', { email: email.trim() });
+        nav.navigate('ForgotPassword_email', { email: email.trim() });
     };
 
     const handleGoogleOAuth = async () => {
         if (!GOOGLE_CLIENT_ID) {
-            Alert.alert(t('auth.configError'), t('auth.googleNotConfigured'));
+            showAlert(t('auth.configError'), t('auth.googleNotConfigured'));
             return;
         }
 
         setOauthSubmitting(true);
         try {
-            // Construct Google OAuth URL for implicit flow
             const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
             authUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
             authUrl.searchParams.set('redirect_uri', GOOGLE_REDIRECT_URI);
@@ -69,24 +79,20 @@ export default function LoginScreen({ navigation }: any) {
                     throw new Error('No ID token received from Google');
                 }
 
-                // Call backend API with the ID token
                 const authResponse = await oauthLogin('google', idToken);
-
-                Alert.alert(
+                showAlert(
                     t('auth.loginSuccess'),
                     authResponse.isNewUser
                         ? t('auth.newAccountCreated')
                         : t('auth.welcomeBackMessage')
                 );
-            } else if (authResult.type === 'cancel') {
-                // User cancelled - do nothing
-            } else {
+            } else if (authResult.type !== 'cancel') {
                 throw new Error('OAuth failed');
             }
         } catch (err: any) {
             console.error('Google OAuth error:', err);
             const msg = getApiErrorMessage(err);
-            Alert.alert(
+            showAlert(
                 t('auth.loginFailed'),
                 msg.includes('NOT_CONFIGURED') || msg.includes('OAUTH')
                     ? t('auth.googleOAuthNotConfigured')
@@ -98,7 +104,7 @@ export default function LoginScreen({ navigation }: any) {
     };
 
     const handleAppleOAuth = async () => {
-        Alert.alert(t('auth.appleNotSupported'), t('auth.appleSignInNotSupported'));
+        showAlert(t('auth.appleNotSupported'), t('auth.appleSignInNotSupported'));
     };
 
     const handleOAuth = async (provider: 'google' | 'apple') => {
@@ -111,19 +117,29 @@ export default function LoginScreen({ navigation }: any) {
 
     const handleLogin = async () => {
         if (!email.trim() || !password) {
-            Alert.alert(t('common.error'), t('auth.enterEmailPassword'));
+            showAlert(t('common.error'), t('auth.enterEmailPassword'));
             return;
         }
+
         setSubmitting(true);
         try {
+            console.log('Attempting login for:', email.trim());
             await login(email.trim(), password);
+            console.log('Login successful');
+
+            if (Platform.OS === 'web') {
+                window.location.reload();
+            }
         } catch (err) {
+            console.error('Login error:', err);
             const msg = getApiErrorMessage(err);
-            const text =
-                msg === 'INVALID_CREDENTIALS'
-                    ? t('auth.invalidCredentials')
-                    : msg;
-            Alert.alert(t('auth.loginFailed'), text);
+            let text = msg === 'INVALID_CREDENTIALS' ? t('auth.invalidCredentials') : msg;
+
+            if (msg.toLowerCase().includes('verify') || msg.toLowerCase().includes('activated')) {
+                text = 'Account is not activated. Please check your email to verify it.';
+            }
+
+            showAlert(t('auth.loginFailed'), text);
         } finally {
             setSubmitting(false);
         }
@@ -137,7 +153,6 @@ export default function LoginScreen({ navigation }: any) {
         >
             <View style={styles.overlay}>
                 <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', marginTop: 40 }}>
-
                     <View style={{ alignItems: 'center', marginBottom: 40 }}>
                         <Image
                             source={{ uri: "https://cdn-icons-png.flaticon.com/128/201/201623.png" }}
@@ -152,11 +167,10 @@ export default function LoginScreen({ navigation }: any) {
                     </View>
 
                     <View style={styles.container}>
-                        {/* --- Ô NHẬP EMAIL --- */}
                         <View style={[styles.inputContainer, { marginBottom: 20 }]}>
                             <Image
                                 source={require('../../../../assets/images/email-icon.png')}
-                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }}
                             />
                             <TextInput
                                 placeholder={t('auth.emailPlaceholder')}
@@ -177,11 +191,10 @@ export default function LoginScreen({ navigation }: any) {
                             />
                         </View>
 
-                        {/* --- Ô NHẬP PASSWORD --- */}
                         <View style={styles.inputContainer}>
                             <Image
                                 source={require('../../../../assets/images/password-icon.png')}
-                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }}
                             />
 
                             <TextInput
@@ -213,12 +226,11 @@ export default function LoginScreen({ navigation }: any) {
                                     source={isPasswordVisible
                                         ? require('../../../../assets/images/hidden_eyepassword-icon.png')
                                         : require('../../../../assets/images/eyepassword-icon.png')}
-                                    style={{ width: 20, height: 20, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                                    style={{ width: 20, height: 20, tintColor: '#94a3b8' }}
                                 />
                             </TouchableOpacity>
                         </View>
 
-                        {/* --- QUÊN MẬT KHẨU --- */}
                         <View style={{ alignItems: 'flex-end', paddingTop: 12 }}>
                             <TouchableOpacity
                                 onPress={handleForgotPassword}
@@ -229,6 +241,7 @@ export default function LoginScreen({ navigation }: any) {
                             </TouchableOpacity>
                         </View>
                     </View>
+
                     <View style={[styles.containerChild, { marginTop: 20, alignItems: 'center' }]}>
                         <Pressable
                             style={styles.button}
@@ -285,12 +298,11 @@ export default function LoginScreen({ navigation }: any) {
 
                         <Text style={[styles.text, { marginTop: 40, color: '#ccc2c2', marginBottom: 40 }]}>
                             {t('auth.noAccount')}{' '}
-                            <Text style={styles.linkText} onPress={() => navigation.navigate("Register")}>
+                            <Text style={styles.linkText} onPress={() => nav.navigate("Register")}>
                                 {t('auth.register')}
                             </Text>
                         </Text>
                     </View>
-
                 </ScrollView>
             </View>
         </ImageBackground>

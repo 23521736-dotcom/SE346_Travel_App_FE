@@ -22,6 +22,8 @@ interface AuthContextData {
   register: (email: string, password: string, fullName?: string, role?: RegisterRole) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string, otp: string, password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextData>({} as AuthContextData);
@@ -66,7 +68,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     const { user: apiUser } = await authApi.login(email, password);
-    setUser(mapUser(apiUser));
+    console.log('API User received:', apiUser);
+    const mapped = mapUser(apiUser);
+    console.log('Mapped User state:', mapped);
+    setUser(mapped);
   };
 
   const register = async (
@@ -78,13 +83,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await authApi.register(email, password, fullName, role);
   };
 
+  const forgotPassword = async (email: string) => {
+    await authApi.forgotPassword(email);
+  };
+
+  const resetPassword = async (email: string, otp: string, password: string) => {
+    await authApi.resetPassword(email, otp, password);
+  };
+
   const logout = async () => {
     await authApi.logout();
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, forgotPassword, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );

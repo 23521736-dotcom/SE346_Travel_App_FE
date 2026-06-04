@@ -9,16 +9,45 @@ import {
     Text,
     TextInput,
     TouchableOpacity,
-    View
+    View,
+    Alert,
+    ActivityIndicator
 } from 'react-native';
 import { COLORS, styles } from './ForgotPasswordScreen_email.style';
-
+import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 
 export default function ForgotPasswordScreen_email({ navigation, route }: any) {
     const [email, setEmail] = useState<string>(route?.params?.email ?? '');
+    const [loading, setLoading] = useState(false);
+    const { forgotPassword } = useAuth();
 
-    const handleSendCode = () => {
-        navigation.navigate('ForgotPassword_OTP', { email: email.trim() });
+    const handleSendCode = async () => {
+        if (!email.trim()) {
+            const msg = 'Vui lòng nhập email';
+            if (Platform.OS === 'web') window.alert(msg);
+            else Alert.alert('Lỗi', msg);
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await forgotPassword(email.trim());
+            const successMsg = 'Mã OTP đã được gửi đến email của bạn.';
+            if (Platform.OS === 'web') {
+                window.alert(successMsg);
+                navigation.navigate('ForgotPassword_OTP', { email: email.trim() });
+            } else {
+                Alert.alert('Thành công', successMsg, [
+                    { text: 'OK', onPress: () => navigation.navigate('ForgotPassword_OTP', { email: email.trim() }) }
+                ]);
+            }
+        } catch (err) {
+            const msg = getApiErrorMessage(err);
+            if (Platform.OS === 'web') window.alert(`Lỗi: ${msg}`);
+            else Alert.alert('Lỗi', msg);
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
@@ -82,9 +111,16 @@ export default function ForgotPasswordScreen_email({ navigation, route }: any) {
                                     style={styles.submitButton}
                                     activeOpacity={0.8}
                                     onPress={handleSendCode}
+                                    disabled={loading}
                                 >
-                                    <Text style={styles.submitText}>Send Code</Text>
-                                    <Feather name="arrow-right" size={22} color="#0a1a24" />
+                                    {loading ? (
+                                        <ActivityIndicator color="#0a1a24" />
+                                    ) : (
+                                        <>
+                                            <Text style={styles.submitText}>Send Code</Text>
+                                            <Feather name="arrow-right" size={22} color="#0a1a24" />
+                                        </>
+                                    )}
                                 </TouchableOpacity>
                             </View>
 
