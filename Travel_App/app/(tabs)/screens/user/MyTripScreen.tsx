@@ -6,6 +6,7 @@ import {
   Alert,
   ImageBackground,
   Pressable,
+  RefreshControl,
   ScrollView,
   Text,
   View,
@@ -273,6 +274,7 @@ export default function MyTripScreen({ navigation }: any) {
   const [upcomingTripList, setUpcomingTripList] = useState<Trip[]>([]);
   const [pastTripList, setPastTripList] = useState<Trip[]>([]);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [openingTripId, setOpeningTripId] = useState<string | null>(null);
   const [deletingTripId, setDeletingTripId] = useState<string | null>(null);
   const [tripLoadError, setTripLoadError] = useState<string | null>(null);
@@ -344,6 +346,42 @@ export default function MyTripScreen({ navigation }: any) {
     return () => {
       isMounted = false;
     };
+  }, [currentUserId]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    setTripLoadError(null);
+
+    try {
+      const apiTrips = await fetchMyTrips();
+
+      console.log(
+        "[MyTripScreen] refresh trips ownerId",
+        apiTrips.map((trip) => ({
+          id: trip.id ?? trip.Id ?? trip.tripId ?? trip.trip_id,
+          title: trip.title ?? trip.Title ?? trip.name ?? trip.Name,
+          ownerId: trip.ownerId,
+          OwnerId: trip.OwnerId,
+          owner_id: trip.owner_id,
+          owner: trip.owner,
+        }))
+      );
+
+      const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
+
+      const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
+      const pastTrips = mappedTrips.filter(isPastTrip);
+
+      setUpcomingTripList(upcomingTrips);
+      setPastTripList(pastTrips);
+      if (!upcomingTrips.length && pastTrips.length) {
+        setActiveFilter("Past");
+      }
+    } catch (error) {
+      setTripLoadError(getApiErrorMessage(error));
+    } finally {
+      setRefreshing(false);
+    }
   }, [currentUserId]);
 
   useFocusEffect(loadTrips);
@@ -529,6 +567,7 @@ export default function MyTripScreen({ navigation }: any) {
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.scrollContent}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <Pressable
           onPress={() => navigation.navigate('SmartPlanning' as never)}

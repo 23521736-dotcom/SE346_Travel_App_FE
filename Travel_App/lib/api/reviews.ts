@@ -2,10 +2,13 @@ import type { ApiOk, ReviewListItem } from './types';
 import { normalizeReviewListItem } from './types';
 import { apiClient } from './client';
 
-export async function fetchPlaceReviews(placeId: string): Promise<ReviewListItem[]> {
-  const res = await apiClient.get<ApiOk<ReviewListItem[]>>(`/places/${placeId}/reviews`, {
-    params: { limit: 50 },
-  });
+export async function fetchPlaceReviews(placeId: string, limit?: number, offset?: number): Promise<ReviewListItem[]> {
+  const params: Record<string, any> = {};
+  if (limit !== undefined) params.limit = limit;
+  if (offset !== undefined) params.offset = offset;
+  if (!params.limit) params.limit = 50;
+
+  const res = await apiClient.get<ApiOk<ReviewListItem[]>>(`/places/${placeId}/reviews`, { params });
   return res.data.data.map((item) => normalizeReviewListItem(item as any));
 }
 
