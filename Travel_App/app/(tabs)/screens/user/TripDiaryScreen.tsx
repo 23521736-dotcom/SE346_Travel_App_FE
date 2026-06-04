@@ -15,6 +15,7 @@ import { getApiErrorMessage } from "../../../../lib/api/client";
 import { deleteTripDiaryEntry, fetchTripDiary, TripDiaryEntry } from "../../../../lib/api/diary";
 import { colors } from "../../common/colors";
 import styles from "./TripDiaryScreen.styles";
+import { CachedImage } from "../../../../components/CachedImage";
 
 const fallbackHeroImage =
   "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=1200&auto=format&fit=crop";
@@ -107,7 +108,7 @@ function TimelineCard({
             if (isMoreTile) {
               return (
                 <Pressable key={`${image}-${index}`} style={styles.moreImageWrap}>
-                  <Image source={{ uri: image }} style={styles.moreImage} />
+                  <CachedImage uri={image} style={styles.moreImage} />
                   <View style={styles.moreOverlay}>
                     <Text style={styles.moreText}>+{extraCount}</Text>
                   </View>
@@ -116,9 +117,9 @@ function TimelineCard({
             }
 
             return (
-              <Image
+              <CachedImage
                 key={`${image}-${index}`}
-                source={{ uri: image }}
+                uri={image}
                 style={isTwoColumn ? styles.galleryImageLarge : styles.galleryImageSmall}
               />
             );
@@ -266,7 +267,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
         contentContainerStyle={styles.scrollContent}
       >
         <View style={styles.heroCard}>
-          <Image source={{ uri: heroImage }} style={styles.heroImage} />
+          <CachedImage uri={heroImage} style={styles.heroImage} />
           <View style={styles.heroOverlay}>
             <Pressable style={styles.playButton} onPress={() => alert("Phát video")}>
               <Ionicons name="play" size={30} color={colors.white} />

@@ -42,6 +42,7 @@ export default function WriteReviewScreen({ navigation, route }: any) {
   const [reviewText, setReviewText] = useState(editingReview?.content ?? '');
   const [pendingImages, setPendingImages] = useState<LocalReviewImage[]>(normalizeInitialImages(editingReview?.images));
   const [submitting, setSubmitting] = useState(false);
+  const charCount = reviewText.length;
 
   const handlePickImage = async () => {
     if (pendingImages.length >= 10) return;
@@ -173,7 +174,16 @@ export default function WriteReviewScreen({ navigation, route }: any) {
             onChangeText={setReviewText}
             multiline
             textAlignVertical="top"
+            maxLength={8000}
           />
+          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4 }}>
+            <Text style={{
+              fontSize: 12,
+              color: charCount > 7500 ? '#ef4444' : colors.textMuted
+            }}>
+              {charCount}/8000
+            </Text>
+          </View>
         </View>
 
         <View style={styles.section}>

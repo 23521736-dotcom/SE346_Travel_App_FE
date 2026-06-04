@@ -3,6 +3,7 @@ import { useNavigation } from "@react-navigation/native";
 import React, { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   Image,
   Pressable,
   type GestureResponderEvent,
@@ -408,12 +409,25 @@ export default function NotificationScreenUser() {
   };
 
   const handleDelete = async (item: NotificationItem) => {
-    try {
-      await deleteNotification(item.id);
-      setItems((prev) => prev.filter((notification) => notification.id !== item.id));
-    } catch (error) {
-      console.warn("Failed to delete notification", error);
-    }
+    Alert.alert(
+      "Xóa thông báo",
+      "Bạn có chắc muốn xóa thông báo này?",
+      [
+        { text: "Hủy", style: "cancel" },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await deleteNotification(item.id);
+              setItems((prev) => prev.filter((notification) => notification.id !== item.id));
+            } catch (error) {
+              console.warn("Failed to delete notification", error);
+            }
+          }
+        }
+      ]
+    );
   };
 
   return (

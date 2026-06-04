@@ -164,6 +164,7 @@ export default function SmartPlanningScreen() {
     FESTIVALS: 0.5,
     SHOPPING: 0.5,
   });
+  const [weightErrors, setWeightErrors] = useState<Record<string, boolean>>({});
 
   // Result state - Step 3
   const [optimizedResult, setOptimizedResult] = useState<OptimizationResult | null>(null);
@@ -520,22 +521,38 @@ export default function SmartPlanningScreen() {
           { key: 'DINING', label: 'Ẩm thực' },
           { key: 'FESTIVALS', label: 'Lễ hội' },
           { key: 'SHOPPING', label: 'Mua sắm' },
-        ].map((item) => (
-          <View key={item.key} style={styles.preferenceWeightRow}>
-            <Text style={{ flex: 1 }}>{item.label}</Text>
-            <TextInput
-              style={styles.weightInput}
-              value={String(preferenceWeights[item.key as keyof typeof preferenceWeights])}
-              onChangeText={(text) => {
-                const value = parseFloat(text);
-                if (!isNaN(value) && value >= 0 && value <= 1) {
-                  setPreferenceWeights((prev) => ({ ...prev, [item.key]: value }));
-                }
-              }}
-              keyboardType="decimal-pad"
-            />
-          </View>
-        ))}
+        ].map((item) => {
+          const weight = preferenceWeights[item.key as keyof typeof preferenceWeights];
+          const hasError = weightErrors[item.key] || (weight !== '' && weight <= 0);
+          return (
+            <View key={item.key} style={styles.preferenceWeightRow}>
+              <Text style={{ flex: 1 }}>{item.label}</Text>
+              <TextInput
+                style={[
+                  styles.weightInput,
+                  hasError && { borderColor: '#ef4444', borderWidth: 1 }
+                ]}
+                value={String(weight)}
+                onChangeText={(text) => {
+                  const value = parseFloat(text);
+                  if (!isNaN(value) && value >= 0 && value <= 1) {
+                    setPreferenceWeights((prev) => ({ ...prev, [item.key]: value }));
+                    setWeightErrors((prev) => ({ ...prev, [item.key]: false }));
+                  } else {
+                    setWeightErrors((prev) => ({ ...prev, [item.key]: true }));
+                    setPreferenceWeights((prev) => ({ ...prev, [item.key]: text === '' ? '' : value }));
+                  }
+                }}
+                keyboardType="decimal-pad"
+              />
+              {hasError && (
+                <Text style={{ color: '#ef4444', fontSize: 11, marginLeft: 8 }}>
+                  Phải > 0
+                </Text>
+              )}
+            </View>
+          );
+        })}
       </View>
 
       {/* Places list */}

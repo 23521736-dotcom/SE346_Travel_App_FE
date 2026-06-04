@@ -214,6 +214,12 @@ export default function PlanningTrip({ navigation, route }: any) {
     ...routeTrip,
     title: routeTrip?.title || route?.params?.title || defaultTrip.title,
   }));
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const initialTripRef = useRef<TripData>(sortTripForPlanning({
+    ...defaultTrip,
+    ...routeTrip,
+    title: routeTrip?.title || route?.params?.title || defaultTrip.title,
+  }));
 
   useEffect(() => {
     if (!routeTripId || routeTrip) {
@@ -237,6 +243,8 @@ export default function PlanningTrip({ navigation, route }: any) {
           id: apiDraft.id === undefined ? undefined : String(apiDraft.id),
         } as TripData);
         setTrip(draft);
+        initialTripRef.current = draft;
+        setHasUnsavedChanges(false);
         upsertTripDraft(draft);
       } catch (error) {
         if (isMounted) {
@@ -260,6 +268,8 @@ export default function PlanningTrip({ navigation, route }: any) {
     if (route?.params?.updatedTrip) {
       const normalizedTrip = sortTripForPlanning(route.params.updatedTrip);
       setTrip(normalizedTrip);
+      initialTripRef.current = normalizedTrip;
+      setHasUnsavedChanges(false);
       upsertTripDraft(normalizedTrip);
     }
   }, [route?.params?.updatedTrip]);
@@ -269,6 +279,14 @@ export default function PlanningTrip({ navigation, route }: any) {
       setTrip((current) => sortTripForPlanning({ ...current, ...routeTrip }));
     }
   }, [routeTrip]);
+
+  // Track unsaved changes
+  useEffect(() => {
+    // Simple check: compare stringified versions
+    const currentTripStr = JSON.stringify(trip);
+    const initialTripStr = JSON.stringify(initialTripRef.current);
+    setHasUnsavedChanges(currentTripStr !== initialTripStr);
+  }, [trip]);
 
   // Hàm xử lý khi bấm vào Header của từng ngày
   const toggleExpand = (dayId: number) => {
@@ -281,6 +299,25 @@ export default function PlanningTrip({ navigation, route }: any) {
       }
       return [...prev, dayId];
     });
+  };
+
+  const handleGoBack = () => {
+    if (hasUnsavedChanges) {
+      Alert.alert(
+        "Discard changes?",
+        "You have unsaved changes. Are you sure you want to go back?",
+        [
+          { text: "Keep Editing", style: "cancel" },
+          {
+            text: "Discard",
+            style: "destructive",
+            onPress: () => navigation.goBack()
+          }
+        ]
+      );
+    } else {
+      navigation.goBack();
+    }
   };
 
   const daysData = Array.from({ length: Math.max(trip.duration, 1) }, (_, index) => ({
@@ -359,7 +396,7 @@ export default function PlanningTrip({ navigation, route }: any) {
       <View style={styles.header}>
         {/* Nút trở về */}
         <TouchableOpacity
-          onPress={() => navigation.goBack()}
+          onPress={handleGoBack}
           style={styles.iconButton}
         >
           <Feather name="chevron-left" size={24} color="#333" />

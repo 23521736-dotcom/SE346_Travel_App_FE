@@ -25,6 +25,7 @@ import { getApiErrorMessage } from '../../context/AuthContext';
 import { getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../../lib/placeCategories';
 import { fetchRecommendations } from '../../../../lib/api/recommendations';
 import type { RecommendationPlace } from '../../../../lib/api/recommendations';
+import { CachedImage } from '../../../../components/CachedImage';
 
 type Place = PlaceListItem;
 
@@ -75,8 +76,8 @@ const renderPlaceCard = (item: Place, navigation: any, hasPromotion: boolean) =>
     return (
         <View style={styles.card}>
             <View style={styles.imageFrame}>
-                <Image
-                    source={{ uri: item.image }}
+                <CachedImage
+                    uri={item.image}
                     style={{ width: "100%", height: "100%" }} />
                 {hasPromotion && <DealBadge />}
             </View>
@@ -304,7 +305,7 @@ export default function HomeScreen({ navigation }: any) {
                                     style={{ width: 160, marginRight: 12, backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 }}
                                     onPress={() => navigation.navigate('Detail Location', { placeId: rec.placeId })}
                                 >
-                                    <Image source={{ uri: rec.coverImageUrl }} style={{ width: '100%', height: 100 }} />
+                                    <CachedImage uri={rec.coverImageUrl} style={{ width: '100%', height: 100 }} />
                                     <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
                                         <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>{rec.matchPercentage}%</Text>
                                     </View>
