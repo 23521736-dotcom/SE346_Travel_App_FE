@@ -158,7 +158,7 @@ export default function SmartPlanningScreen() {
   const [filter, setFilter] = useState<'all' | 'favorites'>('all');
   const [categoryFilter, setCategoryFilter] = useState('');
   const [selectedPlaces, setSelectedPlaces] = useState<Set<string>>(new Set());
-  const [preferenceWeights, setPreferenceWeights] = useState({
+  const [preferenceWeights, setPreferenceWeights] = useState<Record<string, number | ''>>({
     ATTRACTIONS: 0.5,
     DINING: 0.5,
     FESTIVALS: 0.5,
@@ -303,6 +303,10 @@ export default function SmartPlanningScreen() {
 
     setOptimizing(true);
     try {
+      const normalizedPreferenceWeights = Object.fromEntries(
+        Object.entries(preferenceWeights).map(([key, value]) => [key, value === '' ? 0 : Number(value)])
+      );
+
       const request: OptimizeItineraryRequest = {
         placeIds: Array.from(selectedPlaces),
         startDate: formatDate(startDate),
@@ -310,7 +314,7 @@ export default function SmartPlanningScreen() {
         dailyStartTime,
         dailyEndTime,
         maxBudget: budget ? Number(budget.replace(/[^0-9.]/g, '')) : undefined,
-        preferenceWeights,
+        preferenceWeights: normalizedPreferenceWeights,
       };
 
       const result = await optimizeItinerary(request);
@@ -547,7 +551,7 @@ export default function SmartPlanningScreen() {
               />
               {hasError && (
                 <Text style={{ color: '#ef4444', fontSize: 11, marginLeft: 8 }}>
-                  Phải {'>'} 0
+                  Phai lon hon 0
                 </Text>
               )}
             </View>
@@ -567,11 +571,11 @@ export default function SmartPlanningScreen() {
               Không có địa điểm nào
             </Text>
           ) : (
-            visiblePlaces.map((place) => {
+            visiblePlaces.map((place, index) => {
               const isSelected = selectedPlaces.has(place.id);
               return (
                 <TouchableOpacity
-                  key={place.id}
+                  key={`smart-place-${place.id}-${index}`}
                   style={[styles.placeItem, isSelected && styles.placeItemSelected]}
                   onPress={() => togglePlaceSelection(place.id)}
                 >
@@ -741,7 +745,7 @@ export default function SmartPlanningScreen() {
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={10}>
           <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textPrimary }}>
+        <Text style={styles.headerTitle} numberOfLines={2}>
           Lập kế hoạch thông minh
         </Text>
         <View style={{ width: 24 }} />

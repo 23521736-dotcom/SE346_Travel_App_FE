@@ -236,7 +236,7 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
             onDelete={handleDeleteReview}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `review-${item.id}-${index}`}
         ListHeaderComponent={
           <View>
             <View style={{ alignItems: 'center' }}>

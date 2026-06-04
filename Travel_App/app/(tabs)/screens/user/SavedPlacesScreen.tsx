@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -78,9 +78,15 @@ export default function SavedPlaces({ navigation }: any) {
     const [loadingMore, setLoadingMore] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [savingIds, setSavingIds] = useState<Set<string>>(new Set());
+    const favoritesRequestOffsetsRef = useRef<Set<number>>(new Set());
     const PAGE_SIZE = 20;
 
     const loadFavorites = useCallback(async (offset = 0) => {
+        if (favoritesRequestOffsetsRef.current.has(offset)) {
+            return;
+        }
+        favoritesRequestOffsetsRef.current.add(offset);
+
         if (offset === 0) {
             setLoading(true);
         }
@@ -107,6 +113,7 @@ export default function SavedPlaces({ navigation }: any) {
             }
             setHasMore(false);
         } finally {
+            favoritesRequestOffsetsRef.current.delete(offset);
             if (offset === 0) {
                 setLoading(false);
             }
@@ -214,7 +221,6 @@ export default function SavedPlaces({ navigation }: any) {
         const isSaved = savedIds.has(item.Id);
         return (
             <TouchableOpacity
-                key={item.Id}
                 activeOpacity={0.86}
                 style={[styles.card, { backgroundColor: theme.card }]}
                 onPress={() =>
@@ -341,7 +347,7 @@ export default function SavedPlaces({ navigation }: any) {
                 style={[styles.listContainer, { backgroundColor: theme.background }]}
                 contentContainerStyle={styles.listContent}
                 data={filteredPlaces}
-                keyExtractor={(item) => item.Id}
+                keyExtractor={(item, index) => `saved-place-${item.Id}-${index}`}
                 renderItem={renderPlaceCard}
                 refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 onEndReached={handleLoadMore}

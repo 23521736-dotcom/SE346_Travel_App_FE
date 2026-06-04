@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -298,12 +298,18 @@ export default function MyTripScreen({ navigation }: any) {
     "Upcoming"
   );
   const PAGE_SIZE = 20;
+  const tripRequestOffsetsRef = useRef<Set<number>>(new Set());
 
   const trips = activeFilter === "Upcoming" ? upcomingTripList : pastTripList;
   const featuredTrip = upcomingTripList[0];
   const currentUserId = user?.id;
 
   const loadTrips = useCallback(async (offset = 0) => {
+    if (tripRequestOffsetsRef.current.has(offset)) {
+      return;
+    }
+    tripRequestOffsetsRef.current.add(offset);
+
     if (offset === 0) {
       setIsLoadingTrips(true);
       setTripLoadError(null);
@@ -348,6 +354,7 @@ export default function MyTripScreen({ navigation }: any) {
         setHasMorePast(false);
       }
     } finally {
+      tripRequestOffsetsRef.current.delete(offset);
       if (offset === 0) {
         setIsLoadingTrips(false);
       }
@@ -532,7 +539,7 @@ export default function MyTripScreen({ navigation }: any) {
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>{t('trip.myTrips')}</Text>
+        <Text style={[styles.title, { color: theme.text }]}>My Trips</Text>
         <Pressable
           style={styles.iconButton}
           onPress={createEmptyPlanningTrip}
@@ -554,21 +561,14 @@ export default function MyTripScreen({ navigation }: any) {
           accessibilityRole="button"
           accessibilityHint="Tap to use AI-powered trip planning"
           style={({ pressed }) => [
-            {
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: 12,
-              borderRadius: 12,
-              marginTop: 12,
-              backgroundColor: theme.primary,
-            },
+            styles.aiPlanButton,
+            { backgroundColor: theme.primary },
             pressed && { opacity: 0.8 }
           ]}
         >
           <Ionicons name="bulb-outline" size={20} color={theme.textOnPrimary} style={{ marginRight: 8 }} />
-          <Text style={{ color: theme.textOnPrimary, fontWeight: '600', fontSize: 16 }}>
-            {t('trip.smartPlanning')}
+          <Text style={[styles.aiPlanButtonText, { color: theme.textOnPrimary }]}>
+            Plan with AI
           </Text>
         </Pressable>
 
@@ -675,7 +675,7 @@ export default function MyTripScreen({ navigation }: any) {
           ) : (
             <FlatList
               data={trips}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item, index) => `trip-${item.id}-${index}`}
               renderItem={({ item }) => (
                 <TripCard
                   trip={item}

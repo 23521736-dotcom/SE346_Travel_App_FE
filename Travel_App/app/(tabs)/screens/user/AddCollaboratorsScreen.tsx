@@ -236,11 +236,7 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
                         <Feather name="arrow-left" size={24} color="#003A70" />
                     </TouchableOpacity>
                     <Text style={screenStyles.headerTitle}>Add Collaborators</Text>
-                    <TouchableOpacity onPress={saveCollaborators} disabled={isSaving || !canManageTrip}>
-                        <Text style={[screenStyles.saveText, (isSaving || !canManageTrip) && { opacity: 0.45 }]}>
-                            {isSaving ? 'Saving...' : 'Save'}
-                        </Text>
-                    </TouchableOpacity>
+                    <View /> 
                 </View>
 
                 <View style={screenStyles.searchContainer}>

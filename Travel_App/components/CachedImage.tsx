@@ -1,11 +1,10 @@
-import { Image } from "expo-image";
-import React from "react";
+import { Image, type ImageSource } from "expo-image";
 
 interface CachedImageProps {
   uri: string;
   style?: any;
   contentFit?: "cover" | "contain" | "fill" | "scale-down";
-  placeholder?: any;
+  placeholder?: ImageSource;
 }
 
 export function CachedImage({ uri, style, contentFit = "cover", placeholder }: CachedImageProps) {

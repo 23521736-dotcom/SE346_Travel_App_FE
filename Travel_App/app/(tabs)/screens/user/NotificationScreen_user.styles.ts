@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StatusBar, StyleSheet } from "react-native";
 import { colors } from "../../common/colors";
 import { commonStyles } from "../../common/styles";
 
@@ -12,7 +12,7 @@ const styles = StyleSheet.create({
 
   header: {
     paddingHorizontal: 20,
-    paddingTop: 18,
+    paddingTop: Platform.OS === "android" ? (StatusBar.currentHeight ?? 0) + 14 : 24,
     paddingBottom: 14,
     backgroundColor: "rgba(248,250,255,0.96)",
     flexDirection: "row",
@@ -90,8 +90,8 @@ const styles = StyleSheet.create({
 
   listContent: {
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 112,
+    paddingTop: 12,
+    paddingBottom: 128,
     rowGap: 14,
   },
 

@@ -545,6 +545,29 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "800",
   },
+
+  aiPlanButton: {
+    alignSelf: "stretch",
+    minHeight: 46,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingHorizontal: 18,
+    paddingVertical: 11,
+    borderRadius: 23,
+    marginTop: 12,
+    marginHorizontal: 16,
+    shadowColor: colors.shadow,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.12,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+
+  aiPlanButtonText: {
+    fontWeight: "800",
+    fontSize: 15,
+  },
 });
 
 export default styles;

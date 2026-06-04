@@ -80,7 +80,7 @@ export default function TermsOfServiceScreen({ navigation }: any) {
 
                 <Text style={styles.sectionTitle}>7. Giới hạn trách nhiệm</Text>
                 <Text style={styles.paragraph}>
-                    Ứng dụng được cung cấp trên cơ sở &ldquo;nguyên trạng&rdquo; và &ldquo;có sẵn&rdquo;. Chúng tôi không bảo đảm rằng ứng dụng sẽ không bị gián đoạn, không có lỗi hoặc hoàn toàn an toàn. Chúng tôi không chịu trách nhiệm về bất kỳ thiệt hại nào phát sinh từ việc sử dụng hoặc không thể sử dụng ứng dụng, bao gồm nhưng không giới hạn thiệt hại gián tiếp, ngẫu nhiên hoặc hậu quả.
+                    Ứng dụng được cung cấp trên cơ sở &quot;nguyên trạng&quot; và &quot;có sẵn&quot;. Chúng tôi không bảo đảm rằng ứng dụng sẽ không bị gián đoạn, không có lỗi hoặc hoàn toàn an toàn. Chúng tôi không chịu trách nhiệm về bất kỳ thiệt hại nào phát sinh từ việc sử dụng hoặc không thể sử dụng ứng dụng, bao gồm nhưng không giới hạn thiệt hại gián tiếp, ngẫu nhiên hoặc hậu quả.
                 </Text>
 
                 <Text style={styles.sectionTitle}>8. Thay đổi điều khoản</Text>

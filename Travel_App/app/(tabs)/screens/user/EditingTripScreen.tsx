@@ -797,9 +797,9 @@ export default function EditingTripScreen({ navigation, route }: any) {
                 />
               </View>
 
-              {day.locations.map((loc) => {
+              {day.locations.map((loc, locIndex) => {
                 return (
-                <View key={loc.id} style={styles.itineraryCard}>
+                <View key={`editing-location-${day.dayId}-${loc.id}-${locIndex}`} style={styles.itineraryCard}>
                   <Image source={{ uri: loc.image }} style={styles.itineraryImage} />
 
                   <View style={styles.itineraryInfo}>

@@ -17,8 +17,8 @@ import styles from './RegisterScreen.styles';
 
 export default function RegisterScreen({ navigation }: any) {
     // Always call useNavigation to satisfy Rules of Hooks
-    const hookNav = useNavigation<any>();
-    const nav = navigation ?? hookNav;
+    const fallbackNavigation = useNavigation<any>();
+    const nav = navigation ?? fallbackNavigation;
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [isCfPasswordVisible, setCfPasswordVisible] = useState(false);
     const [isChecked, setChecked] = useState(false);

@@ -459,8 +459,8 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                 <Text style={styles.sectionTitle}>
                                     Promotions
                                 </Text>
-                                {promotions.map((promotion) => (
-                                    <View key={promotion.id} style={styles.promotionCard}>
+                                {promotions.map((promotion, index) => (
+                                    <View key={`promotion-${promotion.id}-${index}`} style={styles.promotionCard}>
                                         {(() => {
                                             const schedule = getPromotionSchedule(promotion);
 

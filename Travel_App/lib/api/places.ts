@@ -43,16 +43,24 @@ export async function fetchPlacePromotions(placeId: string): Promise<PromotionIt
 }
 
 export async function fetchPromotionPlaceIds(placeIds: string[]): Promise<Set<string>> {
-  const entries = await Promise.all(
-    placeIds.map(async (placeId) => {
-      try {
-        const promotions = await fetchPlacePromotions(placeId);
-        return [placeId, promotions.some((promotion) => promotion.isActive !== false)] as const;
-      } catch {
-        return [placeId, false] as const;
-      }
-    })
-  );
+  const uniquePlaceIds = Array.from(new Set(placeIds.filter(Boolean)));
+  const entries: Array<readonly [string, boolean]> = [];
+  const batchSize = 4;
+
+  for (let index = 0; index < uniquePlaceIds.length; index += batchSize) {
+    const batch = uniquePlaceIds.slice(index, index + batchSize);
+    const batchEntries = await Promise.all(
+      batch.map(async (placeId) => {
+        try {
+          const promotions = await fetchPlacePromotions(placeId);
+          return [placeId, promotions.some((promotion) => promotion.isActive !== false)] as const;
+        } catch {
+          return [placeId, false] as const;
+        }
+      })
+    );
+    entries.push(...batchEntries);
+  }
 
   return new Set(entries.filter(([, hasPromotion]) => hasPromotion).map(([placeId]) => placeId));
 }

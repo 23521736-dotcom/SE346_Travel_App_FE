@@ -566,11 +566,11 @@ export default function PlanningTrip({ navigation, route }: any) {
                   {isExpanded ? (
                     <View style={styles.timelineWrap}>
                       <View style={styles.timelineLine} />
-                      {sortedLocations.map((loc) => {
+                      {sortedLocations.map((loc, locIndex) => {
                         const periodLabel = getActivityPeriodLabel(loc.period, loc.time);
 
                         return (
-                          <View key={loc.id} style={styles.timelineItem}>
+                          <View key={`timeline-${day.id}-${loc.id}-${locIndex}`} style={styles.timelineItem}>
                             <View style={styles.timeHeader}>
                               <View style={styles.timelineDot} />
                               <Text style={styles.timeTitle}>

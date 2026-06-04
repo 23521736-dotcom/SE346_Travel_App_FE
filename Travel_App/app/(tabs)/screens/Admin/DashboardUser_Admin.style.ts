@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
     logoutText: { fontSize: 12, fontWeight: '700', color: '#dc2626' },
 
     scrollContent: { paddingHorizontal: 20, paddingBottom: 120 },
+    contentArea: { flex: 1, paddingHorizontal: 20 },
 
     statsContainer: { marginBottom: 16 },
     statCard: { backgroundColor: '#ffffff', padding: 16, borderRadius: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 2, elevation: 2 },
@@ -44,10 +45,14 @@ export const styles = StyleSheet.create({
     userName: { fontSize: 12, fontWeight: '700', color: '#0f172a', marginBottom: 2 },
     textBanned: { color: '#94a3b8', textDecorationLine: 'line-through' },
     userJoined: { fontSize: 10, color: '#64748b' },
+    userStats: { fontSize: 10, color: '#94a3b8', marginTop: 2 },
 
     // Cột 2: Email
     userEmailCol: { flex: 1.4, justifyContent: 'center', paddingRight: 4 },
     userEmail: { fontSize: 11, color: '#475569' },
+    userRoleCol: { flex: 0.8, justifyContent: 'center', alignItems: 'flex-start', paddingRight: 4 },
+    badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, alignSelf: 'flex-start' },
+    badgeText: { fontSize: 10, fontWeight: '700' },
 
     // Cột 3: Action Button
     userActionCol: { flex: 0.6, justifyContent: 'center', alignItems: 'center' },
@@ -80,16 +85,4 @@ export const styles = StyleSheet.create({
     navTextActive: { color: '#0ea5e9', fontWeight: 'bold' },
     navDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#0ea5e9', marginTop: 4 },
 
-    // Content area
-    contentArea: { flex: 1, paddingHorizontal: 20 },
-
-    // Badge styles
-    badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, alignSelf: 'flex-start' },
-    badgeText: { fontSize: 10, fontWeight: '700' },
-
-    // User stats
-    userStats: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 },
-
-    // User role column
-    userRoleCol: { flex: 1, justifyContent: 'center', alignItems: 'center' },
 });

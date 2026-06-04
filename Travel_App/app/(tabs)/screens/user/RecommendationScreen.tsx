@@ -104,8 +104,9 @@ export default function RecommendationScreen({ navigation }: any) {
           <FlatList
             horizontal
             showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalListContent}
             data={data}
-            keyExtractor={(item) => item.placeId}
+            keyExtractor={(item, index) => `${section.key}-${item.placeId}-${index}`}
             renderItem={renderPlaceCard}
             ListEmptyComponent={
               <View style={styles.emptyState}>
@@ -144,6 +145,7 @@ export default function RecommendationScreen({ navigation }: any) {
 
       <ScrollView
         style={styles.scrollContainer}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

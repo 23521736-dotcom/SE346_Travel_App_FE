@@ -1,4 +1,4 @@
-import { StyleSheet } from "react-native";
+import { Platform, StatusBar, StyleSheet } from "react-native";
 import { colors } from "../../common/colors";
 
 const styles = StyleSheet.create({
@@ -10,14 +10,30 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) + 14 : 22,
+    paddingBottom: 14,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
   },
 
+  headerTitle: {
+    flex: 1,
+    textAlign: 'center',
+    fontSize: 18,
+    lineHeight: 24,
+    fontWeight: '700',
+    color: colors.textPrimary,
+    marginHorizontal: 12,
+    includeFontPadding: true,
+  },
+
   scrollContent: {
-    padding: 16,
+    paddingHorizontal: 14,
+    paddingTop: 14,
+    paddingBottom: 28,
   },
 
   sectionCard: {
@@ -52,12 +68,15 @@ const styles = StyleSheet.create({
   dateTimeRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    columnGap: 12,
   },
 
   preferenceWeightRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    columnGap: 10,
+    marginBottom: 10,
   },
 
   weightInput: {
@@ -96,10 +115,12 @@ const styles = StyleSheet.create({
 
   placeInfo: {
     flex: 1,
+    minWidth: 0,
   },
 
   placeName: {
     fontSize: 14,
+    lineHeight: 20,
     fontWeight: '600',
     color: colors.textPrimary,
   },
@@ -124,6 +145,7 @@ const styles = StyleSheet.create({
     borderColor: colors.borderLight,
     alignItems: 'center',
     justifyContent: 'center',
+    marginLeft: 8,
   },
 
   checkboxChecked: {
@@ -138,10 +160,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    rowGap: 12,
   },
 
   summaryItem: {
     alignItems: 'center',
+    width: '48%',
   },
 
   summaryValue: {
@@ -173,10 +198,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    columnGap: 10,
   },
 
   dayTitle: {
+    flex: 1,
     fontSize: 15,
+    lineHeight: 21,
     fontWeight: '700',
     color: colors.textPrimary,
   },
@@ -184,8 +212,10 @@ const styles = StyleSheet.create({
   dayStats: {
     flexDirection: 'row',
     alignItems: 'center',
+    flexWrap: 'wrap',
     marginBottom: 12,
-    gap: 16,
+    columnGap: 14,
+    rowGap: 6,
   },
 
   dayStatItem: {
@@ -242,8 +272,10 @@ const styles = StyleSheet.create({
 
   activityMeta: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     marginTop: 2,
-    gap: 8,
+    columnGap: 8,
+    rowGap: 2,
   },
 
   activityMetaText: {

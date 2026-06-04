@@ -323,7 +323,7 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
 
                 <FlatList
                     data={searchResults}
-                    keyExtractor={(item) => item.id}
+                    keyExtractor={(item, index) => `search-result-${item.id}-${index}`}
                     renderItem={renderResultCard}
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.resultListContainer}
@@ -422,11 +422,11 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                     <View style={{ paddingVertical: 28 }}>
                         <ActivityIndicator size="small" color="#006699" />
                     </View>
-                ) : visiblePlaces.filter((place) => matchesPlaceCategory(place.category, activeFilter)).map((place) => {
+                ) : visiblePlaces.filter((place) => matchesPlaceCategory(place.category, activeFilter)).map((place, index) => {
                     const isSelected = selectedItems.includes(place.id);
 
                     return (
-                        <View key={place.id} style={styles.card}>
+                        <View key={`visible-place-${place.id}-${index}`} style={styles.card}>
                             <View style={styles.cardImageWrap}>
                                 <Image source={{ uri: place.imageUrl }} style={styles.cardImg} />
                                 {place.hasPromotion && (

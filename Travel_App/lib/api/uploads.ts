@@ -91,7 +91,8 @@ export async function uploadPlaceCover(uri: string): Promise<string> {
     },
     body: form,
   });
-  return parseUploadResponse(res, endpoint);
+  const uploadedUrl = await parseUploadResponse(res, endpoint);
+  return Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl;
 }
 
 export async function uploadReviewImage(uri: string): Promise<string> {
@@ -107,7 +108,8 @@ export async function uploadReviewImage(uri: string): Promise<string> {
     },
     body: form,
   });
-  return parseUploadResponse(res, endpoint);
+  const uploadedUrl = await parseUploadResponse(res, endpoint);
+  return Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl;
 }
 
 export async function uploadReviewImages(images: UploadImageInput[]): Promise<string[]> {
@@ -163,7 +165,8 @@ export async function uploadDiaryImage(input: string | UploadImageInput): Promis
     },
     body: form,
   });
-  return parseUploadResponse(res, endpoint);
+  const uploadedUrl = await parseUploadResponse(res, endpoint);
+  return Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl;
 }
 
 export async function uploadDiaryImages(images: UploadImageInput[]): Promise<string[]> {
@@ -197,5 +200,6 @@ export async function uploadAvatar(uri: string): Promise<string> {
     },
     body: form,
   });
-  return parseUploadResponse(res, endpoint);
+  const uploadedUrl = await parseUploadResponse(res, endpoint);
+  return Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl;
 }

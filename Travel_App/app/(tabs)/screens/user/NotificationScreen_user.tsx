@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -362,8 +362,15 @@ export default function NotificationScreenUser() {
   const [hasMore, setHasMore] = useState(true);
   const [errorMessage, setErrorMessage] = useState("");
   const PAGE_SIZE = 20;
+  const notificationRequestKeysRef = useRef<Set<string>>(new Set());
 
   const fetchNotifications = useCallback(async (offset = 0) => {
+    const requestKey = `${activeTab}:${offset}`;
+    if (notificationRequestKeysRef.current.has(requestKey)) {
+      return;
+    }
+    notificationRequestKeysRef.current.add(requestKey);
+
     if (offset === 0) {
       setLoading(true);
     }
@@ -385,6 +392,7 @@ export default function NotificationScreenUser() {
       }
       setHasMore(false);
     } finally {
+      notificationRequestKeysRef.current.delete(requestKey);
       if (offset === 0) {
         setLoading(false);
       }
@@ -538,6 +546,7 @@ export default function NotificationScreenUser() {
 
       <FlatList
         data={items}
+        contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
           <NotificationCard
             item={item}
@@ -547,7 +556,7 @@ export default function NotificationScreenUser() {
             onDelete={handleDelete}
           />
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => `notification-${item.id}-${index}`}
         ListEmptyComponent={
           !loading && !errorMessage ? (
             <Text style={styles.emptyText}>No notifications yet.</Text>

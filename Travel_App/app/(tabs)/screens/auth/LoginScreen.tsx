@@ -57,12 +57,13 @@ export default function LoginScreen({ navigation }: any) {
 
             const authResult = await WebBrowser.openAuthSessionAsync(
                 authUrl.toString(),
-                GOOGLE_REDIRECT_URI,
+                GOOGLE_REDIRECT_URI
             );
 
             if (authResult.type === 'success') {
-                const redirectUrl = new URL(authResult.url);
-                const idToken = redirectUrl.searchParams.get('id_token');
+                const callbackUrl = new URL(authResult.url);
+                const params = new URLSearchParams(callbackUrl.hash.replace(/^#/, '') || callbackUrl.search);
+                const idToken = params.get('id_token');
 
                 if (!idToken) {
                     throw new Error('No ID token received from Google');

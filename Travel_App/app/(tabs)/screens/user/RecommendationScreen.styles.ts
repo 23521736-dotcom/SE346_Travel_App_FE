@@ -1,4 +1,4 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, Platform, StatusBar } from 'react-native';
 import { colors } from '../../common/colors';
 
 const CARD_WIDTH = Dimensions.get('window').width * 0.7;
@@ -9,7 +9,9 @@ export default StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight ?? 0) + 14 : 22,
+    paddingBottom: 16,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: colors.borderLight,
@@ -24,17 +26,24 @@ export default StyleSheet.create({
   },
   headerTitle: {
     fontSize: 22,
+    lineHeight: 30,
     fontWeight: '700',
     color: colors.textPrimary,
-    flex: 1,
+    includeFontPadding: true,
   },
   headerSubtitle: {
     fontSize: 13,
+    lineHeight: 18,
     color: colors.textSecondary,
     marginTop: 4,
+    includeFontPadding: true,
   },
   scrollContainer: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingTop: 4,
+    paddingBottom: 28,
   },
   section: {
     marginBottom: 20,
@@ -73,6 +82,9 @@ export default StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
+  },
+  horizontalListContent: {
+    paddingRight: 16,
   },
   placeImage: {
     width: '100%',

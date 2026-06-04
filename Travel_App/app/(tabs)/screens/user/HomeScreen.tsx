@@ -1,5 +1,5 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -159,6 +159,7 @@ export default function HomeScreen({ navigation }: any) {
     // Advanced filters
     const [minRating, setMinRating] = useState<number | undefined>();
     const [maxPrice, setMaxPrice] = useState<number | undefined>();
+    const placesRequestKeysRef = useRef<Set<string>>(new Set());
 
     // Debounced search
     const [debouncedSearch, setDebouncedSearch] = useState('');
@@ -171,6 +172,12 @@ export default function HomeScreen({ navigation }: any) {
     }, [searchQuery]);
 
     const loadPlaces = useCallback(async (offset = 0) => {
+        const requestKey = JSON.stringify({ offset, activeCategory, debouncedSearch, minRating, maxPrice });
+        if (placesRequestKeysRef.current.has(requestKey)) {
+            return;
+        }
+        placesRequestKeysRef.current.add(requestKey);
+
         if (offset === 0) {
             setLoading(true);
         }
@@ -200,6 +207,7 @@ export default function HomeScreen({ navigation }: any) {
             }
             setHasMore(false);
         } finally {
+            placesRequestKeysRef.current.delete(requestKey);
             if (offset === 0) {
                 setLoading(false);
             }
@@ -438,9 +446,9 @@ export default function HomeScreen({ navigation }: any) {
                             </Pressable>
                         </View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 10 }}>
-                            {recommendations.map((rec) => (
+                            {recommendations.map((rec, index) => (
                                 <Pressable
-                                    key={rec.placeId}
+                                    key={`home-rec-${rec.placeId}-${index}`}
                                     style={{ width: 160, marginRight: 12, backgroundColor: theme.card, borderRadius: 12, overflow: 'hidden', elevation: 2, shadowColor: theme.shadow, shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 }}
                                     onPress={() => navigation.navigate('Detail Location', { placeId: rec.placeId })}
                                     accessibilityLabel={`${rec.name}, ${rec.matchPercentage}% match`}
@@ -486,7 +494,7 @@ export default function HomeScreen({ navigation }: any) {
                 <FlatList
                     data={places}
                     renderItem={renderPlaceItem}
-                    keyExtractor={(item) => item.Id}
+                    keyExtractor={(item, index) => `home-place-${item.Id}-${index}`}
                     ListHeaderComponent={listHeader}
                     showsVerticalScrollIndicator={false}
                     refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
