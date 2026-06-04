@@ -18,7 +18,6 @@ export default function ForgotPasswordScreen_email({ navigation, route }: any) {
     const [email, setEmail] = useState<string>(route?.params?.email ?? '');
 
     const handleSendCode = () => {
-        console.log('Sending reset code to:', email);
         navigation.navigate('ForgotPassword_OTP', { email: email.trim() });
     };
 

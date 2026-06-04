@@ -36,7 +36,7 @@ export default function PrivacyPolicyScreen({ navigation }: any) {
                 >
                     <Text style={styles.backText}>{'< Back'}</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Privacy Policy</Text>
+                <Text style={styles.headerTitle}>Chính sách Quyền riêng tư</Text>
                 <View style={styles.placeholder} />
             </View>
 
@@ -44,66 +44,91 @@ export default function PrivacyPolicyScreen({ navigation }: any) {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                <Text style={styles.lastUpdated}>Last Updated: May 2026</Text>
+                <Text style={styles.lastUpdated}>Cập nhật lần cuối: Tháng 6 năm 2026</Text>
 
                 <Text style={styles.paragraph}>
-                    Your privacy matters to us. This Privacy Policy explains what
-                    information we collect, how we use it, and how we protect your data
-                    when you use our travel application.
+                    Quyền riêng tư của bạn rất quan trọng đối với chúng tôi. Chính sách Quyền riêng tư này giải thích thông tin chúng tôi thu thập, cách sử dụng và bảo vệ dữ liệu của bạn khi sử dụng ứng dụng Travel App.
                 </Text>
 
-                <Section title="1. Information We Collect">
+                <Section title="1. Thông tin chúng tôi thu thập">
                     <Text style={styles.paragraph}>
-                        We collect information that helps us provide a better and more
-                        personalized travel experience.
+                        Chúng tôi thu thập thông tin giúp cung cấp trải nghiệm du lịch tốt hơn và cá nhân hóa hơn.
                     </Text>
                     <Bullet>
-                        <Text style={styles.bold}>Personal information:</Text> name,
-                        email address, avatar, username, and account details you provide.
+                        <Text style={styles.bold}>Thông tin cá nhân:</Text> tên,
+                        địa chỉ email, avatar, tên người dùng và thông tin tài khoản bạn cung cấp.
                     </Bullet>
                     <Bullet>
-                        <Text style={styles.bold}>Travel activity:</Text> saved places,
-                        trip plans, reviews, ratings, and locations you add to the app.
+                        <Text style={styles.bold}>Hoạt động du lịch:</Text> địa điểm đã lưu,
+                        kế hoạch chuyến đi, đánh giá, xếp hạng và địa điểm bạn thêm vào ứng dụng.
                     </Bullet>
                     <Bullet>
-                        <Text style={styles.bold}>Device information:</Text> basic app
-                        usage data used to keep the service stable and secure.
+                        <Text style={styles.bold}>Thông tin thiết bị:</Text> dữ liệu sử dụng ứng dụng cơ bản được sử dụng để giữ dịch vụ ổn định và an toàn.
                     </Bullet>
                 </Section>
 
-                <Section title="2. How We Use Your Information">
-                    <Bullet>Create and manage your account.</Bullet>
-                    <Bullet>Save your trips, favorite places, and travel preferences.</Bullet>
-                    <Bullet>Improve app features, performance, and user experience.</Bullet>
-                    <Bullet>Send important account, security, or service updates.</Bullet>
+                <Section title="2. Cách chúng tôi sử dụng thông tin">
+                    <Bullet>Tạo và quản lý tài khoản của bạn.</Bullet>
+                    <Bullet>Lưu chuyến đi, địa điểm yêu thích và sở thích du lịch của bạn.</Bullet>
+                    <Bullet>Cải thiện tính năng, hiệu suất và trải nghiệm người dùng của ứng dụng.</Bullet>
+                    <Bullet>Gửi các cập nhật quan trọng về tài khoản, bảo mật hoặc dịch vụ.</Bullet>
+                    <Bullet>Hỗ trợ xử lý giao dịch đặt phòng qua đối tác.</Bullet>
+                    <Bullet>Phân tích xu hướng để cải thiện dịch vụ.</Bullet>
                 </Section>
 
-                <Section title="3. Sharing Your Information">
+                <Section title="3. Chia sẻ thông tin">
                     <Text style={styles.paragraph}>
-                        We do not sell your personal information. We may share limited
-                        information only when it is needed to operate the app, comply with
-                        legal requirements, or protect our users and services.
+                        Chúng tôi không bán thông tin cá nhân của bạn. Chúng tôi có thể chia sẻ thông tin có hạn khi cần thiết để vận hành ứng dụng, tuân thủ yêu cầu pháp lý, hoặc bảo vệ người dùng và dịch vụ của chúng tôi.
+                    </Text>
+                    <Bullet>
+                        <Text style={styles.bold}>Đối tác dịch vụ:</Text> Các bên cung cấp dịch vụ đặt phòng, thanh toán và vận hành ứng dụng.
+                    </Bullet>
+                    <Bullet>
+                        <Text style={styles.bold}>Yêu cầu pháp lý:</Text> Khi luật pháp yêu cầu hoặc để bảo vệ quyền lợi của chúng tôi.
+                    </Bullet>
+                    <Bullet>
+                        <Text style={styles.bold}>Quyền sở hữu:</Text> Trong trường hợp sáp nhập hoặc bán một phần hoặc toàn bộ tài sản.
+                    </Bullet>
+                </Section>
+
+                <Section title="4. Lưu trữ và bảo mật dữ liệu">
+                    <Text style={styles.paragraph}>
+                        Chúng tôi sử dụng các biện pháp kỹ thuật và tổ chức hợp lý để bảo vệ thông tin của bạn. Dữ liệu được lưu trữ trên các máy chủ bảo vệ và được mã hóa khi truyền tải. Tuy nhiên, không có dịch vụ kỹ thuật số nào có thể đảm bảo bảo mật hoàn toàn, vì vậy vui lòng giữ thông tin đăng nhập của bạn riêng tư.
+                    </Text>
+                    <Text style={styles.paragraph}>
+                        Chúng tôi lưu trữ dữ liệu của bạn trong thời gian cần thiết để cung cấp dịch vụ và tuân thủ nghĩa vụ pháp lý. Khi tài khoản bị xóa, chúng tôi sẽ xóa hoặc hủy danh danh dữ liệu cá nhân của bạn trong vòng 30 ngày.
                     </Text>
                 </Section>
 
-                <Section title="4. Data Security">
+                <Section title="5. Quyền của bạn">
+                    <Bullet>Bạn có thể cập nhật thông tin hồ sơ trong tài khoản của mình.</Bullet>
+                    <Bullet>Bạn có thể quản lý tùy chọn thông báo từ màn hình Hồ sơ.</Bullet>
+                    <Bullet>Bạn có thể yêu cầu xem xét hoặc xóa dữ liệu của mình bằng cách liên hệ với chúng tôi.</Bullet>
+                    <Bullet>Bạn có quyền rút đồng ý cho việc thu thập dữ liệu bất kỳ lúc nào.</Bullet>
+                    <Bullet>Bạn có quyền yêu cầu sao chép dữ liệu cá nhân của mình.</Bullet>
+                </Section>
+
+                <Section title="6. Cookie và công nghệ theo dõi">
                     <Text style={styles.paragraph}>
-                        We use reasonable technical and organizational measures to protect
-                        your information. However, no digital service can guarantee
-                        complete security, so please keep your account credentials private.
+                        Chúng tôi sử dụng cookie và các công nghệ tương tự để:{'\n'}
+                        • Nhớ những gì bạn đang làm khi điều hướng giữa các trang{'\n'}
+                        • Hiểu cách người dùng sử dụng ứng dụng để cải thiện dịch vụ{'\n'}
+                        • Cung cấp trải nghiệm được cá nhân hóa{'\n'}
+                        Bạn có thể quản lý cookie trong cài đặt thiết bị của mình.
                     </Text>
                 </Section>
 
-                <Section title="5. Your Choices">
-                    <Bullet>You can update your profile information in your account.</Bullet>
-                    <Bullet>You can manage notification preferences from the Profile screen.</Bullet>
-                    <Bullet>You may contact us to request review or deletion of your data.</Bullet>
+                <Section title="7. Thay đổi chính sách">
+                    <Text style={styles.paragraph}>
+                        Chúng tôi có thể cập nhật chính sách này theo thời gian. Thay đổi sẽ được thông báo qua ứng dụng. Việc bạn tiếp tục sử dụng ứng dụng sau khi thay đổi có hiệu lực thể hiện sự chấp nhận của bạn.
+                    </Text>
                 </Section>
 
-                <Section title="6. Contact Us">
+                <Section title="8. Liên hệ">
                     <Text style={styles.paragraph}>
-                        If you have any questions about this Privacy Policy, please contact
-                        our support team through the app.
+                        Nếu bạn có bất kỳ câu hỏi nào về Chính sách Quyền riêng tư này, vui lòng liên hệ với chúng tôi qua:{'\n'}
+                        Email: travelapp.support@gmail.com{'\n'}
+                        Chúng tôi sẽ cố gắng phản hồi trong vòng 2-3 ngày làm việc.
                     </Text>
                 </Section>
             </ScrollView>

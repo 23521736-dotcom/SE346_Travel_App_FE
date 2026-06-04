@@ -298,29 +298,7 @@ export default function MyTripScreen({ navigation }: any) {
           return;
         }
 
-        console.log(
-          "[MyTripScreen] raw trips ownerId",
-          apiTrips.map((trip) => ({
-            id: trip.id ?? trip.Id ?? trip.tripId ?? trip.trip_id,
-            title: trip.title ?? trip.Title ?? trip.name ?? trip.Name,
-            ownerId: trip.ownerId,
-            OwnerId: trip.OwnerId,
-            owner_id: trip.owner_id,
-            owner: trip.owner,
-          }))
-        );
-
         const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
-        console.log(
-          "[MyTripScreen] mapped trips owner check",
-          mappedTrips.map((trip) => ({
-            id: trip.id,
-            title: trip.title,
-            ownerId: trip.ownerId,
-            currentUserId,
-            isOwner: currentUserId !== undefined && String(trip.ownerId) === String(currentUserId),
-          }))
-        );
 
         const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
         const pastTrips = mappedTrips.filter(isPastTrip);
@@ -493,14 +471,6 @@ export default function MyTripScreen({ navigation }: any) {
     }
 
     const isOwner = currentUserId !== undefined && String(trip.ownerId) === String(currentUserId);
-    console.log("[MyTripScreen] delete/leave pressed", {
-      tripId: trip.id,
-      title: trip.title,
-      ownerId: trip.ownerId,
-      currentUserId,
-      isOwner,
-      action: isOwner ? "deleteTrip" : "leaveTrip",
-    });
 
     setDeletingTripId(trip.id);
     try {
@@ -526,13 +496,6 @@ export default function MyTripScreen({ navigation }: any) {
 
   const confirmDeleteTrip = (trip: Trip) => {
     const isOwner = currentUserId !== undefined && String(trip.ownerId) === String(currentUserId);
-    console.log("[MyTripScreen] delete/leave confirm opened", {
-      tripId: trip.id,
-      title: trip.title,
-      ownerId: trip.ownerId,
-      currentUserId,
-      isOwner,
-    });
 
     Alert.alert(
       isOwner ? "Delete trip" : "Leave trip",
