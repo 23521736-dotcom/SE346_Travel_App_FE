@@ -13,6 +13,7 @@ export type RegisterRole = "TRAVELER" | "OWNER";
 
 export type AuthResponse = {
   accessToken: string;
+  refreshToken: string;
   user: ApiUser;
 };
 

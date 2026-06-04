@@ -3,6 +3,7 @@ import * as SecureStore from 'expo-secure-store';
 import { API_V1 } from '../config';
 
 const TOKEN_KEY = 'travel_app_access_token';
+const REFRESH_TOKEN_KEY = 'travel_app_refresh_token';
 
 export const apiClient = axios.create({
   baseURL: API_V1,
@@ -21,6 +22,70 @@ apiClient.interceptors.request.use(async (config) => {
   }
   return config;
 });
+
+// Response interceptor for automatic token refresh
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value: string) => void; reject: (reason: unknown) => void }> = [];
+
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    // Only handle 401 errors and prevent infinite loops
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      // If already refreshing, queue the request
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then((token) => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return apiClient(originalRequest);
+        }).catch((err) => {
+          return Promise.reject(err);
+        });
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const refreshToken = await getRefreshToken();
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        // Import refreshAccessToken function to avoid circular dependency
+        const { refreshAccessToken } = await import('./auth');
+        const { accessToken, refreshToken: newRefreshToken } = await refreshAccessToken(refreshToken);
+
+        // Store new tokens
+        await storeTokens(accessToken, newRefreshToken);
+
+        // Process queued requests with new token
+        failedQueue.forEach(({ resolve }) => resolve(accessToken));
+        failedQueue = [];
+
+        // Retry original request with new token
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+        return apiClient(originalRequest);
+      } catch (refreshError) {
+        // Refresh failed - reject all queued requests and clear tokens
+        failedQueue.forEach(({ reject }) => reject(refreshError));
+        failedQueue = [];
+        await clearTokens();
+
+        // Note: Navigation to login should be handled by the auth context
+        // which will detect the missing token
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
 
 function hasLocalStorage(): boolean {
   try {
@@ -88,6 +153,76 @@ export async function getAccessToken(): Promise<string | null> {
   }
 
   return null;
+}
+
+export async function setRefreshToken(token: string | null): Promise<void> {
+  // prefer localStorage when available (web)
+  try {
+    if (hasLocalStorage()) {
+      if (token) {
+        window.localStorage.setItem(REFRESH_TOKEN_KEY, token);
+      } else {
+        window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+      }
+      return;
+    }
+  } catch (_) {
+    // ignore and fallback to SecureStore
+  }
+
+  // fallback to SecureStore with feature-detection
+  try {
+    if (token) {
+      if (typeof (SecureStore as any).setItemAsync === 'function') {
+        await (SecureStore as any).setItemAsync(REFRESH_TOKEN_KEY, token);
+      } else if (typeof (SecureStore as any).setValueWithKeyAsync === 'function') {
+        await (SecureStore as any).setValueWithKeyAsync(REFRESH_TOKEN_KEY, token);
+      }
+    } else {
+      if (typeof (SecureStore as any).deleteItemAsync === 'function') {
+        await (SecureStore as any).deleteItemAsync(REFRESH_TOKEN_KEY);
+      } else if (typeof (SecureStore as any).deleteValueWithKeyAsync === 'function') {
+        await (SecureStore as any).deleteValueWithKeyAsync(REFRESH_TOKEN_KEY);
+      }
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('setRefreshToken fallback failed', e);
+  }
+}
+
+export async function getRefreshToken(): Promise<string | null> {
+  try {
+    if (hasLocalStorage()) {
+      return window.localStorage.getItem(REFRESH_TOKEN_KEY);
+    }
+  } catch (_) {
+    // ignore
+  }
+
+  try {
+    if (typeof (SecureStore as any).getItemAsync === 'function') {
+      return await (SecureStore as any).getItemAsync(REFRESH_TOKEN_KEY);
+    }
+    if (typeof (SecureStore as any).getValueWithKeyAsync === 'function') {
+      return await (SecureStore as any).getValueWithKeyAsync(REFRESH_TOKEN_KEY);
+    }
+  } catch (e) {
+    // eslint-disable-next-line no-console
+    console.warn('getRefreshToken failed', e);
+  }
+
+  return null;
+}
+
+export async function clearTokens(): Promise<void> {
+  await setAccessToken(null);
+  await setRefreshToken(null);
+}
+
+export async function storeTokens(accessToken: string, refreshToken: string): Promise<void> {
+  await setAccessToken(accessToken);
+  await setRefreshToken(refreshToken);
 }
 
 export function getApiErrorMessage(err: unknown): string {

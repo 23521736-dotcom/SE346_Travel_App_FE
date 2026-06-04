@@ -1,9 +1,10 @@
 import type { ApiOk, AuthResponse, RegisterRole } from './types';
-import { apiClient, setAccessToken } from './client';
+import { apiClient, setAccessToken, setRefreshToken, storeTokens, clearTokens, getRefreshToken } from './client';
 
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const res = await apiClient.post<ApiOk<AuthResponse>>('/auth/login', { email, password });
-  await setAccessToken(res.data.data.accessToken);
+  const { accessToken, refreshToken } = res.data.data;
+  await storeTokens(accessToken, refreshToken);
   return res.data.data;
 }
 
@@ -19,11 +20,27 @@ export async function register(
     fullName,
     role,
   });
+  // Note: registration may or may not return tokens depending on backend implementation
+  // If backend returns tokens, store them; otherwise user needs to login separately
+  if (res.data.data.accessToken && res.data.data.refreshToken) {
+    const { accessToken, refreshToken } = res.data.data;
+    await storeTokens(accessToken, refreshToken);
+  }
   return res.data.data;
 }
 
 export async function logout(): Promise<void> {
-  await setAccessToken(null);
+  try {
+    const refreshToken = await getRefreshToken();
+    if (refreshToken) {
+      await apiClient.post('/auth/logout', { refreshToken });
+    }
+  } catch (error) {
+    // Ignore logout API errors - always clear local tokens
+    console.warn('Logout API call failed:', error);
+  } finally {
+    await clearTokens();
+  }
 }
 
 export async function forgotPassword(email: string): Promise<{ message: string }> {
@@ -36,6 +53,14 @@ export async function oauthLogin(provider: 'google' | 'apple', idToken: string, 
     idToken,
     role,
   });
-  await setAccessToken(res.data.data.accessToken);
+  const { accessToken, refreshToken } = res.data.data;
+  await storeTokens(accessToken, refreshToken);
+  return res.data.data;
+}
+
+export async function refreshAccessToken(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {
+  const res = await apiClient.post<ApiOk<{ accessToken: string; refreshToken: string }>>('/auth/refresh', {
+    refreshToken,
+  });
   return res.data.data;
 }
