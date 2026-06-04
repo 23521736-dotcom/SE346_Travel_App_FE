@@ -54,7 +54,7 @@ async function appendImageFile(
   } as unknown as Blob);
 }
 
-async function parseUploadResponse(res: Response, endpoint: string) {
+async function parseUploadResponse(res: Response, endpoint: string): Promise<string | string[]> {
   const text = await res.text();
   let json: any = null;
 
@@ -72,7 +72,10 @@ async function parseUploadResponse(res: Response, endpoint: string) {
     throw new Error(json?.error || `UPLOAD_FAILED: ${endpoint}`);
   }
 
-  return json.data.publicUrl as string;
+  const data = json.data;
+  return data.items
+    ? data.items.map((item: any) => item.publicUrl as string)
+    : data.publicUrl as string;
 }
 
 export async function uploadPlaceCover(uri: string): Promise<string> {
@@ -122,8 +125,24 @@ export async function uploadReviewImages(images: UploadImageInput[]): Promise<st
     return remoteUrls;
   }
 
-  const uploadedUrls = await Promise.all(localImages.map((item) => uploadReviewImage(item.uri)));
-  return [...remoteUrls, ...uploadedUrls];
+  const token = await getAccessToken();
+  const form = new FormData();
+
+  for (const image of localImages) {
+    await appendImageFile(form, 'files', image, 'review.jpg');
+  }
+
+  const endpoint = '/uploads/review-images';
+  const res = await fetch(`${API_V1}${endpoint}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    body: form,
+  });
+
+  const uploadedUrls = await parseUploadResponse(res, endpoint);
+  return [...remoteUrls, ...(Array.isArray(uploadedUrls) ? uploadedUrls : [uploadedUrls])];
 }
 
 export async function uploadDiaryImage(input: string | UploadImageInput): Promise<string> {

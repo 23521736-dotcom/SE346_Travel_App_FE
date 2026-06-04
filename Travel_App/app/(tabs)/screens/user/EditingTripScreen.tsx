@@ -20,6 +20,7 @@ import {
 import { getApiErrorMessage } from '../../../../lib/api/client';
 import {
   addPlaceToTripDay,
+  deleteActivityFromDay,
   mapApiTripToDraft,
   removePlaceFromTripDay,
   upsertTripToBackend,
@@ -615,11 +616,19 @@ export default function EditingTripScreen({ navigation, route }: any) {
         );
 
         for (const location of locationsToRemove) {
-          savedTrip = await removePlaceFromTripDay(
-            String(persistedTripId),
-            persistedDay.dayId,
-            getLocationSelectionId(location)
-          );
+          if (location.placeId) {
+            savedTrip = await removePlaceFromTripDay(
+              String(persistedTripId),
+              persistedDay.dayId,
+              location.placeId
+            );
+          } else if (location.id) {
+            savedTrip = await deleteActivityFromDay(
+              String(persistedTripId),
+              persistedDay.dayId,
+              String(location.id)
+            );
+          }
           persistedTrip = mergeApiTripIntoDraft(persistedTrip, savedTrip);
           syncTripState(persistedTrip);
         }
