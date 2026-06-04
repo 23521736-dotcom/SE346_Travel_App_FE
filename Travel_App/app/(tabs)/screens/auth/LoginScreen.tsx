@@ -11,32 +11,98 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import * as AuthSession from 'expo-auth-session';
 import { oauthLogin } from '../../../../lib/api/auth';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import styles from './LoginScreen.styles';
+
+WebBrowser.maybeCompleteAuthBrowserSession();
+
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
+const GOOGLE_REDIRECT_URI = AuthSession.makeRedirectUri({
+    scheme: 'travelapp',
+    path: 'oauth-google-callback',
+});
 
 export default function LoginScreen({ navigation }: any) {
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [oauthSubmitting, setOauthSubmitting] = useState(false);
     const { login } = useAuth();
 
     const handleForgotPassword = () => {
         navigation.navigate('ForgotPassword_email', { email: email.trim() });
     };
 
-    const handleOAuth = async (provider: 'google' | 'apple') => {
+    const handleGoogleOAuth = async () => {
+        if (!GOOGLE_CLIENT_ID) {
+            Alert.alert('Loi cau hinh', 'Google Client ID chua duoc cau hinh');
+            return;
+        }
+
+        setOauthSubmitting(true);
         try {
-            await oauthLogin(provider);
-        } catch (err) {
+            // Construct Google OAuth URL for implicit flow
+            const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
+            authUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
+            authUrl.searchParams.set('redirect_uri', GOOGLE_REDIRECT_URI);
+            authUrl.searchParams.set('response_type', 'id_token');
+            authUrl.searchParams.set('scope', 'openid email profile');
+            authUrl.searchParams.set('nonce', Math.random().toString(36).substring(7));
+
+            const authResult = await AuthSession.startAsync({
+                authUrl: authUrl.toString(),
+                returnUrl: GOOGLE_REDIRECT_URI,
+            });
+
+            if (authResult.type === 'success') {
+                const { params } = authResult;
+                const idToken = params.id_token;
+
+                if (!idToken) {
+                    throw new Error('No ID token received from Google');
+                }
+
+                // Call backend API with the ID token
+                const authResponse = await oauthLogin('google', idToken);
+
+                Alert.alert(
+                    'Dang nhap thanh cong',
+                    authResponse.isNewUser
+                        ? 'Tai khoan moi da duoc tao!'
+                        : 'Chao mung tro lai!'
+                );
+            } else if (authResult.type === 'cancel') {
+                // User cancelled - do nothing
+            } else {
+                throw new Error(authResult.params?.error_description || 'OAuth failed');
+            }
+        } catch (err: any) {
+            console.error('Google OAuth error:', err);
             const msg = getApiErrorMessage(err);
             Alert.alert(
-                'Chua ho tro',
-                msg.includes('NOT_CONFIGURED')
-                    ? `Dang nhap ${provider} chua duoc cau hinh tren server`
-                    : msg
+                'Dang nhap Google that bai',
+                msg.includes('NOT_CONFIGURED') || msg.includes('OAUTH')
+                    ? 'Google OAuth chua duoc cau hinh dung'
+                    : msg || 'Co loi xay ra, vui long thu lai'
             );
+        } finally {
+            setOauthSubmitting(false);
+        }
+    };
+
+    const handleAppleOAuth = async () => {
+        Alert.alert('Chua ho tro', 'Apple Sign In chua duoc ho tro');
+    };
+
+    const handleOAuth = async (provider: 'google' | 'apple') => {
+        if (provider === 'google') {
+            await handleGoogleOAuth();
+        } else {
+            await handleAppleOAuth();
         }
     };
 
@@ -167,10 +233,20 @@ export default function LoginScreen({ navigation }: any) {
                         </View>
 
                         <View style={[styles.containerGG_Apple, { marginTop: 20 }]}>
-                            <Pressable style={styles.buttonGG_Apple} onPress={() => handleOAuth('google')}>
+                            <Pressable
+                                style={styles.buttonGG_Apple}
+                                onPress={() => handleOAuth('google')}
+                                disabled={oauthSubmitting}
+                            >
                                 <View style={styles.containerImageGG_Apple}>
-                                    <Image source={require('../../../../assets/images/google-icon.png')} style={{ width: 20, height: 20 }} />
-                                    <Text style={styles.buttonGG_AppleText}>Google</Text>
+                                    {oauthSubmitting ? (
+                                        <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />
+                                    ) : (
+                                        <Image source={require('../../../../assets/images/google-icon.png')} style={{ width: 20, height: 20 }} />
+                                    )}
+                                    <Text style={styles.buttonGG_AppleText}>
+                                        {oauthSubmitting ? 'Dang dang nhap...' : 'Google'}
+                                    </Text>
                                 </View>
                             </Pressable>
 
