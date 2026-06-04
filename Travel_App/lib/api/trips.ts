@@ -679,6 +679,17 @@ export async function removePlaceFromTripDay(
   return unwrapTripPayload(res.data as ApiOk<ApiTrip> | ApiTrip);
 }
 
+export async function deleteActivityFromDay(
+  tripId: string,
+  dayId: string,
+  activityId: string
+): Promise<ApiTrip> {
+  const res = await apiClient.delete<ApiOk<ApiTrip> | ApiTrip>(
+    `${TRIPS_PATH}/${tripId}/days/${dayId}/activities/${activityId}`
+  );
+  return unwrapTripPayload(res.data as ApiOk<ApiTrip> | ApiTrip);
+}
+
 export async function upsertTripToBackend(
   body: Record<string, unknown>,
   tripId?: string
