@@ -15,6 +15,7 @@ import {
 import { getApiErrorMessage } from "../../../../lib/api/client";
 import { ApiTrip, deleteTrip, fetchMyTrips, leaveTrip, mapApiTripToDraft } from "../../../../lib/api/trips";
 import { colors } from "../../common/colors";
+import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../context/AuthContext";
 import {
   Collaborator,
@@ -183,11 +184,13 @@ function TripCard({
   onPress,
   onDelete,
   isDeleting,
+  theme,
 }: {
   trip: Trip;
   onPress?: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
+  theme: any;
 }) {
   return (
     <Pressable
@@ -195,6 +198,7 @@ function TripCard({
       disabled={isDeleting}
       style={({ pressed }) => [
         styles.tripCard,
+        { backgroundColor: theme.card },
         trip.muted && styles.tripCardMuted,
         pressed && styles.tripCardPressed,
         isDeleting && styles.tripCardDeleting,
@@ -208,10 +212,10 @@ function TripCard({
 
       <View style={styles.tripContent}>
         <View>
-          <Text numberOfLines={1} style={styles.tripTitle}>
+          <Text numberOfLines={1} style={[styles.tripTitle, { color: theme.text }]}>
             {trip.title}
           </Text>
-          <Text style={styles.tripDate}>{trip.date}</Text>
+          <Text style={[styles.tripDate, { color: theme.textSecondary }]}>{trip.date}</Text>
         </View>
 
         {trip.status === "hold" ? (
@@ -229,12 +233,12 @@ function TripCard({
               />
             ))}
             {trip.extraCount ? (
-              <View style={[styles.avatar, styles.moreAvatar]}>
-                <Text style={styles.moreAvatarText}>+{trip.extraCount}</Text>
+              <View style={[styles.avatar, styles.moreAvatar, { backgroundColor: theme.primary }]}>
+                <Text style={[styles.moreAvatarText, { color: theme.textOnPrimary }]}>+{trip.extraCount}</Text>
               </View>
             ) : null}
             {trip.collaboratorLabel ? (
-              <Text style={styles.collaboratorText}>
+              <Text style={[styles.collaboratorText, { color: theme.textSecondary }]}>
                 {trip.collaboratorLabel}
               </Text>
             ) : null}
@@ -259,9 +263,9 @@ function TripCard({
           ]}
         >
           {isDeleting ? (
-            <ActivityIndicator size="small" color={colors.danger} />
+            <ActivityIndicator size="small" color={theme.danger} />
           ) : (
-            <Ionicons name="trash-bin-outline" size={17} color={colors.danger} />
+            <Ionicons name="trash-bin-outline" size={17} color={theme.danger} />
           )}
         </Pressable>
       ) : null}
@@ -272,6 +276,7 @@ function TripCard({
 
 export default function MyTripScreen({ navigation }: any) {
   const { user } = useAuth();
+  const { theme } = useTheme();
   const [upcomingTripList, setUpcomingTripList] = useState<Trip[]>([]);
   const [pastTripList, setPastTripList] = useState<Trip[]>([]);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
@@ -570,20 +575,20 @@ export default function MyTripScreen({ navigation }: any) {
   };
 
   return (
-    <View style={styles.screen}>
+    <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={styles.title}>My Trips</Text>
+        <Text style={[styles.title, { color: theme.text }]}>My Trips</Text>
         <Pressable
           style={styles.iconButton}
           onPress={createEmptyPlanningTrip}
         >
-          <Ionicons name="add" size={28} color={colors.primary} />
+          <Ionicons name="add" size={28} color={theme.primary} />
         </Pressable>
       </View>
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, { backgroundColor: theme.background }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         <Pressable
@@ -596,20 +601,20 @@ export default function MyTripScreen({ navigation }: any) {
               padding: 12,
               borderRadius: 12,
               marginTop: 12,
-              backgroundColor: colors.primary,
+              backgroundColor: theme.primary,
             },
             pressed && { opacity: 0.8 }
           ]}
         >
-          <Ionicons name="bulb-outline" size={20} color="white" style={{ marginRight: 8 }} />
-          <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>
+          <Ionicons name="bulb-outline" size={20} color={theme.textOnPrimary} style={{ marginRight: 8 }} />
+          <Text style={{ color: theme.textOnPrimary, fontWeight: '600', fontSize: 16 }}>
             Lập lịch thông minh
           </Text>
         </Pressable>
 
         {featuredTrip ? (
           <View style={styles.featuredSection}>
-            <View style={styles.featuredCard}>
+            <View style={[styles.featuredCard, { backgroundColor: theme.card }]}>
               <ImageBackground
                 source={{ uri: featuredTrip.image }}
                 imageStyle={styles.featuredImageRadius}
@@ -620,24 +625,24 @@ export default function MyTripScreen({ navigation }: any) {
                   <View style={styles.featuredBadge}>
                     <Text style={styles.featuredBadgeText}>Current Trip</Text>
                   </View>
-                  <Text numberOfLines={1} style={styles.featuredTripTitle}>
+                  <Text numberOfLines={1} style={[styles.featuredTripTitle, { color: theme.text }]}>
                     {featuredTrip.title}
                   </Text>
                   <View style={styles.featuredMetaRow}>
-                    <Ionicons name="calendar-outline" size={14} color={colors.white} />
-                    <Text numberOfLines={1} style={styles.featuredMetaText}>
+                    <Ionicons name="calendar-outline" size={14} color={theme.textOnPrimary} />
+                    <Text numberOfLines={1} style={[styles.featuredMetaText, { color: theme.textOnPrimary }]}>
                       {featuredTrip.date}
                     </Text>
                   </View>
                   <View style={styles.featuredMetaRow}>
-                    <Ionicons name="bed-outline" size={14} color={colors.white} />
-                    <Text numberOfLines={1} style={styles.featuredMetaText}>
+                    <Ionicons name="bed-outline" size={14} color={theme.textOnPrimary} />
+                    <Text numberOfLines={1} style={[styles.featuredMetaText, { color: theme.textOnPrimary }]}>
                       {featuredTrip.hotel || "Hotel not selected"} - {featuredTrip.duration || 1} days
                     </Text>
                   </View>
                   <View style={styles.featuredMetaRow}>
-                    <Ionicons name="wallet-outline" size={14} color={colors.white} />
-                    <Text numberOfLines={1} style={styles.featuredMetaText}>
+                    <Ionicons name="wallet-outline" size={14} color={theme.textOnPrimary} />
+                    <Text numberOfLines={1} style={[styles.featuredMetaText, { color: theme.textOnPrimary }]}>
                       Total budget: VND: {formatVnd(featuredTrip.budget || 0)}
                     </Text>
                   </View>
@@ -693,13 +698,13 @@ export default function MyTripScreen({ navigation }: any) {
         <View style={styles.tripList}>
           {isLoadingTrips ? (
             <View style={styles.tripState}>
-              <ActivityIndicator color={colors.primary} />
-              <Text style={styles.tripStateText}>Loading trips...</Text>
+              <ActivityIndicator color={theme.primary} />
+              <Text style={[styles.tripStateText, { color: theme.text }]}>Loading trips...</Text>
             </View>
           ) : tripLoadError ? (
-            <Text style={styles.tripErrorText}>{tripLoadError}</Text>
+            <Text style={[styles.tripErrorText, { color: theme.danger }]}>{tripLoadError}</Text>
           ) : !isLoadingTrips && trips.length === 0 ? (
-            <Text style={styles.tripStateText}>No trips yet</Text>
+            <Text style={[styles.tripStateText, { color: theme.text }]}>No trips yet</Text>
           ) : (
             <FlatList
               data={trips}
@@ -710,12 +715,13 @@ export default function MyTripScreen({ navigation }: any) {
                   onPress={openingTripId || deletingTripId ? undefined : () => openTrip(item)}
                   onDelete={() => confirmDeleteTrip(item)}
                   isDeleting={deletingTripId === item.id}
+                  theme={theme}
                 />
               )}
               onEndReached={handleLoadMore}
               onEndReachedThreshold={0.5}
               ListFooterComponent={(loadingMoreUpcoming || loadingMorePast) ? (
-                <ActivityIndicator size="small" color={colors.primary} style={{ margin: 16 }} />
+                <ActivityIndicator size="small" color={theme.primary} style={{ margin: 16 }} />
               ) : null}
               scrollEnabled={false}
             />

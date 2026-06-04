@@ -1,32 +1,9 @@
-export const colors = {
-  primary: '#00AEEF',
-  primaryDark: '#008FC4',
-  primaryLight: '#E3F2FD',
+import { lightTheme } from './theme';
 
-  background: '#F5F7FA',
-  surface: '#FFFFFF',
-  surfaceMuted: '#EDEFF3',
-  white: '#FFFFFF',
-  black: '#000000',
+// Export colors for backward compatibility
+// Use lightTheme as default colors
+export const colors = lightTheme;
 
-  textPrimary: '#111827',
-  textSecondary: '#6B7280',
-  textMuted: '#7e7e7e',
-  textOnPrimary: 'rgb(255, 255, 255)',
-
-  border: '#ddd',
-  borderLight: '#EDF0F2',
-
-  danger: '#E53935',
-  dangerSoft: '#efdbdb',
-
-  success: '#00875A',
-  successSoft: '#e5f6ef',
-
-  warning: '#EAB308',
-  warningSoft: '#FEF9C3',
-
-  shadow: "#020413",
-
-  overlay: 'rgba(0, 0, 0, 0.5)',
-};
+// Re-export lightTheme for direct use in theme-aware components
+export { lightTheme, darkTheme } from './theme';
+export type { Theme } from './theme';
