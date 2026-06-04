@@ -66,6 +66,8 @@ function CustomInput({
                     value={value}
                     onChangeText={onChangeText}
                     keyboardType={keyboardType}
+                    accessibilityLabel={placeholder}
+                    accessibilityHint={`Enter your ${label.toLowerCase()}`}
                 />
             </View>
         </View>
@@ -113,12 +115,18 @@ const renderPlaceCard = (item: Place, navigation: any, hasPromotion: boolean) =>
                 </View>
 
                 <View style={{ flexDirection: 'row', columnGap: 14, alignItems: 'center' }}>
-                    <Pressable onPress={() => navigation.navigate("Write Review", { placeId: item.Id, placeName: item.Name })}>
+                    <Pressable
+                        onPress={() => navigation.navigate("Write Review", { placeId: item.Id, placeName: item.Name })}
+                        accessibilityLabel={`Write a review for ${item.Name}`}
+                        accessibilityRole="button">
                         <Text style={styles.placeActionText}>
                             Review
                         </Text>
                     </Pressable>
-                    <Pressable onPress={() => navigation.navigate("Detail Location", { placeId: item.Id })}>
+                    <Pressable
+                        onPress={() => navigation.navigate("Detail Location", { placeId: item.Id })}
+                        accessibilityLabel={`View details for ${item.Name}`}
+                        accessibilityRole="button">
                         <Text style={styles.placeActionText}>
                             Detail
                         </Text>
@@ -279,7 +287,10 @@ export default function HomeScreen({ navigation }: any) {
                         <Ionicons name="location-sharp" size={18} color={colors.primary} />
                         <Text style={{ fontWeight: 'bold', fontSize: 20 }}> Near me</Text>
                         <Pressable
-                            onPress={() => alert('pressed down')}>
+                            onPress={() => alert('pressed down')}
+                            accessibilityLabel="Change location"
+                            accessibilityRole="button"
+                            accessibilityHint="Tap to select a different location">
                             <Ionicons
                                 name="chevron-down"
                                 size={20}
@@ -296,9 +307,16 @@ export default function HomeScreen({ navigation }: any) {
                         style={styles.searchInput}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
+                            accessibilityLabel="Search destinations"
+                            accessibilityHint="Enter a destination name to search"
                         />
                     {searchQuery.length > 0 && (
-                        <TouchableOpacity style={styles.clearIcon} onPress={() => setSearchQuery('')}>
+                        <TouchableOpacity
+                            style={styles.clearIcon}
+                            onPress={() => setSearchQuery('')}
+                            accessibilityLabel="Clear search"
+                            accessibilityRole="button"
+                            accessibilityHint="Tap to clear the search text">
                             <Ionicons name="close-circle" size={20} color="#9ca3af" />
                         </TouchableOpacity>
                     )}
@@ -318,7 +336,11 @@ export default function HomeScreen({ navigation }: any) {
                                 styles.filterChip,
                                 activeCategory === item.value && styles.filterChipActive,
                             ]}
-                            onPress={() => setActiveCategory(item.value)}>
+                            onPress={() => setActiveCategory(item.value)}
+                            accessibilityLabel={`Filter by ${item.label}`}
+                            accessibilityRole="button"
+                            accessibilityHint={activeCategory === item.value ? `Currently showing ${item.label} places` : `Tap to show ${item.label} places`}
+                            accessibilityState={{ selected: activeCategory === item.value }}>
                             <View style={styles.containerCategoryButton}>
                                 <Text style={styles.filterText}>
                                     {item.label}
@@ -337,35 +359,50 @@ export default function HomeScreen({ navigation }: any) {
                 >
                     <Pressable
                         style={[styles.filterChip, minRating === undefined && styles.filterChipActive]}
-                        onPress={() => setMinRating(undefined)}>
+                        onPress={() => setMinRating(undefined)}
+                        accessibilityLabel="All Ratings"
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: minRating === undefined }}>
                         <View style={styles.containerCategoryButton}>
                             <Text style={styles.filterText}>All Ratings</Text>
                         </View>
                     </Pressable>
                     <Pressable
                         style={[styles.filterChip, minRating === 4 && styles.filterChipActive]}
-                        onPress={() => setMinRating(minRating === 4 ? undefined : 4)}>
+                        onPress={() => setMinRating(minRating === 4 ? undefined : 4)}
+                        accessibilityLabel="4 star rating and above"
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: minRating === 4 }}>
                         <View style={styles.containerCategoryButton}>
                             <Text style={styles.filterText}>4+ ⭐</Text>
                         </View>
                     </Pressable>
                     <Pressable
                         style={[styles.filterChip, minRating === 3 && styles.filterChipActive]}
-                        onPress={() => setMinRating(minRating === 3 ? undefined : 3)}>
+                        onPress={() => setMinRating(minRating === 3 ? undefined : 3)}
+                        accessibilityLabel="3 star rating and above"
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: minRating === 3 }}>
                         <View style={styles.containerCategoryButton}>
                             <Text style={styles.filterText}>3+ ⭐</Text>
                         </View>
                     </Pressable>
                     <Pressable
                         style={[styles.filterChip, maxPrice === 1 && styles.filterChipActive]}
-                        onPress={() => setMaxPrice(maxPrice === 1 ? undefined : 1)}>
+                        onPress={() => setMaxPrice(maxPrice === 1 ? undefined : 1)}
+                        accessibilityLabel="Budget price level"
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: maxPrice === 1 }}>
                         <View style={styles.containerCategoryButton}>
                             <Text style={styles.filterText}>$ Budget</Text>
                         </View>
                     </Pressable>
                     <Pressable
                         style={[styles.filterChip, maxPrice === 2 && styles.filterChipActive]}
-                        onPress={() => setMaxPrice(maxPrice === 2 ? undefined : 2)}>
+                        onPress={() => setMaxPrice(maxPrice === 2 ? undefined : 2)}
+                        accessibilityLabel="Moderate price level"
+                        accessibilityRole="button"
+                        accessibilityState={{ selected: maxPrice === 2 }}>
                         <View style={styles.containerCategoryButton}>
                             <Text style={styles.filterText}>$$ Moderate</Text>
                         </View>
@@ -377,7 +414,10 @@ export default function HomeScreen({ navigation }: any) {
                     <Pressable
                         style={{ flex: 1, borderRadius: 8, borderWidth: 2, borderColor: colors.primary, padding: 10 }}
                     onPress={() => setModalVisible(true)}
-                        disabled={aiLoading}>
+                        disabled={aiLoading}
+                        accessibilityLabel="Plan with AI"
+                        accessibilityRole="button"
+                        accessibilityHint="Tap to get personalized trip suggestions using AI">
                         <View style={[styles.containerCategoryButton, { height: 40 }]}>
                             <Image source={require('../../../../assets/images/AIPlan-icon.png')}
                                 style={{ width: 25, height: 25, marginRight: 2 }}>
@@ -403,7 +443,10 @@ export default function HomeScreen({ navigation }: any) {
                             <Text style={{ fontWeight: '600', fontSize: 18 }}>
                                 Gợi ý cho bạn
                             </Text>
-                            <Pressable onPress={() => navigation.navigate('Recommendations')}>
+                            <Pressable
+                                onPress={() => navigation.navigate('Recommendations')}
+                                accessibilityLabel="View all recommendations"
+                                accessibilityRole="link">
                                 <Text style={{ color: colors.primary, fontWeight: '500', fontSize: 13 }}>Xem tất cả</Text>
                             </Pressable>
                         </View>
@@ -413,6 +456,9 @@ export default function HomeScreen({ navigation }: any) {
                                     key={rec.placeId}
                                     style={{ width: 160, marginRight: 12, backgroundColor: '#fff', borderRadius: 12, overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 3 }}
                                     onPress={() => navigation.navigate('Detail Location', { placeId: rec.placeId })}
+                                    accessibilityLabel={`${rec.name}, ${rec.matchPercentage}% match`}
+                                    accessibilityRole="button"
+                                    accessibilityHint="Tap to view place details"
                                 >
                                     <CachedImage uri={rec.coverImageUrl} style={{ width: '100%', height: 100 }} />
                                     <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8 }}>
@@ -480,6 +526,9 @@ export default function HomeScreen({ navigation }: any) {
                 <Pressable
                     style={styles.overlay}
                     onPress={() => setModalVisible(false)}
+                    accessibilityLabel="Close modal"
+                    accessibilityRole="button"
+                    accessibilityHint="Tap to close AI planning modal"
                 >
                     <TouchableWithoutFeedback onPress={() => { }}>
                         <KeyboardAvoidingView
@@ -492,7 +541,11 @@ export default function HomeScreen({ navigation }: any) {
                                         <Feather name="map-pin" size={20} color="#0EB4D3" />
                                         <Text style={styles.modalTitle}>Add New Destination</Text>
                                     </View>
-                                    <Pressable onPress={() => setModalVisible(false)} style={styles.closeButton}>
+                                    <Pressable
+                                        onPress={() => setModalVisible(false)}
+                                        style={styles.closeButton}
+                                        accessibilityLabel="Close modal"
+                                        accessibilityRole="button">
                                         <Feather name="x" size={24} color="#4A5568" />
                                     </Pressable>
                                 </View>
@@ -531,11 +584,19 @@ export default function HomeScreen({ navigation }: any) {
                                             setBudget('');
                                             setDuration('');
                                         }}
-                                    >
+                                        accessibilityLabel="Cancel"
+                                        accessibilityRole="button"
+                                        accessibilityHint="Clear all inputs and close modal">
                                         <Text style={styles.cancelButtonText}>Cancel</Text>
                                     </Pressable>
 
-                                    <Pressable style={styles.primaryButton} onPress={handlePlanWithAi} disabled={aiLoading}>
+                                    <Pressable
+                                        style={styles.primaryButton}
+                                        onPress={handlePlanWithAi}
+                                        disabled={aiLoading}
+                                        accessibilityLabel="Generate AI plan"
+                                        accessibilityRole="button"
+                                        accessibilityHint="Tap to generate a personalized trip plan">
                                         <Text style={styles.primaryButtonText}>
                                             {aiLoading ? 'Planning...' : '✨ Plan with AI'}
                                         </Text>

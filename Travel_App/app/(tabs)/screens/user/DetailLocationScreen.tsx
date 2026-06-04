@@ -271,7 +271,10 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                 }}
-                                onPress={showPreviousImage}>
+                                onPress={showPreviousImage}
+                                accessibilityLabel="Previous image"
+                                accessibilityRole="button"
+                                accessibilityHint="Swipe or tap to see the previous photo">
                                 <Ionicons name="chevron-back" size={26} color="white" />
                             </Pressable>
                             <Pressable
@@ -287,26 +290,36 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                 }}
-                                onPress={showNextImage}>
+                                onPress={showNextImage}
+                                accessibilityLabel="Next image"
+                                accessibilityRole="button"
+                                accessibilityHint="Swipe or tap to see the next photo">
                                 <Ionicons name="chevron-forward" size={26} color="white" />
                             </Pressable>
                         </>
                     )}
-                    <Pressable style={styles.roundButton}
-                        onPress={() => navigation.goBack()}>
+                    <Pressable
+                        style={styles.roundButton}
+                        onPress={() => navigation.goBack()}
+                        accessibilityLabel="Go back"
+                        accessibilityRole="button">
                         <Ionicons name="chevron-back" size={25}
                             color="white" />
                     </Pressable>
-                    <Pressable style={[styles.roundButton, {
-                        position: 'absolute',
-                        right: 15,
-                        top: 15,
-                        zIndex: 1,
-                        backgroundColor: 'rgba(0,0,0,0.2)',
-                        borderRadius: 20,
-                        padding: 5
-                    }]}
-                        onPress={toggleFavorite}>
+                    <Pressable
+                        style={[styles.roundButton, {
+                            position: 'absolute',
+                            right: 15,
+                            top: 15,
+                            zIndex: 1,
+                            backgroundColor: 'rgba(0,0,0,0.2)',
+                            borderRadius: 20,
+                            padding: 5
+                        }]}
+                        onPress={toggleFavorite}
+                        accessibilityLabel={isLiked ? "Remove from favorites" : "Add to favorites"}
+                        accessibilityRole="button"
+                        accessibilityHint={isLiked ? "Tap to unlike this place" : "Tap to save this place to favorites"}>
                         <Ionicons name="heart"
                             size={24}
                             color={isLiked ? "red" : "white"} />
@@ -369,6 +382,9 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                         console.error('Failed to open Google Maps', error);
                                     });
                                 }}
+                                accessibilityLabel="Open in Google Maps"
+                                accessibilityRole="link"
+                                accessibilityHint="Tap to view this location in Google Maps"
                                 style={({ pressed }) => ({
                                     flexDirection: 'row',
                                     alignItems: 'center',
@@ -506,13 +522,17 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                     Reviews
                                 </Text>
 
-                                <Text style={{ color: '#00B4D8', fontWeight: '600' }}
+                                <Pressable
                                     onPress={() => navigation.navigate("All Reviews", {
                                       placeId: place.Id,
                                       placeName: place.Name,
-                                    })}>
-                                    See All
-                                </Text>
+                                    })}
+                                    accessibilityLabel="See all reviews"
+                                    accessibilityRole="link">
+                                    <Text style={{ color: '#00B4D8', fontWeight: '600' }}>
+                                        See All
+                                    </Text>
+                                </Pressable>
                             </View>
 
                             <PicturesContainer pictures={firstReview.Pictures} />

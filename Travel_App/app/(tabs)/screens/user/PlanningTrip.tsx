@@ -398,7 +398,9 @@ export default function PlanningTrip({ navigation, route }: any) {
         <TouchableOpacity
           onPress={handleGoBack}
           style={styles.iconButton}
-        >
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+          accessibilityHint="Tap to go back to the previous screen">
           <Feather name="chevron-left" size={24} color="#333" />
         </TouchableOpacity>
 
@@ -420,6 +422,9 @@ export default function PlanningTrip({ navigation, route }: any) {
               <Pressable
                 onPress={openEditTrip}
                 disabled={isDeletingTrip || isLoadingRouteTrip}
+                accessibilityLabel="Modify trip"
+                accessibilityRole="button"
+                accessibilityHint="Tap to edit trip details"
                 style={({ pressed }) => [
                   styles.actionPill,
                   pressed && styles.buttonPressed,
@@ -432,6 +437,9 @@ export default function PlanningTrip({ navigation, route }: any) {
               <Pressable
                 onPress={confirmDeleteTrip}
                 disabled={isDeletingTrip || isLoadingRouteTrip}
+                accessibilityLabel="Delete trip"
+                accessibilityRole="button"
+                accessibilityHint="Tap to delete this trip permanently"
                 style={({ pressed }) => [
                   styles.actionPillDanger,
                   pressed && styles.buttonPressed,
@@ -492,7 +500,11 @@ export default function PlanningTrip({ navigation, route }: any) {
                   </>
                 ) : (
                   <>
-                    <TouchableOpacity style={styles.avatarPlus}>
+                    <TouchableOpacity
+                      style={styles.avatarPlus}
+                      accessibilityLabel="Add group member"
+                      accessibilityRole="button"
+                      accessibilityHint="Tap to add a member to this trip">
                       <Feather name="plus" size={16} color="#718096" />
                     </TouchableOpacity>
                     <Text style={styles.emptyMembersText}>No members yet</Text>
@@ -524,6 +536,10 @@ export default function PlanningTrip({ navigation, route }: any) {
                   <Pressable
                     onPress={() => toggleExpand(dayId)}
                     style={isExpanded ? styles.dayHeaderExpanded : styles.dayHeaderCollapsed}
+                    accessibilityLabel={`${dayTitle}, ${day.date}, ${day.locations.length} locations`}
+                    accessibilityRole="button"
+                    accessibilityState={{ expanded: isExpanded }}
+                    accessibilityHint={isExpanded ? "Tap to collapse day details" : "Tap to expand day details"}
                   >
                     <View style={isExpanded ? styles.dayBadgeExpanded : styles.dayBadgeCollapsed}>
                       <Text style={isExpanded ? styles.dayBadgeTextExpanded : styles.dayBadgeTextCollapsed}>

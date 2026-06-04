@@ -169,6 +169,8 @@ export default function LoginScreen({ navigation }: any) {
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
                                 autoCapitalize="none"
+                                accessibilityLabel="Email address"
+                                accessibilityHint="Enter your email address to log in"
                             />
                         </View>
 
@@ -193,11 +195,16 @@ export default function LoginScreen({ navigation }: any) {
                                 value={password}
                                 onChangeText={setPassword}
                                 autoCapitalize="none"
+                                accessibilityLabel="Password"
+                                accessibilityHint="Enter your password to log in"
                             />
 
                             <TouchableOpacity
                                 onPress={() => setPasswordVisible(!isPasswordVisible)}
                                 style={{ paddingLeft: 10 }}
+                                accessibilityLabel={isPasswordVisible ? "Hide password" : "Show password"}
+                                accessibilityRole="button"
+                                accessibilityHint={isPasswordVisible ? "Tap to hide password" : "Tap to show password"}
                             >
                                 <Image
                                     source={isPasswordVisible
@@ -210,13 +217,23 @@ export default function LoginScreen({ navigation }: any) {
 
                         {/* --- QUÊN MẬT KHẨU --- */}
                         <View style={{ alignItems: 'flex-end', paddingTop: 12 }}>
-                            <TouchableOpacity onPress={handleForgotPassword}>
+                            <TouchableOpacity
+                                onPress={handleForgotPassword}
+                                accessibilityLabel="Forgot password"
+                                accessibilityRole="link"
+                                accessibilityHint="Tap to reset your password">
                                 <Text style={styles.linkText}>Forgot Password</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
                     <View style={[styles.containerChild, { marginTop: 20, alignItems: 'center' }]}>
-                        <Pressable style={styles.button} onPress={handleLogin} disabled={submitting}>
+                        <Pressable
+                            style={styles.button}
+                            onPress={handleLogin}
+                            disabled={submitting}
+                            accessibilityLabel="Log in"
+                            accessibilityRole="button"
+                            accessibilityHint="Tap to sign in to your account">
                             {submitting ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
@@ -237,7 +254,8 @@ export default function LoginScreen({ navigation }: any) {
                                 style={styles.buttonGG_Apple}
                                 onPress={() => handleOAuth('google')}
                                 disabled={oauthSubmitting}
-                            >
+                                accessibilityLabel="Sign in with Google"
+                                accessibilityRole="button">
                                 <View style={styles.containerImageGG_Apple}>
                                     {oauthSubmitting ? (
                                         <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />
@@ -250,7 +268,11 @@ export default function LoginScreen({ navigation }: any) {
                                 </View>
                             </Pressable>
 
-                            <Pressable style={styles.buttonGG_Apple} onPress={() => handleOAuth('apple')}>
+                            <Pressable
+                                style={styles.buttonGG_Apple}
+                                onPress={() => handleOAuth('apple')}
+                                accessibilityLabel="Sign in with Apple"
+                                accessibilityRole="button">
                                 <View style={styles.containerImageGG_Apple}>
                                     <Image source={require('../../../../assets/images/apple-icon.png')} style={{ width: 20, height: 20 }} />
                                     <Text style={styles.buttonGG_AppleText}>Apple</Text>
@@ -260,9 +282,14 @@ export default function LoginScreen({ navigation }: any) {
 
                         <Text style={[styles.text, { marginTop: 40, color: '#ccc2c2', marginBottom: 40 }]}>
                             Don't have an account?{' '}
-                            <Text style={styles.linkText} onPress={() => navigation.navigate("Register")}>
-                                Register
-                            </Text>
+                            <Pressable
+                                onPress={() => navigation.navigate("Register")}
+                                accessibilityLabel="Register"
+                                accessibilityRole="link">
+                                <Text style={styles.linkText}>
+                                    Register
+                                </Text>
+                            </Pressable>
                         </Text>
                     </View>
 
