@@ -10,6 +10,7 @@ import { FloatingChatbot } from '@/components/chatbot/FloatingChatbot';
 import { AuthProvider, useAuth } from './(tabs)/context/AuthContext';
 import { ThemeProvider as AppThemeProvider } from './(tabs)/context/ThemeContext';
 import { ErrorBoundary } from './(tabs)/components/ErrorBoundary';
+import '../lib/i18n';
 
 export const unstable_settings = {
   anchor: '(tabs)',

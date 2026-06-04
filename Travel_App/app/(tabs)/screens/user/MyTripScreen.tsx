@@ -12,6 +12,7 @@ import {
   Text,
   View,
 } from "react-native";
+import { useTranslation } from 'react-i18next';
 import { getApiErrorMessage } from "../../../../lib/api/client";
 import { ApiTrip, deleteTrip, fetchMyTrips, leaveTrip, mapApiTripToDraft } from "../../../../lib/api/trips";
 import { colors } from "../../common/colors";
@@ -73,6 +74,7 @@ function formatApiDateRange(startDate?: string, endDate?: string, fallback?: str
     })}`;
   }
 
+  // Note: This will be translated when component has access to i18n
   return "Choose your travel dates";
 }
 
@@ -278,6 +280,7 @@ function TripCard({
 }
 
 export default function MyTripScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const { theme } = useTheme();
   const [upcomingTripList, setUpcomingTripList] = useState<Trip[]>([]);
@@ -471,7 +474,7 @@ export default function MyTripScreen({ navigation }: any) {
 
   const writeDiaryTrip = () => {
     if (!featuredTrip) {
-      Alert.alert("No trip selected", "Open a trip before writing a diary.");
+      Alert.alert(t('trip.noTripSelected'), t('trip.openTripFirst'));
       return;
     }
 
@@ -560,14 +563,14 @@ export default function MyTripScreen({ navigation }: any) {
     const isOwner = currentUserId !== undefined && String(trip.ownerId) === String(currentUserId);
 
     Alert.alert(
-      isOwner ? "Delete trip" : "Leave trip",
+      isOwner ? t('trip.deleteTripTitle') : t('trip.leaveTripTitle'),
       isOwner
-        ? `Delete "${trip.title}"? This cannot be undone.`
-        : `Leave "${trip.title}"? You can join again only if you are invited back.`,
+        ? t('trip.deleteTripMessage', { title: trip.title })
+        : t('trip.leaveTripMessage', { title: trip.title }),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t('trip.cancel'), style: "cancel" },
         {
-          text: isOwner ? "Delete" : "Leave",
+          text: isOwner ? t('trip.delete') : t('trip.leave'),
           style: "destructive",
           onPress: () => {
             void deleteTripFromList(trip);
@@ -581,6 +584,7 @@ export default function MyTripScreen({ navigation }: any) {
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>My Trips</Text>
+        <Text style={styles.title}>{t('trip.myTrips')}</Text>
         <Pressable
           style={styles.iconButton}
           onPress={createEmptyPlanningTrip}
@@ -619,6 +623,9 @@ export default function MyTripScreen({ navigation }: any) {
           <Ionicons name="bulb-outline" size={20} color={theme.textOnPrimary} style={{ marginRight: 8 }} />
           <Text style={{ color: theme.textOnPrimary, fontWeight: '600', fontSize: 16 }}>
             Lập lịch thông minh
+          <Ionicons name="bulb-outline" size={20} color="white" style={{ marginRight: 8 }} />
+          <Text style={{ color: 'white', fontWeight: '600', fontSize: 16 }}>
+            {t('trip.smartPlanning')}
           </Text>
         </Pressable>
 
@@ -633,7 +640,7 @@ export default function MyTripScreen({ navigation }: any) {
                 <View style={styles.featuredOverlay} />
                 <View style={styles.featuredInfo}>
                   <View style={styles.featuredBadge}>
-                    <Text style={styles.featuredBadgeText}>Current Trip</Text>
+                    <Text style={styles.featuredBadgeText}>{t('trip.currentTrip')}</Text>
                   </View>
                   <Text numberOfLines={1} style={[styles.featuredTripTitle, { color: theme.text }]}>
                     {featuredTrip.title}
@@ -654,6 +661,15 @@ export default function MyTripScreen({ navigation }: any) {
                     <Ionicons name="wallet-outline" size={14} color={theme.textOnPrimary} />
                     <Text numberOfLines={1} style={[styles.featuredMetaText, { color: theme.textOnPrimary }]}>
                       Total budget: VND: {formatVnd(featuredTrip.budget || 0)}
+                    <Ionicons name="bed-outline" size={14} color={colors.white} />
+                    <Text numberOfLines={1} style={styles.featuredMetaText}>
+                      {featuredTrip.hotel || t('trip.hotelNotSelected')} - {featuredTrip.duration || 1} {t('trip.days')}
+                    </Text>
+                  </View>
+                  <View style={styles.featuredMetaRow}>
+                    <Ionicons name="wallet-outline" size={14} color={colors.white} />
+                    <Text numberOfLines={1} style={styles.featuredMetaText}>
+                      {t('trip.totalBudget')} {formatVnd(featuredTrip.budget || 0)}
                     </Text>
                   </View>
                 </View>
@@ -669,7 +685,7 @@ export default function MyTripScreen({ navigation }: any) {
                     pressed && styles.buttonPressed,
                   ]}
                 >
-                  <Text style={styles.featuredPrimaryButtonText}>Plan Trip</Text>
+                  <Text style={styles.featuredPrimaryButtonText}>{t('trip.planTrip')}</Text>
                 </Pressable>
 
                 <Pressable
@@ -682,7 +698,7 @@ export default function MyTripScreen({ navigation }: any) {
                   ]}
                 >
                   <Text style={styles.featuredSecondaryButtonText}>
-                    Write Diary Trip
+                    {t('trip.writeDiaryTrip')}
                   </Text>
                 </Pressable>
               </View>
@@ -717,11 +733,14 @@ export default function MyTripScreen({ navigation }: any) {
             <View style={styles.tripState}>
               <ActivityIndicator color={theme.primary} />
               <Text style={[styles.tripStateText, { color: theme.text }]}>Loading trips...</Text>
+              <ActivityIndicator color={colors.primary} />
+              <Text style={styles.tripStateText}>{t('trip.loadingTrips')}</Text>
             </View>
           ) : tripLoadError ? (
             <Text style={[styles.tripErrorText, { color: theme.danger }]}>{tripLoadError}</Text>
           ) : !isLoadingTrips && trips.length === 0 ? (
             <Text style={[styles.tripStateText, { color: theme.text }]}>No trips yet</Text>
+            <Text style={styles.tripStateText}>{t('trip.noTripsYet')}</Text>
           ) : (
             <FlatList
               data={trips}

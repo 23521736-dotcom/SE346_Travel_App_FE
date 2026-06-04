@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
+import { useTranslation } from 'react-i18next';
 import { oauthLogin } from '../../../../lib/api/auth';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import styles from './LoginScreen.styles';
@@ -26,6 +27,7 @@ const GOOGLE_REDIRECT_URI = AuthSession.makeRedirectUri({
 });
 
 export default function LoginScreen({ navigation }: any) {
+    const { t } = useTranslation();
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -39,7 +41,7 @@ export default function LoginScreen({ navigation }: any) {
 
     const handleGoogleOAuth = async () => {
         if (!GOOGLE_CLIENT_ID) {
-            Alert.alert('Loi cau hinh', 'Google Client ID chua duoc cau hinh');
+            Alert.alert(t('auth.configError'), t('auth.googleNotConfigured'));
             return;
         }
 
@@ -70,10 +72,10 @@ export default function LoginScreen({ navigation }: any) {
                 const authResponse = await oauthLogin('google', idToken);
 
                 Alert.alert(
-                    'Dang nhap thanh cong',
+                    t('auth.loginSuccess'),
                     authResponse.isNewUser
-                        ? 'Tai khoan moi da duoc tao!'
-                        : 'Chao mung tro lai!'
+                        ? t('auth.newAccountCreated')
+                        : t('auth.welcomeBackMessage')
                 );
             } else if (authResult.type === 'cancel') {
                 // User cancelled - do nothing
@@ -84,10 +86,10 @@ export default function LoginScreen({ navigation }: any) {
             console.error('Google OAuth error:', err);
             const msg = getApiErrorMessage(err);
             Alert.alert(
-                'Dang nhap Google that bai',
+                t('auth.loginFailed'),
                 msg.includes('NOT_CONFIGURED') || msg.includes('OAUTH')
-                    ? 'Google OAuth chua duoc cau hinh dung'
-                    : msg || 'Co loi xay ra, vui long thu lai'
+                    ? t('auth.googleOAuthNotConfigured')
+                    : msg || t('auth.errorOccurred')
             );
         } finally {
             setOauthSubmitting(false);
@@ -95,7 +97,7 @@ export default function LoginScreen({ navigation }: any) {
     };
 
     const handleAppleOAuth = async () => {
-        Alert.alert('Chua ho tro', 'Apple Sign In chua duoc ho tro');
+        Alert.alert(t('auth.appleNotSupported'), t('auth.appleSignInNotSupported'));
     };
 
     const handleOAuth = async (provider: 'google' | 'apple') => {
@@ -108,7 +110,7 @@ export default function LoginScreen({ navigation }: any) {
 
     const handleLogin = async () => {
         if (!email.trim() || !password) {
-            Alert.alert('Loi', 'Vui long nhap email va mat khau');
+            Alert.alert(t('common.error'), t('auth.enterEmailPassword'));
             return;
         }
         setSubmitting(true);
@@ -118,9 +120,9 @@ export default function LoginScreen({ navigation }: any) {
             const msg = getApiErrorMessage(err);
             const text =
                 msg === 'INVALID_CREDENTIALS'
-                    ? 'Email hoac mat khau khong dung'
+                    ? t('auth.invalidCredentials')
                     : msg;
-            Alert.alert('Dang nhap that bai', text);
+            Alert.alert(t('auth.loginFailed'), text);
         } finally {
             setSubmitting(false);
         }
@@ -141,10 +143,10 @@ export default function LoginScreen({ navigation }: any) {
                             style={{ height: 70, width: 70, marginBottom: 5 }}
                         />
                         <Text style={{ fontWeight: '800', fontSize: 32, textAlign: 'center', color: '#ffffff' }}>
-                            Welcome Back
+                            {t('auth.welcomeBack')}
                         </Text>
                         <Text style={{ marginTop: 6, textAlign: 'center', color: '#9ca3af', fontSize: 16 }}>
-                            Log in to continue your adventure
+                            {t('auth.loginToContinue')}
                         </Text>
                     </View>
 
@@ -156,7 +158,7 @@ export default function LoginScreen({ navigation }: any) {
                                 style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
                             />
                             <TextInput
-                                placeholder="Email Address"
+                                placeholder={t('auth.emailPlaceholder')}
                                 style={{
                                     flex: 1,
                                     color: '#ffffff',
@@ -164,7 +166,7 @@ export default function LoginScreen({ navigation }: any) {
                                     fontWeight: '500',
                                     letterSpacing: 0.5
                                 }}
-                                placeholderTextColor="#94a3b8" // Đồng bộ màu chữ mờ với icon
+                                placeholderTextColor="#94a3b8"
                                 value={email}
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
@@ -182,7 +184,7 @@ export default function LoginScreen({ navigation }: any) {
                             />
 
                             <TextInput
-                                placeholder="Password"
+                                placeholder={t('auth.passwordPlaceholder')}
                                 secureTextEntry={!isPasswordVisible}
                                 style={{
                                     flex: 1,
@@ -191,7 +193,7 @@ export default function LoginScreen({ navigation }: any) {
                                     fontWeight: '500',
                                     letterSpacing: 0.5
                                 }}
-                                placeholderTextColor="#94a3b8" // Đồng bộ màu chữ mờ với icon
+                                placeholderTextColor="#94a3b8"
                                 value={password}
                                 onChangeText={setPassword}
                                 autoCapitalize="none"
@@ -223,6 +225,8 @@ export default function LoginScreen({ navigation }: any) {
                                 accessibilityRole="link"
                                 accessibilityHint="Tap to reset your password">
                                 <Text style={styles.linkText}>Forgot Password</Text>
+                            <TouchableOpacity onPress={handleForgotPassword}>
+                                <Text style={styles.linkText}>{t('auth.forgotPassword')}</Text>
                             </TouchableOpacity>
                         </View>
                     </View>
@@ -237,7 +241,7 @@ export default function LoginScreen({ navigation }: any) {
                             {submitting ? (
                                 <ActivityIndicator color="#fff" />
                             ) : (
-                                <Text style={styles.buttonText}>Log in</Text>
+                                <Text style={styles.buttonText}>{t('auth.login')}</Text>
                             )}
                         </Pressable>
                     </View>
@@ -245,7 +249,7 @@ export default function LoginScreen({ navigation }: any) {
                     <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20 }}>
                         <View style={styles.lineContainer}>
                             <View style={styles.line} />
-                            <Text style={styles.text}>Or continue with</Text>
+                            <Text style={styles.text}>{t('auth.orContinueWith')}</Text>
                             <View style={styles.line} />
                         </View>
 
@@ -263,7 +267,7 @@ export default function LoginScreen({ navigation }: any) {
                                         <Image source={require('../../../../assets/images/google-icon.png')} style={{ width: 20, height: 20 }} />
                                     )}
                                     <Text style={styles.buttonGG_AppleText}>
-                                        {oauthSubmitting ? 'Dang dang nhap...' : 'Google'}
+                                        {oauthSubmitting ? t('auth.loggingIn') : 'Google'}
                                     </Text>
                                 </View>
                             </Pressable>
@@ -290,6 +294,10 @@ export default function LoginScreen({ navigation }: any) {
                                     Register
                                 </Text>
                             </Pressable>
+                            {t('auth.noAccount')}{' '}
+                            <Text style={styles.linkText} onPress={() => navigation.navigate("Register")}>
+                                {t('auth.register')}
+                            </Text>
                         </Text>
                     </View>
 

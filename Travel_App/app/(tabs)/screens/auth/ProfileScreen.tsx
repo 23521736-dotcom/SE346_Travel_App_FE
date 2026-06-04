@@ -8,6 +8,7 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
 import styles from './ProfileScreen.styles';
 
@@ -21,6 +22,7 @@ interface SettingItemProps {
 const DEFAULT_AVATAR =
   'https://th.bing.com/th/id/OIP.iY6OLSZImubhw9Yiwg6OuAHaHa?w=186&h=186&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3';
 export default function ProfileScreen({ navigation }: any) {
+  const { t } = useTranslation();
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(true);
   const { user } = useAuth();
   const displayName = user?.fullName || user?.name || 'User';
@@ -88,33 +90,33 @@ export default function ProfileScreen({ navigation }: any) {
           ) : null}
         </View>
         {/* --- ACCOUNT SETTINGS --- */}
-        <Text style={styles.sectionTitle}>ACCOUNT SETTINGS</Text>
+        <Text style={styles.sectionTitle}>{t('profile.accountSettings')}</Text>
         <SettingItem
-          title="Edit Personal Information"
+          title={t('profile.editPersonalInformation')}
           iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1077/1077063.png' }}
           iconBgColor="#e5f3fa"
           onPress={() => navigation.navigate("Edit Profile")}
         />
 
         {/* --- PREFERENCES --- */}
-        <Text style={styles.sectionTitle}>PREFERENCES</Text>
+        <Text style={styles.sectionTitle}>{t('profile.preferences')}</Text>
         <SettingItem
-          title="Notifications"
+          title={t('profile.notifications')}
           iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1827/1827370.png' }}
           iconBgColor="#e5f3fa"
           hasSwitch={true}
         />
 
         {/* --- SUPPORT & LEGAL --- */}
-        <Text style={styles.sectionTitle}>SUPPORT & LEGAL</Text>
+        <Text style={styles.sectionTitle}>{t('profile.supportLegal')}</Text>
         <SettingItem
-          title="Terms of Service"
+          title={t('profile.terms')}
           iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/2912/2912760.png' }}
           iconBgColor="#f1f5f9"
           onPress={() => navigation.navigate('Terms of Service')}
         />
         <SettingItem
-          title="Privacy Policy"
+          title={t('profile.privacy')}
           iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1161/1161388.png' }}
           iconBgColor="#f1f5f9"
           onPress={() => navigation.navigate('Privacy Policy')}
@@ -125,7 +127,7 @@ export default function ProfileScreen({ navigation }: any) {
             source={{ uri: 'https://cdn-icons-png.flaticon.com/128/1828/1828427.png' }}
             style={styles.logoutIcon}
           />
-          <Text style={styles.logoutText}>Logout</Text>
+          <Text style={styles.logoutText}>{t('profile.logout')}</Text>
         </TouchableOpacity>
       </ScrollView>
     </View>

@@ -17,6 +17,7 @@ import {
     TouchableWithoutFeedback,
     View,
 } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { colors } from "../../common/colors";
 import { useTheme } from '../../context/ThemeContext';
 import styles from './HomeScreen.styles';
@@ -145,6 +146,7 @@ const renderPlaceCard = (item: Place, navigation: any, hasPromotion: boolean, th
 };
 export default function HomeScreen({ navigation }: any) {
     const { theme } = useTheme();
+    const { t } = useTranslation();
     const [activeCategory, setActiveCategory] = useState('All');
     const [places, setPlaces] = useState<Place[]>([]);
     const [promotionPlaceIds, setPromotionPlaceIds] = useState<Set<string>>(new Set());
@@ -277,11 +279,11 @@ export default function HomeScreen({ navigation }: any) {
             const body = plan.suggestions
                 .map((s, i) => `${i + 1}. ${s.title}\n${s.description}`)
                 .join('\n\n');
-            Alert.alert('Goi y chuyen di', `${body}\n\n${plan.note}`);
-            alert("Dựa vào 3 thông tin địa điểm, budget, thời gian dùng AI để set 1 trip phù hợp");
+            Alert.alert(t('home.tripSuggestion'), `${body}\n\n${plan.note}`);
+            alert(t('home.aiTripAlert'));
             setModalVisible(false);
         } catch (err) {
-            Alert.alert('Loi', getApiErrorMessage(err));
+            Alert.alert(t('home.error'), getApiErrorMessage(err));
         } finally {
             setAiLoading(false);
         }
@@ -294,6 +296,10 @@ export default function HomeScreen({ navigation }: any) {
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Ionicons name="location-sharp" size={18} color={theme.primary} />
                         <Text style={{ fontWeight: 'bold', fontSize: 20, color: theme.text }}> Near me</Text>
+                    <Text style={{ color: colors.textSecondary }}> {t('home.location')}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                        <Ionicons name="location-sharp" size={18} color={colors.primary} />
+                        <Text style={{ fontWeight: 'bold', fontSize: 20 }}> {t('home.nearMe')}</Text>
                         <Pressable
                             onPress={() => alert('pressed down')}
                             accessibilityLabel="Change location"
@@ -313,6 +319,9 @@ export default function HomeScreen({ navigation }: any) {
                             placeholder="Where to next ?"
                         placeholderTextColor={theme.textMuted}
                         style={[styles.searchInput, { backgroundColor: theme.surface, borderColor: theme.borderLight, color: theme.text }]}
+                            placeholder={t('home.searchPlaceholder')}
+                        placeholderTextColor="#9ca3af"
+                        style={styles.searchInput}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             accessibilityLabel="Search destinations"
@@ -374,7 +383,7 @@ export default function HomeScreen({ navigation }: any) {
                         accessibilityRole="button"
                         accessibilityState={{ selected: minRating === undefined }}>
                         <View style={styles.containerCategoryButton}>
-                            <Text style={styles.filterText}>All Ratings</Text>
+                            <Text style={styles.filterText}>{t('home.allRatings')}</Text>
                         </View>
                     </Pressable>
                     <Pressable
@@ -404,7 +413,7 @@ export default function HomeScreen({ navigation }: any) {
                         accessibilityRole="button"
                         accessibilityState={{ selected: maxPrice === 1 }}>
                         <View style={styles.containerCategoryButton}>
-                            <Text style={styles.filterText}>$ Budget</Text>
+                            <Text style={styles.filterText}>{t('home.budget')}</Text>
                         </View>
                     </Pressable>
                     <Pressable
@@ -414,7 +423,7 @@ export default function HomeScreen({ navigation }: any) {
                         accessibilityRole="button"
                         accessibilityState={{ selected: maxPrice === 2 }}>
                         <View style={styles.containerCategoryButton}>
-                            <Text style={styles.filterText}>$$ Moderate</Text>
+                            <Text style={styles.filterText}>{t('home.moderate')}</Text>
                         </View>
                     </Pressable>
                 </ScrollView>
@@ -438,6 +447,11 @@ export default function HomeScreen({ navigation }: any) {
                                 </Text>
                                 <Text style={[styles.linkText, { fontSize: 12, color: theme.textMuted }]}>
                                     Get personalized trip ideas
+                                <Text style={[styles.categoryButtonText, { flex: 1, fontSize: 15 }]}>
+                                    {aiLoading ? t('home.planning') : t('home.planWithAI')}
+                                </Text>
+                                <Text style={[styles.linkText, { fontSize: 12, color: 'gray' }]}>
+                                    {t('home.getPersonalizedIdeas')}
                                 </Text>
                             </View>
                             <Image source={require('../../../../assets/images/right-arrow-icon.png')}
@@ -460,6 +474,11 @@ export default function HomeScreen({ navigation }: any) {
                                 accessibilityLabel="View all recommendations"
                                 accessibilityRole="link">
                                 <Text style={{ color: colors.primary, fontWeight: '500', fontSize: 13 }}>Xem tất cả</Text>
+                            <Text style={{ fontWeight: '600', fontSize: 18 }}>
+                                {t('home.popularThisWeek')}
+                            </Text>
+                            <Pressable onPress={() => navigation.navigate('Recommendations')}>
+                                <Text style={{ color: colors.primary, fontWeight: '500', fontSize: 13 }}>{t('common.seeAll')}</Text>
                             </Pressable>
                         </View>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 10 }}>
@@ -492,6 +511,8 @@ export default function HomeScreen({ navigation }: any) {
                 <View style={{ flexDirection: 'row', alignItems: 'center', padding: 10 }}>
                     <Text style={{ flex: 1, fontWeight: '500', fontSize: 23, color: theme.text }}>
                         Popular this week
+                    <Text style={{ flex: 1, fontWeight: '500', fontSize: 23 }}>
+                        {t('home.popularThisWeek')}
                     </Text>
                 </View>
             </View>
@@ -524,6 +545,8 @@ export default function HomeScreen({ navigation }: any) {
                         !loading ? (
                             <Text style={{ textAlign: 'center', marginTop: 20, color: theme.textSecondary }}>
                                 Khong co dia diem nao
+                            <Text style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>
+                                {t('home.noPlaces')}
                             </Text>
                         ) : null
                     }
@@ -552,6 +575,8 @@ export default function HomeScreen({ navigation }: any) {
                                     <View style={styles.headerTitleRow}>
                                         <Feather name="map-pin" size={20} color={theme.primary} />
                                         <Text style={[styles.modalTitle, { color: theme.text }]}>Add New Destination</Text>
+                                        <Feather name="map-pin" size={20} color="#0EB4D3" />
+                                        <Text style={styles.modalTitle}>{t('home.addNewDestination')}</Text>
                                     </View>
                                     <Pressable onPress={() => setModalVisible(false)} style={styles.closeButton}>
                                         <Feather name="x" size={24} color={theme.textSecondary} />
@@ -566,26 +591,26 @@ export default function HomeScreen({ navigation }: any) {
 
                                 <View style={styles.formContainer}>
                                     <CustomInput
-                                        label="Destination"
+                                        label={t('home.destination')}
                                         iconName="search"
-                                        placeholder="Where do you want to go?"
+                                        placeholder={t('home.destinationPlaceholder')}
                                         value={destination}
                                         onChangeText={setDestination}
                                         theme={theme}
                                     />
                                     <CustomInput
-                                        label="Estimated Budget"
+                                        label={t('home.estimatedBudget')}
                                         iconName="dollar-sign"
-                                        placeholder="0.00"
+                                        placeholder={t('home.budgetPlaceholder')}
                                         keyboardType="numeric"
                                         value={budget}
                                         onChangeText={setBudget}
                                         theme={theme}
                                     />
                                     <CustomInput
-                                        label="Duration (Days)"
+                                        label={t('home.durationDays')}
                                         iconName="clock"
-                                        placeholder="Days"
+                                        placeholder={t('home.daysPlaceholder')}
                                         keyboardType="numeric"
                                         value={duration}
                                         onChangeText={setDuration}
@@ -610,6 +635,7 @@ export default function HomeScreen({ navigation }: any) {
                                         accessibilityRole="button"
                                         accessibilityHint="Clear all inputs and close modal">
                                         <Text style={styles.cancelButtonText}>Cancel</Text>
+                                        <Text style={styles.cancelButtonText}>{t('common.cancel')}</Text>
                                     </Pressable>
 
                                     <Pressable
@@ -620,7 +646,7 @@ export default function HomeScreen({ navigation }: any) {
                                         accessibilityRole="button"
                                         accessibilityHint="Tap to generate a personalized trip plan">
                                         <Text style={styles.primaryButtonText}>
-                                            {aiLoading ? 'Planning...' : '✨ Plan with AI'}
+                                            {aiLoading ? t('home.planning') : `✨ ${t('home.planWithAI')}`}
                                         </Text>
                                     </Pressable>
                                 </View>
