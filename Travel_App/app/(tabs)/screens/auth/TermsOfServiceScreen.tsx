@@ -21,72 +21,78 @@ export default function TermsOfServiceScreen({ navigation }: any) {
                 >
                     <Text style={styles.backText}>{'< Back'}</Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Terms of Service</Text>
+                <Text style={styles.headerTitle}>Điều khoản Dịch vụ</Text>
                 <View style={styles.placeholder} />
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
-                <Text style={styles.lastUpdated}>Last Updated: May 2026</Text>
+                <Text style={styles.lastUpdated}>Cập nhật lần cuối: Tháng 6 năm 2026</Text>
 
                 <Text style={styles.paragraph}>
-                    Welcome to our application. By downloading, accessing, or using the
-                    app, you agree to be bound by these Terms of Service. If you do not
-                    agree with any of these terms, please do not use the app.
+                    Chào mừng bạn đến với Travel App. Bằng cách tải xuống, truy cập hoặc sử dụng ứng dụng, bạn đồng ý bị ràng buộc bởi những Điều khoản Dịch vụ này. Nếu bạn không đồng ý với bất kỳ điều khoản nào, vui lòng không sử dụng ứng dụng.
                 </Text>
 
-                <Text style={styles.sectionTitle}>1. Acceptance of Terms</Text>
+                <Text style={styles.sectionTitle}>1. Chấp nhận điều khoản</Text>
                 <Text style={styles.paragraph}>
-                    By creating an account or using our services, you confirm that you
-                    have read, understood, and agree to be bound by these terms, as well
-                    as our Privacy Policy.
+                    Bằng cách tạo tài khoản hoặc sử dụng dịch vụ của chúng tôi, bạn xác nhận rằng bạn đã đọc, hiểu và đồng ý bị ràng buộc bởi các điều khoản này, cũng như Chính sách Quyền riêng tư của chúng tôi.
                 </Text>
 
-                <Text style={styles.sectionTitle}>2. User Accounts</Text>
+                <Text style={styles.sectionTitle}>2. Mô tả dịch vụ</Text>
                 <Text style={styles.paragraph}>
-                    • You are responsible for maintaining the confidentiality of your
-                    account credentials. {'\n'}
-                    • You agree to provide accurate information upon registration and
-                    update it if it changes. {'\n'}
-                    • You must notify us immediately if you suspect any unauthorized
-                    access to your account.
+                    Travel App là một ứng dụng du lịch cho phép người dùng:{'\n'}
+                    • Lên kế hoạch và tổ chức các chuyến đi cá nhân hoặc nhóm{'\n'}
+                    • Tìm kiếm và lưu trữ các địa điểm du lịch yêu thích{'\n'}
+                    • Chia sẻ trải nghiệm du lịch với bạn bè và người thân{'\n'}
+                    • Quản lý lịch trình và đặt phòng qua các đối tác của chúng tôi{'\n'}
+                    • Đánh giá và nhận xét về các địa điểm đã đến thăm
                 </Text>
 
-                <Text style={styles.sectionTitle}>3. Privacy & Data</Text>
+                <Text style={styles.sectionTitle}>3. Tài khoản người dùng</Text>
                 <Text style={styles.paragraph}>
-                    We respect your privacy. Any personal information you provide is
-                    collected, stored, and used in accordance with our Privacy Policy. We
-                    do not sell your personal data to third parties.
+                    • Bạn có trách nhiệm bảo mật thông tin đăng nhập tài khoản của mình.{'\n'}
+                    • Bạn đồng ý cung cấp thông tin chính xác khi đăng ký và cập nhật nếu có thay đổi.{'\n'}
+                    • Bạn phải thông báo ngay cho chúng tôi nếu nghi ngờ có bất kỳ truy cập trái phép nào vào tài khoản của bạn.{'\n'}
+                    • Mỗi người dùng được phép tạo một tài khoản cá nhân. Việc tạo nhiều tài khoản có thể dẫn đến khóa tất cả các tài khoản liên quan.
                 </Text>
 
-                <Text style={styles.sectionTitle}>4. Prohibited Conduct</Text>
+                <Text style={styles.sectionTitle}>4. Quy tắc sử dụng</Text>
                 <Text style={styles.paragraph}>
-                    While using the app, you agree NOT to:{'\n'}
-                    • Use the services for any illegal or unauthorized purpose.{'\n'}
-                    • Attempt to interfere with, disrupt, or gain unauthorized access to
-                    our servers or networks.{'\n'}
-                    • Copy, modify, or distribute our copyrighted materials without
-                    permission.
+                    Khi sử dụng ứng dụng, bạn đồng ý KHÔNG:{'\n'}
+                    • Sử dụng dịch vụ cho bất kỳ mục đích bất hợp pháp hoặc trái phép.{'\n'}
+                    • Cố gắng can thiệp, làm gián đoạn hoặc truy cập trái phép vào máy chủ hoặc mạng của chúng tôi.{'\n'}
+                    • Sao chép, sửa đổi hoặc phân phối tài liệu có bản quyền của chúng tôi mà không có phép.{'\n'}
+                    • Đăng tải nội dung lừa đảo, vi phạm, đe dọa hoặc xúc phạm người dùng khác.{'\n'}
+                    • Sử dụng ứng dụng để thu thập dữ liệu về người dùng khác mà không có sự đồng ý.
                 </Text>
 
-                <Text style={styles.sectionTitle}>5. Disclaimer of Warranties</Text>
+                <Text style={styles.sectionTitle}>5. Nội dung do người dùng tạo</Text>
                 <Text style={styles.paragraph}>
-                    The app is provided on an "as is" and "as available" basis. We do not
-                    warrant that the app will be uninterrupted, error-free, or completely
-                    secure. We shall not be liable for any damages arising from your use
-                    or inability to use the app.
+                    • Bạn giữ quyền sở hữu đối với nội dung bạn đăng tải trên ứng dụng.{'\n'}
+                    • Bằng cách đăng tải nội dung, bạn cấp cho chúng tôi quyền sử dụng, hiển thị và phân phối nội dung đó để cung cấp dịch vụ.{'\n'}
+                    • Bạn cam kết rằng bạn có quyền đăng tải nội dung đó và nó không vi phạm quyền của bên thứ ba.{'\n'}
+                    • Chúng tôi bảo lưu quyền xóa bất kỳ nội dung nào vi phạm điều khoản này.
                 </Text>
 
-                <Text style={styles.sectionTitle}>6. Modifications</Text>
+                <Text style={styles.sectionTitle}>6. Quyền sở hữu trí tuệ</Text>
                 <Text style={styles.paragraph}>
-                    We reserve the right to modify or update these terms at any time.
-                    Changes will be effective immediately upon posting. Your continued use
-                    of the app constitutes acceptance of the modified terms.
+                    Ứng dụng, thiết kế, logo và tất cả nội dung có trong ứng dụng thuộc sở hữu của Travel App và được bảo vệ bởi luật bản quyền quốc tế. Bạn không được sử dụng bất kỳ thương hiệu, logo hoặc nội dung nào của chúng tôi mà không có sự cho phép bằng văn bản.
                 </Text>
 
-                <Text style={styles.sectionTitle}>7. Contact Us</Text>
+                <Text style={styles.sectionTitle}>7. Giới hạn trách nhiệm</Text>
                 <Text style={styles.paragraph}>
-                    If you have any questions or concerns regarding these Terms of
-                    Service, please contact our Support team through the app.
+                    Ứng dụng được cung cấp trên cơ sở "nguyên trạng" và "có sẵn". Chúng tôi không bảo đảm rằng ứng dụng sẽ không bị gián đoạn, không có lỗi hoặc hoàn toàn an toàn. Chúng tôi không chịu trách nhiệm về bất kỳ thiệt hại nào phát sinh từ việc sử dụng hoặc không thể sử dụng ứng dụng, bao gồm nhưng không giới hạn thiệt hại gián tiếp, ngẫu nhiên hoặc hậu quả.
+                </Text>
+
+                <Text style={styles.sectionTitle}>8. Thay đổi điều khoản</Text>
+                <Text style={styles.paragraph}>
+                    Chúng tôi bảo lưu quyền sửa đổi hoặc cập nhật các điều khoản này bất kỳ lúc nào. Thay đổi sẽ có hiệu lực ngay lập tức khi được đăng tải. Việc bạn tiếp tục sử dụng ứng dụng thể hiện sự chấp nhận các điều khoản đã sửa đổi.
+                </Text>
+
+                <Text style={styles.sectionTitle}>9. Liên hệ</Text>
+                <Text style={styles.paragraph}>
+                    Nếu bạn có bất kỳ câu hỏi hoặc lo ngại nào về Điều khoản Dịch vụ này, vui lòng liên hệ với chúng tôi qua:{'\n'}
+                    Email: travelapp.support@gmail.com{'\n'}
+                    Chúng tôi sẽ cố gắng phản hồi trong vòng 2-3 ngày làm việc.
                 </Text>
             </ScrollView>
         </SafeAreaView>

@@ -26,7 +26,6 @@ export default function ForgotPasswordScreen_OTP({ navigation, route }: any) {
     };
 
     const handleVerify = () => {
-        console.log('Verifying code:', code);
         navigation.navigate('ForgotPassword_resetPw', { email, code });
     };
 

@@ -20,7 +20,6 @@ export default function ForgotPasswordScreen_resetPw({ navigation }: any) {
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handleResetPassword = () => {
-        console.log('Resetting password...');
         navigation.navigate('Login');
     };
 
