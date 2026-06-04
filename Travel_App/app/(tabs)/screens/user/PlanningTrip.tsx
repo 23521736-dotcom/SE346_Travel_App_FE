@@ -392,7 +392,7 @@ export default function PlanningTrip({ navigation, route }: any) {
                 <Feather name="edit-2" size={14} color="#0EB4D3" />
                 <Text style={styles.modifyBtnText}>Modify</Text>
               </Pressable>
-              {/* <Pressable
+              <Pressable
                 onPress={confirmDeleteTrip}
                 disabled={isDeletingTrip || isLoadingRouteTrip}
                 style={({ pressed }) => [
@@ -409,7 +409,7 @@ export default function PlanningTrip({ navigation, route }: any) {
                 <Text style={styles.deleteTripText}>
                   {isDeletingTrip ? 'Deleting' : 'Delete'}
                 </Text>
-              </Pressable> */}
+              </Pressable>
             </View>
           </View>
 

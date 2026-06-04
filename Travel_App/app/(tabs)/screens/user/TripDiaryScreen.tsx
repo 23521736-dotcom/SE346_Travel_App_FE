@@ -15,6 +15,7 @@ import { getApiErrorMessage } from "../../../../lib/api/client";
 import { deleteTripDiaryEntry, fetchTripDiary, TripDiaryEntry } from "../../../../lib/api/diary";
 import { colors } from "../../common/colors";
 import styles from "./TripDiaryScreen.styles";
+import VideoSlideshowModal from "../../../../components/VideoSlideshowModal";
 
 const fallbackHeroImage =
   "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=1200&auto=format&fit=crop";
@@ -142,6 +143,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
   const [isLoading, setIsLoading] = useState(false);
   const [deletingEntryId, setDeletingEntryId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [showSlideshow, setShowSlideshow] = useState(false);
 
   const heroSubtitle = useMemo(() => {
     if (!entries.length) {
@@ -149,6 +151,10 @@ export default function TripDiaryScreen({ navigation, route }: any) {
     }
     return `${entries.length} ${entries.length === 1 ? "memory" : "memories"} saved${tripDate ? ` - ${tripDate}` : ""}`;
   }, [entries.length, tripDate]);
+
+  const allImages = useMemo(() => {
+    return entries.flatMap((entry) => entry.imageUrls);
+  }, [entries]);
 
   const loadDiary = useCallback(() => {
     let isMounted = true;
@@ -268,7 +274,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
         <View style={styles.heroCard}>
           <Image source={{ uri: heroImage }} style={styles.heroImage} />
           <View style={styles.heroOverlay}>
-            <Pressable style={styles.playButton} onPress={() => alert("Phát video")}>
+            <Pressable style={styles.playButton} onPress={() => setShowSlideshow(true)}>
               <Ionicons name="play" size={30} color={colors.white} />
             </Pressable>
           </View>
@@ -329,7 +335,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
         </View>
 
         <View style={styles.ctaWrap}>
-          <Pressable style={styles.ctaButton}>
+          <Pressable style={styles.ctaButton} onPress={() => setShowSlideshow(true)}>
             <MaterialCommunityIcons name="movie-open-play" size={22} color={colors.white} />
             <Text style={styles.ctaText}>Create Memory Video</Text>
           </Pressable>
@@ -338,6 +344,12 @@ export default function TripDiaryScreen({ navigation, route }: any) {
           </Text>
         </View>
       </ScrollView>
+
+      <VideoSlideshowModal
+        visible={showSlideshow}
+        images={allImages}
+        onClose={() => setShowSlideshow(false)}
+      />
     </View>
   );
 }
