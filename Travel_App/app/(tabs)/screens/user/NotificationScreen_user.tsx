@@ -22,6 +22,7 @@ import {
   listNotifications,
   markNotificationRead,
   type ApiNotificationItem,
+  type NotificationType,
   type NotificationTab,
 } from "../../../../lib/api/notification";
 import { REALTIME_EVENTS, type RealtimeNotificationPayload } from "../../../../lib/realtime/events";
@@ -30,12 +31,6 @@ import { colors } from "../../common/colors";
 import { useRealtimeNotifications } from "../../context/RealtimeContext";
 import styles from "./NotificationScreen_user.styles";
 
-type NotificationType =
-  | "invited"
-  | "upcoming"
-  | "promotion"
-  | "like_comment";
-
 type IconTone = "primary" | "secondary" | "tertiary" | "danger";
 
 type BaseNotificationItem = {
@@ -43,6 +38,8 @@ type BaseNotificationItem = {
   notificationId?: string;
   type: NotificationType;
   targetId?: string;
+  title?: string;
+  body?: string;
   time: string;
   unread?: boolean;
 };
@@ -72,11 +69,18 @@ type LikeCommentNotification = BaseNotificationItem & {
   placeName: string;
 };
 
+type PlaceReviewNotification = BaseNotificationItem & {
+  type: "place_approved" | "place_rejected";
+  placeName: string;
+  rejectionReason?: string;
+};
+
 type NotificationItem =
   | InvitedNotification
   | UpcomingNotification
   | PromotionNotification
-  | LikeCommentNotification;
+  | LikeCommentNotification
+  | PlaceReviewNotification;
 
 type NotificationDisplay = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -97,6 +101,8 @@ const SUPPORTED_TYPES: NotificationType[] = [
   "upcoming",
   "promotion",
   "like_comment",
+  "place_approved",
+  "place_rejected",
 ];
 
 function isSupportedNotificationType(type: unknown): type is NotificationType {
@@ -123,6 +129,17 @@ function formatNotificationDate(value?: string | null): string {
   return `${day}/${month}/${year} ${hours}:${minutes}`;
 }
 
+function stringValue(value: unknown): string | undefined {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    return trimmed || undefined;
+  }
+  if (typeof value === "number") {
+    return String(value);
+  }
+  return undefined;
+}
+
 function mapApiNotification(item: ApiNotificationItem): NotificationItem | null {
   if (!item.id || !isSupportedNotificationType(item.type)) {
     return null;
@@ -132,7 +149,9 @@ function mapApiNotification(item: ApiNotificationItem): NotificationItem | null 
     id: String(item.id),
     notificationId: item.notificationId ? String(item.notificationId) : undefined,
     type: item.type,
-    targetId: item.targetId ? String(item.targetId) : undefined,
+    targetId: stringValue(item.targetId) ?? stringValue(item.placeId),
+    title: stringValue(item.title),
+    body: stringValue(item.body),
     time: formatNotificationDate(item.time),
     unread: Boolean(item.unread),
   };
@@ -166,6 +185,19 @@ function mapApiNotification(item: ApiNotificationItem): NotificationItem | null 
         ...base,
         type: "like_comment",
         placeName: item.placeName ?? "this place",
+      };
+    case "place_approved":
+      return {
+        ...base,
+        type: "place_approved",
+        placeName: item.placeName ?? "your place",
+      };
+    case "place_rejected":
+      return {
+        ...base,
+        type: "place_rejected",
+        placeName: item.placeName ?? "your place",
+        rejectionReason: stringValue(item.rejectionReason),
       };
   }
 }
@@ -203,6 +235,24 @@ function getNotificationDisplay(item: NotificationItem): NotificationDisplay {
         iconTone: "danger",
         titleBeforeHighlight: "Someone liked your review",
         description: `See what they and others are saying about ${item.placeName}.`,
+      };
+    case "place_approved":
+      return {
+        icon: "checkmark-circle",
+        iconTone: "primary",
+        titleBeforeHighlight: item.title ?? "Place approved",
+        description:
+          item.body ??
+          `Your place "${item.placeName}" has been approved and is now visible to travelers.`,
+      };
+    case "place_rejected":
+      return {
+        icon: "alert-circle",
+        iconTone: "danger",
+        titleBeforeHighlight: item.title ?? "Place rejected",
+        description:
+          item.body ??
+          `Your place "${item.placeName}" was not approved.${item.rejectionReason ? ` Reason: ${item.rejectionReason}` : ""}`,
       };
   }
 }
@@ -261,6 +311,14 @@ function getNotificationRoute(item: NotificationItem): NotificationRoute {
         params: {
           placeId: targetId,
           placeName: item.placeName,
+        },
+      };
+    case "place_approved":
+    case "place_rejected":
+      return {
+        name: "Add Location",
+        params: {
+          placeId: targetId,
         },
       };
   }

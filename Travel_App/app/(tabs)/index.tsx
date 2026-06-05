@@ -103,6 +103,8 @@ const MainTabs = () => {
 };
 
 const OwnerTabs = () => {
+  const { unreadCount } = useRealtimeNotifications();
+
   return (
     <Tab.Navigator screenOptions={() => ({
       tabBarActiveTintColor: '#00B4D8',
@@ -156,6 +158,17 @@ const OwnerTabs = () => {
             <Ionicons name="person" size={size} color={color} />
           ),
         }} />
+      <Tab.Screen
+        name="Notifications"
+        component={NotificationScreenUser}
+        options={{
+          headerShown: false,
+          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
+          tabBarIcon: ({ color, size }) => (
+            <Ionicons name="notifications" size={size} color={color} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 };

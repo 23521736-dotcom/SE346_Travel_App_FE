@@ -5,17 +5,22 @@ export type NotificationType =
   | 'invited'
   | 'upcoming'
   | 'promotion'
-  | 'like_comment';
+  | 'like_comment'
+  | 'place_approved'
+  | 'place_rejected';
 
 export type ApiNotificationItem = {
   id: string;
   notificationId?: string;
   type: NotificationType;
   targetId?: string;
+  title?: string;
+  body?: string;
   username?: string;
   itineraryName?: string;
   days?: number;
   placeName?: string;
+  rejectionReason?: string;
   discount?: number;
   image?: string;
   time?: string;
