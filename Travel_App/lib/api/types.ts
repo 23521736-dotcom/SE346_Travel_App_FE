@@ -358,6 +358,25 @@ const normalizeImageUrls = (...values: unknown[]): string[] => {
     .filter(Boolean);
 };
 
+const getAvatarFallback = (...values: unknown[]): string => {
+  const seed = firstString(...values) || 'traveler';
+  return `https://i.pravatar.cc/150?u=${encodeURIComponent(seed)}`;
+};
+
+const normalizePlaceReview = (raw: any): PlaceReview => {
+  const name = firstString(raw?.Name, raw?.username, raw?.userName, raw?.name) || 'Traveler';
+  const userSeed = firstString(raw?.userId, raw?.UserId, raw?.authorId, raw?.id, name);
+
+  return {
+    ava: firstString(raw?.ava, raw?.avatar, raw?.userAvatar, raw?.avatarUrl) || getAvatarFallback(userSeed),
+    Name: name,
+    Date: firstString(raw?.Date, raw?.date, raw?.createdAt, raw?.updatedAt),
+    Content: firstString(raw?.Content, raw?.content, raw?.comment, raw?.text),
+    Rate: firstNumber(raw?.Rate, raw?.rating, raw?.Rating),
+    Pictures: normalizeImageUrls(raw?.Pictures, raw?.images, raw?.imageUrls, raw?.reviewImages, raw?.ReviewImages),
+  };
+};
+
 export function normalizePlaceListItem(raw: ApiFavoritePlaceItem): PlaceListItem {
   const id = firstString(raw.id, raw.Id, raw.placeId, raw._id);
   const name = firstString(raw.name, raw.Name);
@@ -417,7 +436,7 @@ export function normalizePlaceDetail(raw: any): PlaceDetail {
   const about = firstString(raw.about, raw.description);
   const location = firstString(raw.Location, raw.location, place.region);
   const placeImages = firstArray<string>(raw.images, raw.Images, raw.gallery);
-  const reviews = firstArray<PlaceReview>(raw.Reviews, raw.reviews);
+  const reviews = firstArray<any>(raw.Reviews, raw.reviews).map(normalizePlaceReview);
   const { latitude, longitude } = normalizeExternalCoordinates(raw);
 
   return {

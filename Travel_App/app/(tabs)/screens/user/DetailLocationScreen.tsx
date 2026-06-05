@@ -222,7 +222,17 @@ export default function DetailLocationScreen({ navigation, route }: any) {
         );
     }
 
-    const firstReview = place.Reviews[0];
+    const placeReviews = Array.isArray(place.Reviews) ? place.Reviews : [];
+    const firstReview = placeReviews[0];
+    const firstReviewPictures = Array.isArray(firstReview?.Pictures)
+        ? firstReview.Pictures.filter((picture): picture is string => typeof picture === 'string' && picture.trim().length > 0)
+        : [];
+    const firstReviewName = firstReview?.Name || 'Traveler';
+    const firstReviewAvatar =
+        typeof firstReview?.ava === 'string' && firstReview.ava.trim()
+            ? firstReview.ava
+            : `https://i.pravatar.cc/150?u=${encodeURIComponent(String(firstReviewName || place.Id || 'traveler'))}`;
+    const firstReviewRating = Number.isFinite(Number(firstReview?.Rate)) ? Number(firstReview?.Rate) : 0;
     const apiImages = Array.isArray((place as any).Images) ? (place as any).Images.filter(Boolean) : [];
     const normalizedImages = Array.isArray(place.images) ? place.images.filter(Boolean) : [];
     const placeImages = apiImages.length > 0
@@ -538,28 +548,28 @@ export default function DetailLocationScreen({ navigation, route }: any) {
                                 </Pressable>
                             </View>
 
-                            <PicturesContainer pictures={firstReview.Pictures} />
+                            <PicturesContainer pictures={firstReviewPictures} />
 
                             <View style={[styles.detailCard, { flexDirection: 'column', margin: 0, marginTop: 30, padding: 10, rowGap: 10 }]}>
                                 <View style={{ flexDirection: 'row' }}>
                                     <View style={[styles.imageFrame, { width: 60, height: 60, borderRadius: 30, borderWidth: 0 }]}>
                                         <CachedImage
-                                            uri={firstReview.ava}
+                                            uri={firstReviewAvatar}
                                             style={{ width: "100%", height: "100%" }}
                                             contentFit="cover" />
                                     </View>
                                     <View style={{ flexDirection: 'column', marginHorizontal: 10, justifyContent: 'center' }}>
                                         <Text style={{ fontSize: 20, fontWeight: '700' }}>
-                                            {firstReview.Name}
+                                            {firstReviewName}
                                         </Text>
                                         <Text style={{ color: '#353232da', fontWeight: '600' }}>
-                                            {firstReview.Date}
+                                            {firstReview.Date || ''}
                                         </Text>
                                     </View>
                                 </View>
-                                <RatingStartBar ratingValue={firstReview.Rate} size={20} />
+                                <RatingStartBar ratingValue={firstReviewRating} size={20} />
                                 <Text style={{ marginLeft: 5 }}>
-                                    {firstReview.Content}
+                                    {firstReview.Content || ''}
                                 </Text>
                             </View>
                         </View>

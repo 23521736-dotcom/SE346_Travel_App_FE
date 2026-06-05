@@ -38,6 +38,12 @@ function ReviewItem({
   onEdit: (review: ReviewListItem) => void;
   onDelete: (review: ReviewListItem) => void;
 }) {
+  const avatarUri =
+    typeof item.avatar === 'string' && item.avatar.trim()
+      ? item.avatar
+      : `https://i.pravatar.cc/150?u=${encodeURIComponent(String(item.userId ?? item.id ?? item.username ?? 'traveler'))}`;
+  const ratingValue = Number.isFinite(Number(item.Rate)) ? Number(item.Rate) : 0;
+
   const handlePress = () => {
     onLikeToggle(item.id);
   };
@@ -47,12 +53,12 @@ function ReviewItem({
       <View style={styles.reviewHeader}>
         <View style={styles.reviewAuthorRow}>
           <View style={[styles.avatarBorder, { width: 50, height: 50, overflow: 'hidden', borderRadius: 25 }]}>
-            <Image source={{ uri: item.avatar }} style={{ height: '100%', width: '100%' }} resizeMode='cover' />
+            <Image source={{ uri: avatarUri }} style={{ height: '100%', width: '100%' }} resizeMode='cover' />
           </View>
           <View style={styles.reviewAuthorInfo}>
             <Text style={styles.reviewUserName} numberOfLines={1}>{item.username}</Text>
             <View style={{ alignItems: 'flex-start', marginLeft: 0 }}>
-              <RatingStartBar ratingValue={item.Rate} size={20} />
+              <RatingStartBar ratingValue={ratingValue} size={20} />
             </View>
           </View>
         </View>

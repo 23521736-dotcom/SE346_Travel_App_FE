@@ -4,7 +4,7 @@ import { colors } from '../common/colors';
 import { commonStyles } from '../common/styles';
 
 interface PicturesContainerProps {
-    pictures: string[];
+    pictures?: string[] | null;
 }
 
 const styles = StyleSheet.create({
@@ -34,13 +34,18 @@ const styles = StyleSheet.create({
 export const PicturesContainer = ({ pictures }: PicturesContainerProps) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const validPictures = Array.isArray(pictures)
+    ? pictures
+        .map((pic) => (typeof pic === 'string' ? pic.trim() : ''))
+        .filter((pic): pic is string => pic.length > 0)
+    : [];
 
   const handleOpenImage = (url: string) => {
     setSelectedImage(url);
     setModalVisible(true);
   };
 
-  if (!pictures || pictures.length === 0) return null;
+  if (validPictures.length === 0) return null;
 
   return (
     <View>
@@ -49,7 +54,7 @@ export const PicturesContainer = ({ pictures }: PicturesContainerProps) => {
         showsHorizontalScrollIndicator={false}
         style={{ marginTop: 10 }}
       >
-        {pictures.map((picURL, index) => (
+        {validPictures.map((picURL, index) => (
           <TouchableOpacity
             key={index}
             onPress={() => handleOpenImage(picURL)}
