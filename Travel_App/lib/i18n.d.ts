@@ -56,6 +56,8 @@ declare module 'react-i18next' {
         rating: string;
         budget: string;
         moderate: string;
+        budgetWithPrice: string;
+        moderateWithPrice: string;
         planWithAI: string;
         planning: string;
         getPersonalizedIdeas: string;
@@ -137,6 +139,13 @@ declare module 'react-i18next' {
         accountSettings: string;
         preferences: string;
         supportLegal: string;
+        pricePreferenceTitle: string;
+        pricePreferenceHint: string;
+        budgetMaxPrice: string;
+        moderateMaxPrice: string;
+        savePricePreferences: string;
+        pricePreferenceSaved: string;
+        invalidPricePreference: string;
       };
       diary: {
         title: string;

@@ -26,19 +26,35 @@ const ratingLabels = ['Very bad', 'Bad', 'Okay', 'Good', 'Excellent'];
 
 type LocalReviewImage = UploadImageInput;
 
-const normalizeInitialImages = (imageUrls: string[] = []): LocalReviewImage[] => {
-  return imageUrls.map((uri) => ({
-    uri,
-    isRemote: /^https?:\/\//i.test(uri),
-  }));
+const normalizeRatingValue = (value: unknown): number => {
+  const ratingNumber = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : 0;
+  if (!Number.isFinite(ratingNumber)) {
+    return 0;
+  }
+  return Math.min(5, Math.max(0, Math.round(ratingNumber)));
+};
+
+const normalizeInitialImages = (imageUrls?: unknown): LocalReviewImage[] => {
+  if (!Array.isArray(imageUrls)) {
+    return [];
+  }
+
+  return imageUrls
+    .map((uri) => (typeof uri === 'string' ? uri.trim() : ''))
+    .filter((uri): uri is string => uri.length > 0)
+    .map((uri) => ({
+      uri,
+      isRemote: /^https?:\/\//i.test(uri),
+    }));
 };
 
 export default function WriteReviewScreen({ navigation, route }: any) {
-  const placeId = route.params?.placeId as string | undefined;
-  const placeName = route.params?.placeName as string | undefined;
-  const editingReview = route.params?.review as ReviewListItem | undefined;
+  const params = route?.params ?? {};
+  const placeId = params.placeId as string | undefined;
+  const placeName = params.placeName as string | undefined;
+  const editingReview = params.review as ReviewListItem | undefined;
   const isEditing = Boolean(editingReview?.id);
-  const [rating, setRating] = useState(editingReview?.Rate ?? 0);
+  const [rating, setRating] = useState(normalizeRatingValue(editingReview?.Rate ?? editingReview?.rating));
   const [reviewText, setReviewText] = useState(editingReview?.content ?? '');
   const [pendingImages, setPendingImages] = useState<LocalReviewImage[]>(normalizeInitialImages(editingReview?.images));
   const [submitting, setSubmitting] = useState(false);
@@ -47,28 +63,36 @@ export default function WriteReviewScreen({ navigation, route }: any) {
   const handlePickImage = async () => {
     if (pendingImages.length >= 10) return;
 
-    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Loi', 'Can quyen truy cap thu vien anh');
-      return;
-    }
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Loi', 'Can quyen truy cap thu vien anh');
+        return;
+      }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      quality: 0.8,
-    });
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
 
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      setPendingImages((prev) => [
-        ...prev,
-        {
-          uri: asset.uri,
-          fileName: asset.fileName,
-          mimeType: asset.mimeType,
-          file: (asset as any).file,
-        },
-      ].slice(0, 10));
+      if (!result.canceled) {
+        const asset = result.assets?.[0];
+        if (!asset?.uri) {
+          return;
+        }
+
+        setPendingImages((prev) => [
+          ...prev,
+          {
+            uri: asset.uri,
+            fileName: asset.fileName,
+            mimeType: asset.mimeType,
+            file: (asset as any).file,
+          },
+        ].slice(0, 10));
+      }
+    } catch (err) {
+      Alert.alert('Loi', getApiErrorMessage(err));
     }
   };
 

@@ -1,15 +1,22 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+    Alert,
     Image,
     ImageSourcePropType,
     ScrollView,
     Switch,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../context/AuthContext';
+import {
+  getPriceInputValue,
+  loadPricePreferences,
+  savePricePreferences,
+} from '../../../../lib/pricePreferences';
 import styles from './ProfileScreen.styles';
 
 interface SettingItemProps {
@@ -24,9 +31,59 @@ const DEFAULT_AVATAR =
 export default function ProfileScreen({ navigation }: any) {
   const { t } = useTranslation();
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(true);
+  const [budgetPrice, setBudgetPrice] = useState('');
+  const [moderatePrice, setModeratePrice] = useState('');
+  const [isSavingPricePreferences, setIsSavingPricePreferences] = useState(false);
   const { user } = useAuth();
   const displayName = user?.fullName || user?.name || 'User';
   const avatar = user?.avatarUrl || DEFAULT_AVATAR;
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const loadSavedPricePreferences = async () => {
+      const preferences = await loadPricePreferences();
+      if (!isMounted) return;
+
+      setBudgetPrice(getPriceInputValue(preferences.budget));
+      setModeratePrice(getPriceInputValue(preferences.moderate));
+    };
+
+    loadSavedPricePreferences();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const handleSavePricePreferences = async () => {
+    const budget = Number(budgetPrice);
+    const moderate = Number(moderatePrice);
+
+    if (
+      !Number.isFinite(budget) ||
+      !Number.isFinite(moderate) ||
+      budget <= 0 ||
+      moderate <= 0 ||
+      moderate < budget
+    ) {
+      Alert.alert(t('common.error'), t('profile.invalidPricePreference'));
+      return;
+    }
+
+    setIsSavingPricePreferences(true);
+    try {
+      const saved = await savePricePreferences({ budget, moderate });
+      setBudgetPrice(getPriceInputValue(saved.budget));
+      setModeratePrice(getPriceInputValue(saved.moderate));
+      Alert.alert(t('common.confirm'), t('profile.pricePreferenceSaved'));
+    } catch {
+      Alert.alert(t('common.error'), t('common.error'));
+    } finally {
+      setIsSavingPricePreferences(false);
+    }
+  };
+
   const SettingItem = ({
     title,
     iconSource,
@@ -100,6 +157,47 @@ export default function ProfileScreen({ navigation }: any) {
 
         {/* --- PREFERENCES --- */}
         <Text style={styles.sectionTitle}>{t('profile.preferences')}</Text>
+        <View style={styles.pricePreferenceCard}>
+          <Text style={styles.pricePreferenceTitle}>{t('profile.pricePreferenceTitle')}</Text>
+          <Text style={styles.pricePreferenceHint}>{t('profile.pricePreferenceHint')}</Text>
+
+          <View style={styles.priceInputContainer}>
+            <Text style={styles.priceInputLabel}>{t('profile.budgetMaxPrice')}</Text>
+            <TextInput
+              style={styles.priceInput}
+              value={budgetPrice}
+              onChangeText={(value) => setBudgetPrice(getPriceInputValue(value))}
+              placeholder="150000"
+              keyboardType="number-pad"
+              returnKeyType="done"
+            />
+          </View>
+
+          <View style={styles.priceInputContainer}>
+            <Text style={styles.priceInputLabel}>{t('profile.moderateMaxPrice')}</Text>
+            <TextInput
+              style={styles.priceInput}
+              value={moderatePrice}
+              onChangeText={(value) => setModeratePrice(getPriceInputValue(value))}
+              placeholder="500000"
+              keyboardType="number-pad"
+              returnKeyType="done"
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.savePricePreferenceButton,
+              isSavingPricePreferences && styles.savePricePreferenceButtonDisabled,
+            ]}
+            onPress={handleSavePricePreferences}
+            disabled={isSavingPricePreferences}
+          >
+            <Text style={styles.savePricePreferenceText}>
+              {isSavingPricePreferences ? t('common.loading') : t('profile.savePricePreferences')}
+            </Text>
+          </TouchableOpacity>
+        </View>
         <SettingItem
           title={t('profile.notifications')}
           iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1827/1827370.png' }}

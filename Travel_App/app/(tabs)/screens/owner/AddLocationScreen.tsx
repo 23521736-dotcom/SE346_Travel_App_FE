@@ -39,12 +39,24 @@ const normalizeImages = (mainImage?: string, images?: string[]) => {
 
 const getOwnerPlaceImage = (place?: OwnerPlace) => place?.Image ?? place?.image ?? '';
 
+const getPriceInputValue = (value?: number | string | null) => {
+  return String(value ?? '').replace(/[^0-9]/g, '');
+};
+
+const parsePriceLevel = (value: string) => {
+  const priceValue = getPriceInputValue(value);
+  if (!priceValue) return null;
+  const numericValue = Number(priceValue);
+  return Number.isFinite(numericValue) ? numericValue : null;
+};
+
 const AddLocationScreen = ({ navigation, route }: any) => {
   const placeParam = route?.params?.place as OwnerPlace | undefined;
   const placeId = route?.params?.placeId ?? placeParam?.Id;
   const initialImage = getOwnerPlaceImage(placeParam);
   const [placeName, setPlaceName] = useState(placeParam?.Name ?? '');
   const [region, setRegion] = useState(placeParam?.Location ?? '');
+  const [priceInput, setPriceInput] = useState(getPriceInputValue(placeParam?.priceLevel));
   const [description, setDescription] = useState('');
   const [activeCategory, setActiveCategory] = useState('DINING');
   const [coverImageUrl, setCoverImageUrl] = useState(initialImage);
@@ -65,6 +77,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
         const paramImage = getOwnerPlaceImage(placeParam);
         setPlaceName(placeParam.Name ?? '');
         setRegion(placeParam.Location ?? '');
+        setPriceInput(getPriceInputValue(placeParam.priceLevel));
         setCoverImageUrl(paramImage);
         setImageUrls(normalizeImages(paramImage, placeParam.Images));
         setPromotions([]);
@@ -76,6 +89,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
 
         setPlaceName(detail.Name ?? '');
         setRegion(detail.Location ?? '');
+        setPriceInput(getPriceInputValue(detail.priceLevel));
         setActiveCategory(normalizePlaceCategory(detail.category) ?? DEFAULT_PLACE_CATEGORY);
         setDescription(detail.about ?? '');
         setCoverImageUrl(getOwnerPlaceImage(detail));
@@ -86,6 +100,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
         const paramImage = getOwnerPlaceImage(placeParam);
         setPlaceName(placeParam.Name ?? '');
         setRegion(placeParam.Location ?? '');
+        setPriceInput(getPriceInputValue(placeParam.priceLevel));
         setCoverImageUrl(paramImage);
         setImageUrls(normalizeImages(paramImage, placeParam.Images));
       }
@@ -222,6 +237,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
     const paramImage = getOwnerPlaceImage(placeParam);
     setPlaceName(placeParam?.Name ?? '');
     setRegion(placeParam?.Location ?? '');
+    setPriceInput(getPriceInputValue(placeParam?.priceLevel));
     setDescription('');
     setActiveCategory('DINING');
     setCoverImageUrl(paramImage);
@@ -249,6 +265,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
     const name = placeName.trim();
     const placeRegion = region.trim();
     const about = description.trim();
+    const priceLevel = parsePriceLevel(priceInput);
     const images = normalizeImages(coverImageUrl.trim(), imageUrls.map(item => item.trim()));
     const coverUrl = coverImageUrl.trim() || images[0] || '';
 
@@ -272,6 +289,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
         coverImageUrl: coverUrl,
         imageUrls: images,
         featureLabel: 'Open Now',
+        priceLevel,
       };
 
       if (placeId) {
@@ -360,6 +378,20 @@ const AddLocationScreen = ({ navigation, route }: any) => {
             placeholderTextColor={colors.textMuted}
             value={region}
             onChangeText={setRegion}
+          />
+
+          <View style={styles.labelRow}>
+            <Ionicons name="pricetag-outline" size={14} color={colors.textMuted} />
+            <Text style={[styles.label, styles.labelInRow]}>Estimated Price (VND)</Text>
+          </View>
+          <TextInput
+            style={styles.input}
+            placeholder="e.g. 150000"
+            placeholderTextColor={colors.textMuted}
+            value={priceInput}
+            onChangeText={(value) => setPriceInput(getPriceInputValue(value))}
+            keyboardType="number-pad"
+            returnKeyType="done"
           />
 
           <Text style={styles.label}>Category</Text>

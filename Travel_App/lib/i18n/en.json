@@ -54,6 +54,8 @@
     "rating": "⭐",
     "budget": "$ Budget",
     "moderate": "$$ Moderate",
+    "budgetWithPrice": "$ Budget <= VND {{price}}",
+    "moderateWithPrice": "$$ Moderate <= VND {{price}}",
     "planWithAI": "Plan with AI",
     "planning": "Planning...",
     "getPersonalizedIdeas": "Get personalized trip ideas",
@@ -135,7 +137,14 @@
     "logout": "Logout",
     "accountSettings": "ACCOUNT SETTINGS",
     "preferences": "PREFERENCES",
-    "supportLegal": "SUPPORT & LEGAL"
+    "supportLegal": "SUPPORT & LEGAL",
+    "pricePreferenceTitle": "Travel price level",
+    "pricePreferenceHint": "Used as the Budget and Moderate price filters on Home.",
+    "budgetMaxPrice": "Budget max price (VND)",
+    "moderateMaxPrice": "Moderate max price (VND)",
+    "savePricePreferences": "Save price preferences",
+    "pricePreferenceSaved": "Price preferences saved",
+    "invalidPricePreference": "Please enter valid prices. Moderate should be greater than or equal to Budget."
   },
   "diary": {
     "title": "Trip Diary",

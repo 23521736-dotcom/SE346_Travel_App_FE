@@ -1,4 +1,5 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ActivityIndicator,
@@ -28,6 +29,12 @@ import { getPlaceCategoryLabel, PLACE_CATEGORIES } from '../../../../lib/placeCa
 import { fetchRecommendations } from '../../../../lib/api/recommendations';
 import type { RecommendationPlace } from '../../../../lib/api/recommendations';
 import { CachedImage } from '../../../../components/CachedImage';
+import {
+    DEFAULT_PRICE_PREFERENCES,
+    formatVndCompact,
+    loadPricePreferences,
+} from '../../../../lib/pricePreferences';
+import type { PricePreferenceKey } from '../../../../lib/pricePreferences';
 
 type Place = PlaceListItem;
 
@@ -158,7 +165,9 @@ export default function HomeScreen({ navigation }: any) {
 
     // Advanced filters
     const [minRating, setMinRating] = useState<number | undefined>();
-    const [maxPrice, setMaxPrice] = useState<number | undefined>();
+    const [pricePreferences, setPricePreferences] = useState(DEFAULT_PRICE_PREFERENCES);
+    const [selectedPriceFilter, setSelectedPriceFilter] = useState<PricePreferenceKey | undefined>();
+    const maxPrice = selectedPriceFilter ? pricePreferences[selectedPriceFilter] : undefined;
     const placesAbortControllerRef = useRef<AbortController | null>(null);
     const placesRequestIdRef = useRef(0);
 
@@ -264,6 +273,22 @@ export default function HomeScreen({ navigation }: any) {
     useEffect(() => () => {
         placesAbortControllerRef.current?.abort();
     }, []);
+
+    useFocusEffect(
+        useCallback(() => {
+            let isActive = true;
+
+            loadPricePreferences().then((preferences) => {
+                if (isActive) {
+                    setPricePreferences(preferences);
+                }
+            });
+
+            return () => {
+                isActive = false;
+            };
+        }, [])
+    );
 
     // Load personalized recommendations
     useEffect(() => {
@@ -400,23 +425,27 @@ export default function HomeScreen({ navigation }: any) {
                         </View>
                     </Pressable>
                     <Pressable
-                        style={[styles.filterChip, maxPrice === 1 && styles.filterChipActive]}
-                        onPress={() => setMaxPrice(maxPrice === 1 ? undefined : 1)}
+                        style={[styles.filterChip, selectedPriceFilter === 'budget' && styles.filterChipActive]}
+                        onPress={() => setSelectedPriceFilter(selectedPriceFilter === 'budget' ? undefined : 'budget')}
                         accessibilityLabel="Budget price level"
                         accessibilityRole="button"
-                        accessibilityState={{ selected: maxPrice === 1 }}>
+                        accessibilityState={{ selected: selectedPriceFilter === 'budget' }}>
                         <View style={styles.containerCategoryButton}>
-                            <Text style={styles.filterText}>{t('home.budget')}</Text>
+                            <Text style={styles.filterText}>
+                                {t('home.budgetWithPrice', { price: formatVndCompact(pricePreferences.budget) })}
+                            </Text>
                         </View>
                     </Pressable>
                     <Pressable
-                        style={[styles.filterChip, maxPrice === 2 && styles.filterChipActive]}
-                        onPress={() => setMaxPrice(maxPrice === 2 ? undefined : 2)}
+                        style={[styles.filterChip, selectedPriceFilter === 'moderate' && styles.filterChipActive]}
+                        onPress={() => setSelectedPriceFilter(selectedPriceFilter === 'moderate' ? undefined : 'moderate')}
                         accessibilityLabel="Moderate price level"
                         accessibilityRole="button"
-                        accessibilityState={{ selected: maxPrice === 2 }}>
+                        accessibilityState={{ selected: selectedPriceFilter === 'moderate' }}>
                         <View style={styles.containerCategoryButton}>
-                            <Text style={styles.filterText}>{t('home.moderate')}</Text>
+                            <Text style={styles.filterText}>
+                                {t('home.moderateWithPrice', { price: formatVndCompact(pricePreferences.moderate) })}
+                            </Text>
                         </View>
                     </Pressable>
                 </ScrollView>
@@ -481,7 +510,7 @@ export default function HomeScreen({ navigation }: any) {
                     </View>
                 )}
             </View>
-    ), [activeCategory, aiLoading, searchQuery, recommendations, theme, minRating, maxPrice, loading, places.length, placesError, navigation, t]);
+    ), [activeCategory, aiLoading, searchQuery, recommendations, theme, minRating, maxPrice, selectedPriceFilter, pricePreferences, loading, places.length, placesError, navigation, t]);
 
     if (loading && places.length === 0) {
         return (
