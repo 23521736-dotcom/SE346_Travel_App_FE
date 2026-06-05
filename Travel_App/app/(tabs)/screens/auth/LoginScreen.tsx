@@ -12,30 +12,19 @@ import {
     TouchableOpacity,
     View
 } from 'react-native';
-import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
-import { oauthLogin } from '../../../../lib/api/auth';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import styles from './LoginScreen.styles';
 
-WebBrowser.maybeCompleteAuthSession();
-
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
-const GOOGLE_REDIRECT_URI = AuthSession.makeRedirectUri({
-    scheme: 'travelapp',
-    path: 'oauth-google-callback',
-});
-
 export default function LoginScreen({ navigation }: any) {
-    const nav = navigation ?? useNavigation<any>();
+    const fallbackNavigation = useNavigation<any>();
+    const nav = navigation ?? fallbackNavigation;
     const { t } = useTranslation();
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [submitting, setSubmitting] = useState(false);
-    const [oauthSubmitting, setOauthSubmitting] = useState(false);
     const { login } = useAuth();
 
     const showAlert = (title: string, message: string) => {
@@ -48,71 +37,6 @@ export default function LoginScreen({ navigation }: any) {
 
     const handleForgotPassword = () => {
         nav.navigate('ForgotPassword_email', { email: email.trim() });
-    };
-
-    const handleGoogleOAuth = async () => {
-        if (!GOOGLE_CLIENT_ID) {
-            showAlert(t('auth.configError'), t('auth.googleNotConfigured'));
-            return;
-        }
-
-        setOauthSubmitting(true);
-        try {
-            const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
-            authUrl.searchParams.set('client_id', GOOGLE_CLIENT_ID);
-            authUrl.searchParams.set('redirect_uri', GOOGLE_REDIRECT_URI);
-            authUrl.searchParams.set('response_type', 'id_token');
-            authUrl.searchParams.set('scope', 'openid email profile');
-            authUrl.searchParams.set('nonce', Math.random().toString(36).substring(7));
-
-            const authResult = await WebBrowser.openAuthSessionAsync(
-                authUrl.toString(),
-                GOOGLE_REDIRECT_URI
-            );
-
-            if (authResult.type === 'success') {
-                const callbackUrl = new URL(authResult.url);
-                const params = new URLSearchParams(callbackUrl.hash.replace(/^#/, '') || callbackUrl.search);
-                const idToken = params.get('id_token');
-
-                if (!idToken) {
-                    throw new Error('No ID token received from Google');
-                }
-
-                const authResponse = await oauthLogin('google', idToken);
-                showAlert(
-                    t('auth.loginSuccess'),
-                    authResponse.isNewUser
-                        ? t('auth.newAccountCreated')
-                        : t('auth.welcomeBackMessage')
-                );
-            } else if (authResult.type !== 'cancel') {
-                throw new Error('OAuth failed');
-            }
-        } catch (err: any) {
-            console.error('Google OAuth error:', err);
-            const msg = getApiErrorMessage(err);
-            showAlert(
-                t('auth.loginFailed'),
-                msg.includes('NOT_CONFIGURED') || msg.includes('OAUTH')
-                    ? t('auth.googleOAuthNotConfigured')
-                    : msg || t('auth.errorOccurred')
-            );
-        } finally {
-            setOauthSubmitting(false);
-        }
-    };
-
-    const handleAppleOAuth = async () => {
-        showAlert(t('auth.appleNotSupported'), t('auth.appleSignInNotSupported'));
-    };
-
-    const handleOAuth = async (provider: 'google' | 'apple') => {
-        if (provider === 'google') {
-            await handleGoogleOAuth();
-        } else {
-            await handleAppleOAuth();
-        }
     };
 
     const handleLogin = async () => {
@@ -261,44 +185,7 @@ export default function LoginScreen({ navigation }: any) {
                     </View>
 
                     <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 20 }}>
-                        <View style={styles.lineContainer}>
-                            <View style={styles.line} />
-                            <Text style={styles.text}>{t('auth.orContinueWith')}</Text>
-                            <View style={styles.line} />
-                        </View>
-
-                        <View style={[styles.containerGG_Apple, { marginTop: 20 }]}>
-                            <Pressable
-                                style={styles.buttonGG_Apple}
-                                onPress={() => handleOAuth('google')}
-                                disabled={oauthSubmitting}
-                                accessibilityLabel="Sign in with Google"
-                                accessibilityRole="button">
-                                <View style={styles.containerImageGG_Apple}>
-                                    {oauthSubmitting ? (
-                                        <ActivityIndicator color="#fff" style={{ marginRight: 8 }} />
-                                    ) : (
-                                        <Image source={require('../../../../assets/images/google-icon.png')} style={{ width: 20, height: 20 }} />
-                                    )}
-                                    <Text style={styles.buttonGG_AppleText}>
-                                        {oauthSubmitting ? t('auth.loggingIn') : 'Google'}
-                                    </Text>
-                                </View>
-                            </Pressable>
-
-                            <Pressable
-                                style={styles.buttonGG_Apple}
-                                onPress={() => handleOAuth('apple')}
-                                accessibilityLabel="Sign in with Apple"
-                                accessibilityRole="button">
-                                <View style={styles.containerImageGG_Apple}>
-                                    <Image source={require('../../../../assets/images/apple-icon.png')} style={{ width: 20, height: 20 }} />
-                                    <Text style={styles.buttonGG_AppleText}>Apple</Text>
-                                </View>
-                            </Pressable>
-                        </View>
-
-                        <Text style={[styles.text, { marginTop: 40, color: '#ccc2c2', marginBottom: 40 }]}>
+                        <Text style={[styles.text, { color: '#ccc2c2', marginBottom: 40 }]}>
                             {t('auth.noAccount')}{' '}
                             <Text style={styles.linkText} onPress={() => nav.navigate("Register")}>
                                 {t('auth.register')}

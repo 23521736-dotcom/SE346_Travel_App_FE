@@ -81,30 +81,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     marginHorizontal: 10,
   },
-  containerGG_Apple: {
-    flexDirection: 'row',
-    columnGap: 20,
-  },
-  buttonGG_Apple: {
-    borderRadius: 16,
-    backgroundColor: '#1e2329',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: 150,
-    height: 48,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-  },
-  containerImageGG_Apple: {
-    flexDirection: 'row',
-    columnGap: 10,
-    alignItems: 'center'
-  },
-  buttonGG_AppleText: { 
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
 });
 
 export default styles;
