@@ -11,6 +11,21 @@ export const apiClient = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
+const AUTH_REFRESH_SKIP_PATHS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/logout',
+  '/auth/refresh',
+  '/auth/forgot-password',
+  '/auth/change-password-otp',
+  '/auth/oauth',
+];
+
+function shouldSkipAuthRefresh(url?: string): boolean {
+  if (!url) return false;
+  return AUTH_REFRESH_SKIP_PATHS.some((path) => url.includes(path));
+}
+
 // request interceptor uses getAccessToken wrapper to avoid calling
 // SecureStore methods that may not exist in some runtimes (web builds)
 apiClient.interceptors.request.use(async (config) => {
@@ -33,7 +48,12 @@ apiClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // Only handle 401 errors and prevent infinite loops
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest._retry &&
+      !shouldSkipAuthRefresh(originalRequest.url)
+    ) {
       // If already refreshing, queue the request
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
@@ -52,7 +72,8 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = await getRefreshToken();
         if (!refreshToken) {
-          throw new Error('No refresh token available');
+          await clearTokens();
+          return Promise.reject(error);
         }
 
         // Import refreshAccessToken function to avoid circular dependency
