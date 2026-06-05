@@ -54,6 +54,8 @@
     "rating": "⭐",
     "budget": "$ Budget",
     "moderate": "$$ Moderate",
+    "budgetWithPrice": "$ Budget <= VND {{price}}",
+    "moderateWithPrice": "$$ Moderate <= VND {{price}}",
     "planWithAI": "Plan with AI",
     "planning": "Planning...",
     "getPersonalizedIdeas": "Get personalized trip ideas",
@@ -135,7 +137,14 @@
     "logout": "Logout",
     "accountSettings": "ACCOUNT SETTINGS",
     "preferences": "PREFERENCES",
-    "supportLegal": "SUPPORT & LEGAL"
+    "supportLegal": "SUPPORT & LEGAL",
+    "pricePreferenceTitle": "Mức giá phù hợp",
+    "pricePreferenceHint": "Dùng làm ngưỡng lọc Budget và Moderate ở Home.",
+    "budgetMaxPrice": "Giá tối đa Budget (VND)",
+    "moderateMaxPrice": "Giá tối đa Moderate (VND)",
+    "savePricePreferences": "Lưu mức giá",
+    "pricePreferenceSaved": "Đã lưu mức giá",
+    "invalidPricePreference": "Vui lòng nhập giá hợp lệ. Moderate phải lớn hơn hoặc bằng Budget."
   },
   "diary": {
     "title": "Nhật ký chuyến đi",
