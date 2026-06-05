@@ -236,21 +236,39 @@ export function getApiErrorMessage(err: unknown): string {
     const data = err.response?.data as any;
     if (data) {
       if (typeof data === 'string') return data;
-      if (typeof data.error === 'string' && data.error) return data.error;
-      if (typeof data.message === 'string' && data.message) return data.message;
-      if (data.data) {
-        if (typeof data.data.message === 'string') return data.data.message;
-        if (typeof data.data.error === 'string') return data.data.error;
+      if (Array.isArray(data.message) && data.message.length) {
+        const first = data.message[0];
+        if (typeof first === 'string') return first;
+      }
+      if (Array.isArray(data.error) && data.error.length) {
+        const first = data.error[0];
+        if (typeof first === 'string') return first;
       }
       if (Array.isArray(data.errors) && data.errors.length) {
         const first = data.errors[0];
         if (typeof first === 'string') return first;
         if (first && typeof first.msg === 'string') return first.msg;
+        if (first && typeof first.message === 'string') return first.message;
+      }
+      if (typeof data.error === 'string' && data.error) return data.error;
+      if (typeof data.message === 'string' && data.message) return data.message;
+      if (data.data) {
+        if (typeof data.data.message === 'string') return data.data.message;
+        if (typeof data.data.error === 'string') return data.data.error;
+        if (Array.isArray(data.data.message) && data.data.message.length) {
+          const first = data.data.message[0];
+          if (typeof first === 'string') return first;
+        }
       }
       if (data.issues?.fieldErrors) {
         const firstField = Object.keys(data.issues.fieldErrors)[0];
         const firstMessage = firstField ? data.issues.fieldErrors[firstField]?.[0] : null;
         if (firstMessage) return `${firstField}: ${firstMessage}`;
+      }
+      if (data.details && typeof data.details === 'object') {
+        const firstField = Object.keys(data.details)[0];
+        const firstMessage = firstField ? data.details[firstField]?.[0] ?? data.details[firstField] : null;
+        if (typeof firstMessage === 'string') return `${firstField}: ${firstMessage}`;
       }
       try {
         return JSON.stringify(data);

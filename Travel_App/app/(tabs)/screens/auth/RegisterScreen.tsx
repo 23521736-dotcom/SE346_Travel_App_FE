@@ -16,6 +16,9 @@ import { useNavigation } from '@react-navigation/native';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import styles from './RegisterScreen.styles';
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PASSWORD_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+
 export default function RegisterScreen({ navigation }: any) {
     // Always call useNavigation to satisfy Rules of Hooks
     const fallbackNavigation = useNavigation<any>();
@@ -37,13 +40,18 @@ export default function RegisterScreen({ navigation }: any) {
       return;
     }
 
+    if (!EMAIL_PATTERN.test(email.trim())) {
+      Alert.alert('Loi', 'Email khong dung dinh dang');
+      return;
+    }
+
     if (password !== confirmPassword) {
       Alert.alert('Loi', 'Mat khau xac nhan khong khop');
       return;
     }
 
-    if (password.length < 8) {
-      Alert.alert('Loi', 'Mat khau phai co it nhat 8 ky tu');
+    if (!PASSWORD_PATTERN.test(password)) {
+      Alert.alert('Loi', 'Mat khau phai co it nhat 8 ky tu, gom chu hoa, chu thuong va so');
       return;
     }
 
