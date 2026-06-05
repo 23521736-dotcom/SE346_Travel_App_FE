@@ -203,7 +203,7 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
     };
 
     const saveCollaborators = async () => {
-        if (isSaving) {
+        if (isSaving || isPreparingTrip || !canManageTrip) {
             return;
         }
 
@@ -344,7 +344,19 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
                         <Feather name="arrow-left" size={24} color="#003A70" />
                     </TouchableOpacity>
                     <Text style={screenStyles.headerTitle}>Add Collaborators</Text>
-                    <View /> 
+                    <TouchableOpacity
+                        onPress={saveCollaborators}
+                        disabled={isSaving || isPreparingTrip || !canManageTrip}
+                    >
+                        <Text
+                            style={[
+                                screenStyles.saveText,
+                                (isSaving || isPreparingTrip || !canManageTrip) ? { opacity: 0.5 } : null
+                            ]}
+                        >
+                            {isSaving ? 'Saving...' : 'Save'}
+                        </Text>
+                    </TouchableOpacity>
                 </View>
 
                 <View style={screenStyles.searchContainer}>
@@ -399,10 +411,12 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
                         {(activeTrip?.members || []).length > 0 ? (
                             <View style={screenStyles.recentRow}>
                                 {(activeTrip?.members || []).map((member) => {
+                                    const memberKey = getPersonKey(member);
+                                    const isSelectedOwner = memberKey === tripOwnerId;
                                     const canTransferOwner =
                                         canManageTrip &&
-                                        getPersonKey(member) !== currentUserId &&
-                                        getPersonKey(member) !== tripOwnerId;
+                                        memberKey !== currentUserId &&
+                                        !isSelectedOwner;
 
                                     return (
                                         <TouchableOpacity
@@ -415,6 +429,17 @@ export default function AddCollaboratorsScreen({ navigation, route }: any) {
                                             <Text style={screenStyles.recentName} numberOfLines={1}>
                                                 {member.name}
                                             </Text>
+                                            {isSelectedOwner ? (
+                                                <View style={screenStyles.ownerBadge}>
+                                                    <Feather name="star" size={12} color="#006699" />
+                                                    <Text style={screenStyles.ownerBadgeText}>Owner</Text>
+                                                </View>
+                                            ) : canTransferOwner ? (
+                                                <View style={screenStyles.transferBtn}>
+                                                    <Feather name="repeat" size={12} color="#006699" />
+                                                    <Text style={screenStyles.transferBtnText}>Make owner</Text>
+                                                </View>
+                                            ) : null}
                                         </TouchableOpacity>
                                     );
                                 })}
