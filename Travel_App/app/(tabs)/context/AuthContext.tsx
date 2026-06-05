@@ -51,20 +51,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
+    let isMounted = true;
     (async () => {
       try {
         const token = await getAccessToken();
-        if (token) {
+        if (token && isMounted) {
           await refreshUser();
         }
-      } catch {
-        await authApi.logout();
-        setUser(null);
+      } catch (e) {
+        console.error('Initial user fetch failed:', e);
+        // Don't call logout() here to avoid potential loops,
+        // just ensure user is null
+        if (isMounted) setUser(null);
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     })();
-  }, [refreshUser]);
+    return () => { isMounted = false; };
+  }, []); // Empty dependency array is critical
 
   const login = async (email: string, password: string) => {
     const { user: apiUser } = await authApi.login(email, password);
