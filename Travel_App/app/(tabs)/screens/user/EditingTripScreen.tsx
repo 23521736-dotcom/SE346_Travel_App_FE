@@ -26,6 +26,8 @@ import {
   upsertTripToBackend,
 } from '../../../../lib/api/trips';
 import { uploadTripCover } from '../../../../lib/api/uploads';
+import { removeTripMember } from '../../../../lib/api/tripMembers';
+import { useAuth } from '../../context/AuthContext';
 import {
   getSchedulePeriodFromTime,
   getTripDraft,
@@ -265,6 +267,7 @@ function formatBudget(value: number) {
 }
 
 export default function EditingTripScreen({ navigation, route }: any) {
+  const { user } = useAuth();
   const incomingTrip = {
     ...defaultTrip,
     ...(route?.params?.tripData as TripData | undefined),
@@ -279,11 +282,14 @@ export default function EditingTripScreen({ navigation, route }: any) {
   const didSaveTripRef = useRef(false);
   const [isSavingTrip, setIsSavingTrip] = useState(false);
   const [isPickingTripCover, setIsPickingTripCover] = useState(false);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const itineraryData = trip.itineraryData?.length
     ? trip.itineraryData
     : buildEmptyDays(trip.duration, startDate);
   const totalEstimatedBudget = getTripTotalBudget(itineraryData);
+  const tripOwnerId = trip.ownerId ?? trip.userId ?? trip.createdBy;
+  const isTripOwner = Boolean(user?.id && tripOwnerId && String(user.id) === String(tripOwnerId));
 
   const syncTripState = useCallback((nextTrip: TripData | undefined) => {
     if (!nextTrip) {
@@ -548,6 +554,57 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
       return nextTrip;
     });
+  };
+
+  const deleteMember = (member: TripData['members'][number]) => {
+    if (!trip.id || isLocalTripId(trip.id)) {
+      Alert.alert('Unable to remove member', 'Please save this trip before removing members.');
+      return;
+    }
+
+    const memberIdentifier = member.userId ?? member.id;
+    if (!memberIdentifier) {
+      Alert.alert('Unable to remove member', 'This member cannot be removed.');
+      return;
+    }
+
+    Alert.alert(
+      'Remove member',
+      `Remove ${member.name || 'this member'} from this trip?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Remove',
+          style: 'destructive',
+          onPress: async () => {
+            const removalKey = String(memberIdentifier);
+            try {
+              setRemovingMemberId(removalKey);
+              await removeTripMember(trip.id!, memberIdentifier);
+              setTrip((current) => {
+                const nextTrip = {
+                  ...current,
+                  members: current.members.filter((item) => {
+                    const currentIdentifier = item.userId ?? item.id;
+                    return String(currentIdentifier) !== removalKey;
+                  }),
+                };
+
+                if (nextTrip.id) {
+                  upsertTripDraft(nextTrip);
+                }
+
+                return nextTrip;
+              });
+            } catch (error) {
+              Alert.alert('Unable to remove member', getApiErrorMessage(error) || 'Please try again.');
+            } finally {
+              setRemovingMemberId(null);
+            }
+          },
+        },
+      ]
+    );
   };
 
   const saveTrip = async () => {
@@ -913,28 +970,38 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
         <View style={styles.membersRow}>
           <View style={styles.avatarsContainer}>
-            {trip.members.slice(0, 3).map((collab, index) => (
-              <Image
-                key={collab.id}
-                source={{ uri: collab.avatar }}
-                style={[
-                  styles.avatar,
-                  index > 0 && styles.avatarOverlap,
-                  { zIndex: 10 - index },
-                ]}
-              />
-            ))}
+            {trip.members.map((collab) => {
+              const memberIdentifier = collab.userId ?? collab.id;
+              const removalKey = String(memberIdentifier);
+              const isRemovingThisMember = removingMemberId === removalKey;
 
-            {trip.members.length > 3 && (
-              <View
-                style={[
-                  styles.avatar,
-                  styles.avatarOverlap,
-                  styles.extraCountContainer,
-                  { zIndex: 7 },
-                ]}
-              >
-                <Text style={styles.extraCountText}>+{trip.members.length - 3}</Text>
+              return (
+                <View key={collab.id} style={styles.memberItem}>
+                  <Image source={{ uri: collab.avatar }} style={styles.avatar} />
+                  {isTripOwner && (
+                    <TouchableOpacity
+                      style={[
+                        styles.removeMemberButton,
+                        isRemovingThisMember && styles.removeMemberButtonDisabled,
+                      ]}
+                      onPress={() => deleteMember(collab)}
+                      disabled={isRemovingThisMember}
+                    >
+                      {isRemovingThisMember ? (
+                        <ActivityIndicator size="small" color="#E53935" />
+                      ) : (
+                        <Feather name="trash-2" size={13} color="#E53935" />
+                      )}
+                      <Text style={styles.removeMemberText}>Xóa</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
+
+            {trip.members.length === 0 && (
+              <View style={styles.emptyMembersContainer}>
+                <Text style={styles.emptyMembersText}>No collaborators</Text>
               </View>
             )}
           </View>

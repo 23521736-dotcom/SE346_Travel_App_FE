@@ -551,7 +551,7 @@ export default function MyTripScreen({ navigation }: any) {
   return (
     <View style={[styles.screen, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.title, { color: theme.text }]}>My Trips</Text>
+        <Text style={[styles.title, { color: theme.text }]}>My Trip</Text>
         <Pressable
           style={styles.iconButton}
           onPress={createEmptyPlanningTrip}

@@ -333,7 +333,7 @@ export default function HomeScreen({ navigation }: any) {
                     <Text style={{ color: theme.textSecondary }}> {t('home.location')}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                         <Ionicons name="location-sharp" size={18} color={theme.primary} />
-                        <Text style={{ fontWeight: 'bold', fontSize: 20, color: theme.text }}> {t('home.nearMe')}</Text>
+                    <Text style={{ fontWeight: 'bold', fontSize: 20, color: theme.text }}> Travel App</Text>
 
                     </View>
                     <View style={styles.searchContainer}>

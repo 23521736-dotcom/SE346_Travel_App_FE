@@ -397,7 +397,15 @@ const styles = StyleSheet.create({
     },
     avatarsContainer: {
         flexDirection: 'row',
+        alignItems: 'flex-start',
+        flexWrap: 'wrap',
+        flex: 1,
+    },
+    memberItem: {
+        width: 56,
         alignItems: 'center',
+        marginRight: 10,
+        marginBottom: 10,
     },
     avatar: {
         width: 40,
@@ -405,6 +413,28 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         borderWidth: 2,
         borderColor: '#FFF',
+    },
+    removeMemberButton: {
+        minWidth: 46,
+        height: 24,
+        marginTop: 4,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: '#F8B4B4',
+        backgroundColor: '#FFF5F5',
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 6,
+    },
+    removeMemberButtonDisabled: {
+        opacity: 0.6,
+    },
+    removeMemberText: {
+        marginLeft: 3,
+        fontSize: 11,
+        fontWeight: '700',
+        color: '#E53935',
     },
     avatarOverlap: {
         marginLeft: -15,
@@ -418,6 +448,14 @@ const styles = StyleSheet.create({
         color: '#1E88E5',
         fontWeight: 'bold',
         fontSize: 14,
+    },
+    emptyMembersContainer: {
+        height: 40,
+        justifyContent: 'center',
+    },
+    emptyMembersText: {
+        color: '#999',
+        fontSize: 13,
     },
     addMemberContainer: {
         flexDirection: 'row',
