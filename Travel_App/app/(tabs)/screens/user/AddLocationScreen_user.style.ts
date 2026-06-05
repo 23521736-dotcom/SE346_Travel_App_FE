@@ -1,12 +1,13 @@
 import { Platform, StyleSheet } from "react-native";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-    ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+    ...getCommonStyles(colors),
 
     container: {
         flex: 1,
-        backgroundColor: '#F8F9FB',
+        backgroundColor: colors.background,
     },
     scrollContent: {
         paddingHorizontal: 20,
@@ -24,29 +25,31 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 18,
         fontWeight: '700',
-        color: '#003A70',
+        color: colors.primary,
         textAlign: 'center',
     },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.surface,
         paddingHorizontal: 16,
         minHeight: 46,
         paddingVertical: 12,
         borderRadius: 14,
         marginBottom: 16,
-        shadowColor: '#000',
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
         elevation: 2,
         columnGap: 10,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     searchInput: {
         flex: 1,
         fontSize: 14,
-        color: '#333',
+        color: colors.textPrimary,
         paddingVertical: 0,
     },
     filterScroll: {
@@ -56,29 +59,29 @@ const styles = StyleSheet.create({
     filterChip: {
         paddingVertical: 9,
         paddingHorizontal: 16,
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.surface,
         borderRadius: 10,
         marginRight: 10,
         borderWidth: 1,
-        borderColor: '#E2E8F0',
+        borderColor: colors.border,
     },
     filterChipActive: {
-        borderColor: '#006699',
-        backgroundColor: '#E6F0FA',
+        borderColor: colors.primary,
+        backgroundColor: colors.primaryLight,
     },
     filterChipText: {
         fontSize: 13,
-        color: '#707B81',
+        color: colors.textSecondary,
         fontWeight: '500',
     },
     filterChipTextActive: {
-        color: '#006699',
+        color: colors.primary,
         fontWeight: '600',
     },
     sourceSwitch: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#E8EEF4',
+        backgroundColor: colors.surfaceMuted,
         borderRadius: 14,
         padding: 4,
         marginBottom: 16,
@@ -93,20 +96,20 @@ const styles = StyleSheet.create({
         columnGap: 7,
     },
     sourceSwitchButtonActive: {
-        backgroundColor: '#006699',
-        shadowColor: '#003A70',
+        backgroundColor: colors.primary,
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.12,
         shadowRadius: 7,
         elevation: 2,
     },
     sourceSwitchText: {
-        color: '#64748B',
+        color: colors.textSecondary,
         fontSize: 13,
         fontWeight: '700',
     },
     sourceSwitchTextActive: {
-        color: '#FFFFFF',
+        color: colors.white,
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -121,28 +124,30 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#003A70',
+        color: colors.textPrimary,
         marginLeft: 8,
     },
     card: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.surface,
         padding: 10,
         borderRadius: 16,
         marginBottom: 12,
         columnGap: 12,
-        shadowColor: '#000',
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.04,
         shadowRadius: 8,
         elevation: 2,
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     cardImg: {
         width: 64,
         height: 64,
         borderRadius: 12,
-        backgroundColor: '#E2E8F0',
+        backgroundColor: colors.surfaceMuted,
     },
     cardImageWrap: {
         width: 64,
@@ -161,7 +166,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         borderWidth: 2,
-        borderColor: '#FFFFFF',
+        borderColor: colors.surface,
     },
     cardInfo: {
         flex: 1,
@@ -170,7 +175,7 @@ const styles = StyleSheet.create({
     placeName: {
         fontSize: 15,
         fontWeight: '700',
-        color: '#003A70',
+        color: colors.textPrimary,
         marginBottom: 6,
     },
     ratingRow: {
@@ -181,7 +186,7 @@ const styles = StyleSheet.create({
     ratingText: {
         flex: 1,
         fontSize: 12,
-        color: '#707B81',
+        color: colors.textSecondary,
         lineHeight: 17,
     },
     priceRow: {
@@ -191,7 +196,7 @@ const styles = StyleSheet.create({
         marginTop: 5,
     },
     priceText: {
-        color: '#006699',
+        color: colors.primary,
         fontSize: 12,
         fontWeight: '700',
     },
@@ -199,23 +204,23 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: '#006699',
+        backgroundColor: colors.primary,
         alignItems: 'center',
         justifyContent: 'center',
-        shadowColor: '#006699',
+        shadowColor: colors.primary,
         shadowOffset: { width: 0, height: 3 },
         shadowOpacity: 0.18,
         shadowRadius: 6,
         elevation: 2,
     },
     addedBtn: {
-        backgroundColor: '#64748B',
-        shadowColor: '#64748B',
+        backgroundColor: colors.textMuted,
+        shadowColor: colors.shadow,
     },
 
     resultContainer: {
         flex: 1,
-        backgroundColor: '#F4F7FA',
+        backgroundColor: colors.background,
         paddingTop: Platform.OS === 'android' ? 54 : 24,
     },
     resultHeaderRow: {
@@ -229,7 +234,7 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#E2E8F0',
+        backgroundColor: colors.surfaceMuted,
         paddingHorizontal: 16,
         height: 46,
         borderRadius: 14,
@@ -238,7 +243,7 @@ const styles = StyleSheet.create({
     resultSearchInput: {
         flex: 1,
         fontSize: 15,
-        color: '#2d3748',
+        color: colors.textPrimary,
     },
     resultFiltersContainer: {
         marginBottom: 14,
@@ -253,19 +258,19 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         backgroundColor: 'transparent',
         borderWidth: 1,
-        borderColor: '#CBD5E0',
+        borderColor: colors.border,
     },
     resultFilterPillActive: {
-        backgroundColor: '#E6F0FA',
-        borderColor: '#E6F0FA',
+        backgroundColor: colors.primaryLight,
+        borderColor: colors.primary,
     },
     resultFilterText: {
         fontSize: 14,
-        color: '#718096',
+        color: colors.textSecondary,
         fontWeight: '600',
     },
     resultFilterTextActive: {
-        color: '#005f73',
+        color: colors.primary,
     },
     resultListContainer: {
         paddingHorizontal: 20,
@@ -277,23 +282,25 @@ const styles = StyleSheet.create({
     resultMainTitle: {
         fontSize: 24,
         fontWeight: 'bold',
-        color: '#1A202C',
+        color: colors.textPrimary,
         marginBottom: 4,
     },
     resultSubTitle: {
         fontSize: 14,
-        color: '#718096',
+        color: colors.textSecondary,
     },
     resultCard: {
-        backgroundColor: '#FFFFFF',
+        backgroundColor: colors.surface,
         borderRadius: 14,
         marginBottom: 18,
-        shadowColor: '#000',
+        shadowColor: colors.shadow,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.05,
         shadowRadius: 10,
         elevation: 3,
         overflow: 'hidden',
+        borderWidth: 1,
+        borderColor: colors.border,
     },
     resultImageContainer: {
         height: 150,
@@ -309,7 +316,7 @@ const styles = StyleSheet.create({
         position: 'absolute',
         top: 12,
         left: 12,
-        backgroundColor: 'rgba(255, 255, 255, 0.9)',
+        backgroundColor: colors.overlay,
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 8,
@@ -317,7 +324,7 @@ const styles = StyleSheet.create({
     resultCategoryBadgeText: {
         fontSize: 10,
         fontWeight: '700',
-        color: '#4A5568',
+        color: colors.white,
     },
     resultDealBadge: {
         position: 'absolute',
@@ -350,12 +357,12 @@ const styles = StyleSheet.create({
         flex: 1,
         fontSize: 18,
         fontWeight: 'bold',
-        color: '#2D3748',
+        color: colors.textPrimary,
     },
     resultRatingPill: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#FFFAF0',
+        backgroundColor: colors.surfaceMuted,
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 8,
@@ -364,7 +371,7 @@ const styles = StyleSheet.create({
     resultRatingText: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#D97706',
+        color: colors.warning,
     },
     resultLocationRow: {
         flexDirection: 'row',
@@ -374,11 +381,11 @@ const styles = StyleSheet.create({
     },
     resultLocationText: {
         fontSize: 13,
-        color: '#718096',
+        color: colors.textSecondary,
     },
     resultDescription: {
         fontSize: 13,
-        color: '#4A5568',
+        color: colors.textSecondary,
         lineHeight: 18,
         marginBottom: 16,
     },
@@ -389,40 +396,40 @@ const styles = StyleSheet.create({
     },
     resultReviewsText: {
         fontSize: 12,
-        color: '#A0AEC0',
+        color: colors.textMuted,
         fontWeight: '500',
     },
     resultAddButton: {
-        backgroundColor: '#005f73',
+        backgroundColor: colors.primary,
         width: 36,
         height: 36,
         borderRadius: 10,
         justifyContent: 'center',
         alignItems: 'center',
-        shadowColor: '#005f73',
+        shadowColor: colors.primary,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.3,
         shadowRadius: 4,
         elevation: 3,
     },
     resultAddButtonSelected: {
-        backgroundColor: '#A0AEC0',
-        shadowColor: '#A0AEC0',
+        backgroundColor: colors.textMuted,
+        shadowColor: colors.shadow,
     },
     resultEmptyState: {
         alignItems: 'center',
         paddingVertical: 40,
     },
     resultEmptyTitle: {
-        color: '#1A202C',
+        color: colors.textPrimary,
         fontSize: 16,
         fontWeight: '800',
     },
     resultEmptyText: {
-        color: '#718096',
+        color: colors.textSecondary,
         fontSize: 13,
         marginTop: 4,
     },
 });
 
-export default styles;
+export default getStyles;

@@ -1,16 +1,20 @@
 import * as ImagePicker from 'expo-image-picker';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Alert, Image, Pressable, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { uploadAvatar } from '../../../../lib/api/uploads';
 import { updateMe } from '../../../../lib/api/users';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
-import styles from './EditProfileScreen.styles';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './EditProfileScreen.styles';
 
 const DEFAULT_AVATAR =
   'https://th.bing.com/th/id/OIP.iY6OLSZImubhw9Yiwg6OuAHaHa?w=186&h=186&c=7&r=0&o=7&dpr=1.3&pid=1.7&rm=3';
 
 export default function EditProfileScreen({ navigation }: any) {
     const { user, refreshUser } = useAuth();
+    const { colors: themeColors } = useTheme();
+    const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
     const [username, setUsername] = useState('');
@@ -87,8 +91,8 @@ export default function EditProfileScreen({ navigation }: any) {
     const avatar = avatarPreview || user?.avatarUrl || DEFAULT_AVATAR;
 
     return (
-        <View style={{ flex: 1, justifyContent:'center', marginTop: 0, backgroundColor: '#FFFFFF' }}>
-            <View style={[styles.container]}>
+        <View style={{ flex: 1, justifyContent:'center', marginTop: 0, backgroundColor: themeColors.background }}>
+            <View style={[styles.container, { backgroundColor: themeColors.background }]}>
                 <View style={{alignItems:'center'}}>
                     <View style={styles.avatarContainer}>
                         <View style={styles.avatarBorder}>
@@ -98,38 +102,44 @@ export default function EditProfileScreen({ navigation }: any) {
                         </View>
 
                         <TouchableOpacity
-                            style={styles.iconContainer}
+                            style={[styles.iconContainer, { backgroundColor: themeColors.surface }]}
                             onPress={handleAvatarChange}
                             activeOpacity={0.7}
                         >
                             <Image source={{uri: 'https://cdn-icons-png.flaticon.com/128/14025/14025489.png'}}
-                                style={{ width: '70%', height: '70%' }}>
+                                style={{ width: '70%', height: '70%', tintColor: themeColors.primary }}>
                             </Image>
                         </TouchableOpacity>
                     </View>
                 </View>
 
                 <View style={styles.containerChild}>
-                    <Text style={{color: 'grey', fontSize: 15}}>
+                    <Text style={{color: themeColors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 5}}>
                         FULL NAME
                     </Text>
-                    <View style={[styles.inputContainer, {margin: 0}]}>
-                        <TextInput value={fullName} onChangeText={setFullName} style={{ flex: 1 }} />
+                    <View style={[styles.inputContainer, {margin: 0, backgroundColor: themeColors.surface, borderColor: themeColors.border}]}>
+                        <TextInput
+                            value={fullName}
+                            onChangeText={setFullName}
+                            style={{ flex: 1, color: themeColors.textPrimary }}
+                            placeholderTextColor={themeColors.textMuted}
+                        />
                     </View>
                 </View>
 
                 <View style={styles.containerChild}>
-                    <Text style={{color: 'grey', fontSize: 15}}>
+                    <Text style={{color: themeColors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 5}}>
                         EMAIL
                     </Text>
-                    <View style={[styles.inputContainer, {margin: 0}]}>
+                    <View style={[styles.inputContainer, {margin: 0, backgroundColor: themeColors.surface, borderColor: themeColors.border}]}>
                         <Image source={{uri: 'https://cdn-icons-png.flaticon.com/128/646/646094.png'}}
-                            style={{width: 20, height: 20, marginRight: 5, marginTop: 2}}>
+                            style={{width: 20, height: 20, marginRight: 10, tintColor: themeColors.textMuted}}>
                         </Image>
                         <TextInput
                             value={email}
                             onChangeText={setEmail}
-                            style={{ flex: 1 }}
+                            style={{ flex: 1, color: themeColors.textPrimary }}
+                            placeholderTextColor={themeColors.textMuted}
                             keyboardType="email-address"
                             autoCapitalize="none"
                             autoCorrect={false}
@@ -138,27 +148,38 @@ export default function EditProfileScreen({ navigation }: any) {
                 </View>
 
                  <View style={styles.containerChild}>
-                    <Text style={{color: 'grey', fontSize: 15}}>
+                    <Text style={{color: themeColors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 5}}>
                         USERNAME
                     </Text>
-                    <View style={[styles.inputContainer, {margin: 0, rowGap: 10}]}>
-                        <TextInput value={username} onChangeText={setUsername} style={{ flex: 1 }} autoCapitalize="none" />
+                    <View style={[styles.inputContainer, {margin: 0, backgroundColor: themeColors.surface, borderColor: themeColors.border}]}>
+                        <TextInput
+                            value={username}
+                            onChangeText={setUsername}
+                            style={{ flex: 1, color: themeColors.textPrimary }}
+                            placeholderTextColor={themeColors.textMuted}
+                            autoCapitalize="none"
+                        />
                     </View>
                 </View>
 
                 <View style={styles.containerChild}>
-                    <Text style={{color: 'grey', fontSize: 15}}>
+                    <Text style={{color: themeColors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 5}}>
                         LOCATION
                     </Text>
-                    <View style={[styles.inputContainer, {margin: 0}]}>
+                    <View style={[styles.inputContainer, {margin: 0, backgroundColor: themeColors.surface, borderColor: themeColors.border}]}>
                         <Image source={{uri: 'https://cdn-icons-png.flaticon.com/128/9800/9800512.png'}}
-                            style={{width: 20, height: 20, marginRight: 5, marginTop: 2}}>
+                            style={{width: 20, height: 20, marginRight: 10, tintColor: themeColors.textMuted}}>
                         </Image>
-                        <TextInput value={location} onChangeText={setLocation} style={{ flex: 1 }} />
+                        <TextInput
+                            value={location}
+                            onChangeText={setLocation}
+                            style={{ flex: 1, color: themeColors.textPrimary }}
+                            placeholderTextColor={themeColors.textMuted}
+                        />
                     </View>
                 </View>
 
-                <View style={[styles.containerChild, {marginTop: 10, alignItems:'center'}]}>
+                <View style={[styles.containerChild, {marginTop: 20, alignItems:'center'}]}>
                     <Pressable style={styles.button} onPress={handleSave} disabled={saving}>
                         {saving ? (
                             <ActivityIndicator color="#fff" />

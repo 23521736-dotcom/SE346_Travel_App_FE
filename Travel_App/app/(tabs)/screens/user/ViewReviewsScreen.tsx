@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import Fontisto from '@expo/vector-icons/Fontisto';
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -13,15 +13,15 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { colors } from '../../common/colors';
 import { calculateRatingStats, RatingBar, ratingBarStyles, RatingStartBar } from '../../components/Rating';
 import { PicturesContainer } from '../../components/ReviewPicture';
-import styles from './ViewReviewsScreen.styles';
+import getStyles from './ViewReviewsScreen.styles';
 import { fetchPlaceDetail } from '../../../../lib/api/places';
 import { deleteReview, fetchPlaceReviews, toggleReviewLike } from '../../../../lib/api/reviews';
 import type { ReviewListItem } from '../../../../lib/api/types';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
+import { useTheme } from '../../context/ThemeContext';
 
 function ReviewItem({
   item,
@@ -29,41 +29,45 @@ function ReviewItem({
   onLikeToggle,
   onEdit,
   onDelete,
+  colors,
+  styles,
 }: {
   item: ReviewListItem;
   canManage: boolean;
   onLikeToggle: (id: string) => void;
   onEdit: (review: ReviewListItem) => void;
   onDelete: (review: ReviewListItem) => void;
+  colors: any;
+  styles: any;
 }) {
   const handlePress = () => {
     onLikeToggle(item.id);
   };
 
   return (
-    <View style={{ backgroundColor: colors.white, margin: 10, padding: 15, borderRadius: 20, elevation: 3 }}>
+    <View style={{ backgroundColor: colors.surface, margin: 10, padding: 15, borderRadius: 20, elevation: 3 }}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <View style={{ flexDirection: 'row', columnGap: 10, alignItems: 'center' }}>
           <View style={[styles.avatarBorder, { width: 50, height: 50, overflow: 'hidden', borderRadius: 25 }]}>
             <Image source={{ uri: item.avatar }} style={{ height: '100%', width: '100%' }} resizeMode='cover' />
           </View>
           <View style={{ flexDirection: 'column' }}>
-            <Text style={{ color: 'black', fontSize: 18, fontWeight: 'bold' }}>{item.username}</Text>
+            <Text style={{ color: colors.textPrimary, fontSize: 18, fontWeight: 'bold' }}>{item.username}</Text>
             <View style={{ alignItems: 'flex-start', marginLeft: 0 }}>
               <RatingStartBar ratingValue={item.Rate} size={20} />
             </View>
           </View>
         </View>
-        <Text style={{ color: '#908a8a', fontSize: 13 }}>{item.date}</Text>
+        <Text style={{ color: colors.textMuted, fontSize: 13 }}>{item.date}</Text>
       </View>
 
       <View style={{ marginVertical: 10 }}>
-        <Text style={{ color: '#4a4a4a', fontSize: 15, lineHeight: 22 }}>{item.content}</Text>
+        <Text style={{ color: colors.textSecondary, fontSize: 15, lineHeight: 22 }}>{item.content}</Text>
       </View>
 
       <PicturesContainer pictures={item.images} />
 
-      <View style={{ flexDirection: 'row', columnGap: 18, marginTop: 5, alignItems: 'center' }}>
+      <View style={{ flexDirection: 'row', columnGap: 18, marginTop: 15, alignItems: 'center' }}>
         <TouchableHighlight underlayColor="transparent" onPress={handlePress}>
           <View style={{ flexDirection: 'row', alignItems: 'center', columnGap: 5 }}>
             <Fontisto name="like" size={20} color={colors.primary} />
@@ -97,6 +101,9 @@ function ReviewItem({
 
 export default function ViewReviewsScreen({ navigation, route }: any) {
   const { user } = useAuth();
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const placeId = route.params?.placeId as string | undefined;
   const placeName = route.params?.placeName as string | undefined;
   const [reviews, setReviews] = useState<ReviewListItem[]>([]);
@@ -185,22 +192,22 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
 
   if (!placeId) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <Text>Thieu thong tin dia diem</Text>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background }}>
+        <Text style={{ color: themeColors.textPrimary }}>Thieu thong tin dia diem</Text>
       </View>
     );
   }
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background }}>
+        <ActivityIndicator size="large" color={themeColors.primary} />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+    <View style={{ flex: 1, backgroundColor: themeColors.background }}>
       <FlatList
         data={reviews}
         renderItem={({ item }) => (
@@ -210,6 +217,8 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
             onLikeToggle={handleLikeToggle}
             onEdit={handleOpenEdit}
             onDelete={handleDeleteReview}
+            colors={themeColors}
+            styles={styles}
           />
         )}
         keyExtractor={(item) => item.id}
@@ -218,7 +227,7 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
             <View style={{ alignItems: 'center' }}>
               <ImageBackground
                 source={{ uri: coverImage }}
-                style={[styles.imageFrame, { width: '100%', height: 450 }]}
+                style={[styles.imageFrame, { width: '100%', height: 450, borderRadius: 0, borderWidth: 0 }]}
                 resizeMode="cover"
               >
                 <View style={[styles.overlay, { flex: 1, justifyContent: 'center', alignItems: 'center' }]}>
@@ -232,7 +241,7 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
                     <Ionicons name="chevron-back" size={25} color="white" />
                   </Pressable>
 
-                  <Text style={{ color: colors.primary, fontSize: 60, fontWeight: 'bold' }}>
+                  <Text style={{ color: themeColors.primary, fontSize: 60, fontWeight: 'bold' }}>
                     {placeRate}
                   </Text>
                   <RatingStartBar ratingValue={placeRate} size={30} />
@@ -252,7 +261,7 @@ export default function ViewReviewsScreen({ navigation, route }: any) {
         }
         contentContainerStyle={{ paddingBottom: 20 }}
         ListEmptyComponent={
-          <Text style={{ textAlign: 'center', marginTop: 20, color: colors.textSecondary }}>
+          <Text style={{ textAlign: 'center', marginTop: 20, color: themeColors.textSecondary }}>
             Chua co danh gia nao. Hay la nguoi dau tien!
           </Text>
         }

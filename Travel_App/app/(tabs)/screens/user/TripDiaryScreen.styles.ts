@@ -1,25 +1,25 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
   screen: {
     flex: 1,
-    backgroundColor: "#F8F9FF",
+    backgroundColor: colors.background,
   },
 
   header: {
     paddingHorizontal: 20,
     paddingTop: 52,
     paddingBottom: 12,
-    backgroundColor: "rgba(248,249,255,0.94)",
+    backgroundColor: colors.background,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     borderBottomWidth: 1,
-    borderBottomColor: "rgba(190,200,210,0.22)",
+    borderBottomColor: colors.border,
   },
 
   headerLeft: {
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(229,238,255,0.76)",
+    backgroundColor: colors.surfaceMuted,
   },
 
   headerActions: {
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: "#0EA5E9",
+    backgroundColor: colors.primary,
     alignItems: "center",
     justifyContent: "center",
     shadowColor: colors.shadow,
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
   },
 
   sectionTitle: {
-    color: "#0B1C30",
+    color: colors.textPrimary,
     fontSize: 24,
     fontWeight: "800",
   },
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     width: 2,
     borderRadius: 1,
-    backgroundColor: "#CBD5E1",
+    backgroundColor: colors.border,
   },
 
   timelineLineActive: {
@@ -176,7 +176,7 @@ const styles = StyleSheet.create({
     width: 2,
     height: 112,
     borderRadius: 1,
-    backgroundColor: "#0EA5E9",
+    backgroundColor: colors.primary,
   },
 
   timelineCard: {
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: "rgba(190,200,210,0.18)",
+    borderColor: colors.border,
     shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
@@ -204,13 +204,13 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 4,
-    borderColor: "rgba(14,165,233,0.22)",
-    backgroundColor: "#0EA5E9",
+    borderColor: colors.primaryLight,
+    backgroundColor: colors.primary,
   },
 
   timelineDotMuted: {
-    borderColor: "rgba(190,200,210,0.24)",
-    backgroundColor: "#BEC8D2",
+    borderColor: colors.borderLight,
+    backgroundColor: colors.textMuted,
   },
 
   cardHeader: {
@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
   },
 
   placeNameMuted: {
-    color: "#0B1C30",
+    color: colors.textPrimary,
   },
 
   timeRow: {
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
 
   timeText: {
-    color: "#3E4850",
+    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: "700",
   },
@@ -315,16 +315,16 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     borderLeftWidth: 4,
-    borderLeftColor: "rgba(14,165,233,0.42)",
-    backgroundColor: "rgba(229,238,255,0.52)",
+    borderLeftColor: colors.primaryLight,
+    backgroundColor: colors.surfaceMuted,
   },
 
   quoteBoxMuted: {
-    borderLeftColor: "rgba(110,120,129,0.24)",
+    borderLeftColor: colors.borderLight,
   },
 
   quoteText: {
-    color: "#3E4850",
+    color: colors.textPrimary,
     fontSize: 16,
     lineHeight: 24,
   },
@@ -337,7 +337,7 @@ const styles = StyleSheet.create({
     rowGap: 10,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
 
   stateText: {
@@ -364,7 +364,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
 
   emptyTitle: {
@@ -407,7 +407,7 @@ const styles = StyleSheet.create({
   ctaButton: {
     minHeight: 56,
     borderRadius: 12,
-    backgroundColor: "#0EA5E9",
+    backgroundColor: colors.primary,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   },
 
   helperText: {
-    color: "#6E7881",
+    color: colors.textSecondary,
     fontSize: 14,
     lineHeight: 20,
     textAlign: "center",
@@ -434,4 +434,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default styles;
+export default getStyles;

@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,10 +17,10 @@ import {
 import { createReview, updateReview } from '../../../../lib/api/reviews';
 import type { ReviewListItem } from '../../../../lib/api/types';
 import { uploadReviewImages, type UploadImageInput } from '../../../../lib/api/uploads';
-import { colors } from '../../common/colors';
 import { RatingStartBar } from '../../components/Rating';
 import { getApiErrorMessage } from '../../context/AuthContext';
-import styles from './WriteReviewScreen.styles';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './WriteReviewScreen.styles';
 
 const ratingLabels = ['Very bad', 'Bad', 'Okay', 'Good', 'Excellent'];
 
@@ -34,6 +34,9 @@ const normalizeInitialImages = (imageUrls: string[] = []): LocalReviewImage[] =>
 };
 
 export default function WriteReviewScreen({ navigation, route }: any) {
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const placeId = route.params?.placeId as string | undefined;
   const placeName = route.params?.placeName as string | undefined;
   const editingReview = route.params?.review as ReviewListItem | undefined;
@@ -135,7 +138,7 @@ export default function WriteReviewScreen({ navigation, route }: any) {
     >
       <View style={styles.header}>
         <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={colors.primary} />
+          <Ionicons name="arrow-back" size={24} color={themeColors.primary} />
         </Pressable>
         <Text style={styles.headerTitle}>{isEditing ? 'Edit Review' : 'Write Review'}</Text>
         <View style={styles.iconButton} />
@@ -152,7 +155,7 @@ export default function WriteReviewScreen({ navigation, route }: any) {
                 <Ionicons
                   name={value <= rating ? 'star' : 'star-outline'}
                   size={42}
-                  color={colors.warning}
+                  color={themeColors.warning}
                 />
               </TouchableOpacity>
             ))}
@@ -168,7 +171,7 @@ export default function WriteReviewScreen({ navigation, route }: any) {
           <TextInput
             style={styles.textArea}
             placeholder="Share your experience about this place..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={themeColors.textMuted}
             value={reviewText}
             onChangeText={setReviewText}
             multiline
@@ -188,7 +191,7 @@ export default function WriteReviewScreen({ navigation, route }: any) {
               onPress={handlePickImage}
               disabled={pendingImages.length >= 10}
             >
-              <Ionicons name="camera-outline" size={26} color={colors.primary} />
+              <Ionicons name="camera-outline" size={26} color={themeColors.primary} />
               <Text style={styles.addPhotoText}>Upload</Text>
             </TouchableOpacity>
 
@@ -199,7 +202,7 @@ export default function WriteReviewScreen({ navigation, route }: any) {
                   style={styles.removePhotoButton}
                   onPress={() => setPendingImages((prev) => prev.filter((_, i) => i !== idx))}
                 >
-                  <Ionicons name="close" size={16} color={colors.white} />
+                  <Ionicons name="close" size={16} color="white" />
                 </TouchableOpacity>
               </View>
             ))}
@@ -214,11 +217,11 @@ export default function WriteReviewScreen({ navigation, route }: any) {
           onPress={handleSubmitReview}
         >
           {submitting ? (
-            <ActivityIndicator color={colors.white} />
+            <ActivityIndicator color={themeColors.white} />
           ) : (
             <>
               <Text style={styles.submitButtonText}>{isEditing ? 'Save Review' : 'Submit Review'}</Text>
-              <Ionicons name={isEditing ? 'checkmark' : 'send'} size={18} color={colors.white} />
+              <Ionicons name={isEditing ? 'checkmark' : 'send'} size={18} color={themeColors.white} />
             </>
           )}
         </TouchableOpacity>

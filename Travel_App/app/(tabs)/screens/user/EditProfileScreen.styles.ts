@@ -1,10 +1,9 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  // Kế thừa các style chung
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
     avatarContainer : {
         width: 160,
@@ -16,10 +15,6 @@ const styles = StyleSheet.create({
         borderColor: colors.primary,
         width: 150,
         height: 150,
-        //backgroundColor: "#fff",
-        //     //backgroundColor: "#fff",
-        //     borderRadius: 70,
-        //     overflow: "hidden",
         borderRadius: 70,
         overflow: "hidden",
         position: 'relative',
@@ -28,26 +23,20 @@ const styles = StyleSheet.create({
     iconContainer: {
         alignItems: 'center',
         justifyContent: 'center',
-        //borderWidth: 5,
-        //borderColor: colors.primary,
         width: 50,
         height: 50,
         borderRadius: 70,
         position: 'absolute',
-        bottom: 5, // combine with position to be clear
+        bottom: 5,
         right: 10,
         zIndex: 10,
         elevation: 10,
         shadowColor: colors.primary,
         shadowOpacity: 0.5, 
-        shadowRadius: 10, // cang be cang net, lon thi lan trong
+        shadowRadius: 10,
         shadowOffset: {width: 0, height: 4},
     },
   
-      // borderAvatar: {
-      //     borderWidth: 5,
-      //     borderColor: colors.primary,
-
     containerChild: {
         margin: 10,
         marginTop: 10,
@@ -57,4 +46,4 @@ const styles = StyleSheet.create({
       
 });
 
-export default styles;
+export default getStyles;

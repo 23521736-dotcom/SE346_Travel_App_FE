@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -15,9 +15,13 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { oauthLogin } from '../../../../lib/api/auth';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
-import styles from './LoginScreen.styles';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './LoginScreen.styles';
 
 export default function LoginScreen({ navigation }: any) {
+    const { colors: themeColors } = useTheme();
+    const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
     const nav = navigation ?? useNavigation<any>();
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [email, setEmail] = useState('');
@@ -57,7 +61,6 @@ export default function LoginScreen({ navigation }: any) {
             console.log('Login successful');
 
             if (Platform.OS === 'web') {
-                // Hard reload to ensure navigation state is clean and RootNavigation picks up the user
                 console.log('Web environment detected, performing reload for navigation sync');
                 window.location.reload();
             }
@@ -86,7 +89,7 @@ export default function LoginScreen({ navigation }: any) {
             resizeMode="cover"
         >
             <View style={styles.overlay}>
-                <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', marginTop: 40 }}>
+                <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', marginTop: 40 }} showsVerticalScrollIndicator={false}>
 
                     <View style={{ alignItems: 'center', marginBottom: 40 }}>
                         <Image
@@ -102,11 +105,10 @@ export default function LoginScreen({ navigation }: any) {
                     </View>
 
                     <View style={styles.container}>
-                        {/* --- Ô NHẬP EMAIL --- */}
                         <View style={[styles.inputContainer, { marginBottom: 20 }]}>
                             <Image
                                 source={require('../../../../assets/images/email-icon.png')}
-                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }}
                             />
                             <TextInput
                                 placeholder="Email Address"
@@ -117,7 +119,7 @@ export default function LoginScreen({ navigation }: any) {
                                     fontWeight: '500',
                                     letterSpacing: 0.5
                                 }}
-                                placeholderTextColor="#94a3b8" // Đồng bộ màu chữ mờ với icon
+                                placeholderTextColor="#94a3b8"
                                 value={email}
                                 onChangeText={setEmail}
                                 keyboardType="email-address"
@@ -125,11 +127,10 @@ export default function LoginScreen({ navigation }: any) {
                             />
                         </View>
 
-                        {/* --- Ô NHẬP PASSWORD --- */}
                         <View style={styles.inputContainer}>
                             <Image
                                 source={require('../../../../assets/images/password-icon.png')}
-                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }}
                             />
 
                             <TextInput
@@ -142,7 +143,7 @@ export default function LoginScreen({ navigation }: any) {
                                     fontWeight: '500',
                                     letterSpacing: 0.5
                                 }}
-                                placeholderTextColor="#94a3b8" // Đồng bộ màu chữ mờ với icon
+                                placeholderTextColor="#94a3b8"
                                 value={password}
                                 onChangeText={setPassword}
                                 autoCapitalize="none"
@@ -156,12 +157,11 @@ export default function LoginScreen({ navigation }: any) {
                                     source={isPasswordVisible
                                         ? require('../../../../assets/images/hidden_eyepassword-icon.png')
                                         : require('../../../../assets/images/eyepassword-icon.png')}
-                                    style={{ width: 20, height: 20, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                                    style={{ width: 20, height: 20, tintColor: '#94a3b8' }}
                                 />
                             </TouchableOpacity>
                         </View>
 
-                        {/* --- QUÊN MẬT KHẨU --- */}
                         <View style={{ alignItems: 'flex-end', paddingTop: 12 }}>
                             <TouchableOpacity onPress={handleForgotPassword}>
                                 <Text style={styles.linkText}>Forgot Password</Text>

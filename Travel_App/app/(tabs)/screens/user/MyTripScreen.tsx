@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -12,8 +12,8 @@ import {
 } from "react-native";
 import { getApiErrorMessage } from "../../../../lib/api/client";
 import { ApiTrip, deleteTrip, fetchMyTrips, leaveTrip, mapApiTripToDraft } from "../../../../lib/api/trips";
-import { colors } from "../../common/colors";
 import { useAuth } from "../../context/AuthContext";
+import { useTheme } from "../../context/ThemeContext";
 import {
   Collaborator,
   getTripDraft,
@@ -25,7 +25,7 @@ import {
   TripData,
   upsertTripDraft,
 } from "../../store/tripDraftStore";
-import styles from "./MyTripScreen.styles";
+import getStyles from "./MyTripScreen.styles";
 
 type Trip = {
   id: string;
@@ -181,11 +181,15 @@ function TripCard({
   onPress,
   onDelete,
   isDeleting,
+  colors,
+  styles,
 }: {
   trip: Trip;
   onPress?: () => void;
   onDelete?: () => void;
   isDeleting?: boolean;
+  colors: any;
+  styles: any;
 }) {
   return (
     <Pressable
@@ -270,6 +274,9 @@ function TripCard({
 
 export default function MyTripScreen({ navigation }: any) {
   const { user } = useAuth();
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const [upcomingTripList, setUpcomingTripList] = useState<Trip[]>([]);
   const [pastTripList, setPastTripList] = useState<Trip[]>([]);
   const [isLoadingTrips, setIsLoadingTrips] = useState(false);
@@ -296,30 +303,7 @@ export default function MyTripScreen({ navigation }: any) {
           return;
         }
 
-        console.log(
-          "[MyTripScreen] raw trips ownerId",
-          apiTrips.map((trip) => ({
-            id: trip.id ?? trip.Id ?? trip.tripId ?? trip.trip_id,
-            title: trip.title ?? trip.Title ?? trip.name ?? trip.Name,
-            ownerId: trip.ownerId,
-            OwnerId: trip.OwnerId,
-            owner_id: trip.owner_id,
-            owner: trip.owner,
-          }))
-        );
-
         const mappedTrips = apiTrips.map(mapApiTrip).filter((trip) => trip.id);
-        console.log(
-          "[MyTripScreen] mapped trips owner check",
-          mappedTrips.map((trip) => ({
-            id: trip.id,
-            title: trip.title,
-            ownerId: trip.ownerId,
-            currentUserId,
-            isOwner: currentUserId !== undefined && String(trip.ownerId) === String(currentUserId),
-          }))
-        );
-
         const upcomingTrips = mappedTrips.filter((trip) => !isPastTrip(trip));
         const pastTrips = mappedTrips.filter(isPastTrip);
 
@@ -455,14 +439,6 @@ export default function MyTripScreen({ navigation }: any) {
     }
 
     const isOwner = currentUserId !== undefined && String(trip.ownerId) === String(currentUserId);
-    console.log("[MyTripScreen] delete/leave pressed", {
-      tripId: trip.id,
-      title: trip.title,
-      ownerId: trip.ownerId,
-      currentUserId,
-      isOwner,
-      action: isOwner ? "deleteTrip" : "leaveTrip",
-    });
 
     setDeletingTripId(trip.id);
     try {
@@ -488,13 +464,6 @@ export default function MyTripScreen({ navigation }: any) {
 
   const confirmDeleteTrip = (trip: Trip) => {
     const isOwner = currentUserId !== undefined && String(trip.ownerId) === String(currentUserId);
-    console.log("[MyTripScreen] delete/leave confirm opened", {
-      tripId: trip.id,
-      title: trip.title,
-      ownerId: trip.ownerId,
-      currentUserId,
-      isOwner,
-    });
 
     Alert.alert(
       isOwner ? "Delete trip" : "Leave trip",
@@ -522,7 +491,7 @@ export default function MyTripScreen({ navigation }: any) {
           style={styles.iconButton}
           onPress={createEmptyPlanningTrip}
         >
-          <Ionicons name="add" size={28} color={colors.primary} />
+          <Ionicons name="add" size={28} color={themeColors.primary} />
         </Pressable>
       </View>
 
@@ -539,8 +508,9 @@ export default function MyTripScreen({ navigation }: any) {
               justifyContent: 'center',
               padding: 12,
               borderRadius: 12,
+              marginHorizontal: 16,
               marginTop: 12,
-              backgroundColor: colors.primary,
+              backgroundColor: themeColors.primary,
             },
             pressed && { opacity: 0.8 }
           ]}
@@ -568,19 +538,19 @@ export default function MyTripScreen({ navigation }: any) {
                     {featuredTrip.title}
                   </Text>
                   <View style={styles.featuredMetaRow}>
-                    <Ionicons name="calendar-outline" size={14} color={colors.white} />
+                    <Ionicons name="calendar-outline" size={14} color="white" />
                     <Text numberOfLines={1} style={styles.featuredMetaText}>
                       {featuredTrip.date}
                     </Text>
                   </View>
                   <View style={styles.featuredMetaRow}>
-                    <Ionicons name="bed-outline" size={14} color={colors.white} />
+                    <Ionicons name="bed-outline" size={14} color="white" />
                     <Text numberOfLines={1} style={styles.featuredMetaText}>
                       {featuredTrip.hotel || "Hotel not selected"} - {featuredTrip.duration || 1} days
                     </Text>
                   </View>
                   <View style={styles.featuredMetaRow}>
-                    <Ionicons name="wallet-outline" size={14} color={colors.white} />
+                    <Ionicons name="wallet-outline" size={14} color="white" />
                     <Text numberOfLines={1} style={styles.featuredMetaText}>
                       Total budget: VND: {formatVnd(featuredTrip.budget || 0)}
                     </Text>
@@ -637,7 +607,7 @@ export default function MyTripScreen({ navigation }: any) {
         <View style={styles.tripList}>
           {isLoadingTrips ? (
             <View style={styles.tripState}>
-              <ActivityIndicator color={colors.primary} />
+              <ActivityIndicator color={themeColors.primary} />
               <Text style={styles.tripStateText}>Loading trips...</Text>
             </View>
           ) : null}
@@ -651,6 +621,8 @@ export default function MyTripScreen({ navigation }: any) {
             <TripCard
               key={trip.id}
               trip={trip}
+              colors={themeColors}
+              styles={styles}
               onPress={openingTripId || deletingTripId ? undefined : () => openTrip(trip)}
               onDelete={() => confirmDeleteTrip(trip)}
               isDeleting={deletingTripId === trip.id}
@@ -658,8 +630,6 @@ export default function MyTripScreen({ navigation }: any) {
           ))}
         </View>
       </ScrollView>
-
-
     </View>
   );
 }

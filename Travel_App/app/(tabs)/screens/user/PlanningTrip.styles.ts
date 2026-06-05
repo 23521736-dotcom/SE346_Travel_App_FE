@@ -1,39 +1,39 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
   screen: {
     flex: 1,
     backgroundColor: colors.background,
   },
 
-  container: { flex: 1, backgroundColor: '#F3F6FA' },
+  container: { flex: 1, backgroundColor: colors.background },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 18, paddingTop: 42, paddingBottom: 14 },
-  headerTitle: { fontSize: 18, fontWeight: 'bold', color: '#1a202c' },
+  headerTitle: { fontSize: 18, fontWeight: 'bold', color: colors.textPrimary },
   headerEditButton: {
     minWidth: 64,
     height: 34,
     borderRadius: 17,
     paddingHorizontal: 12,
-    backgroundColor: '#E3F8FF',
+    backgroundColor: colors.primaryLight,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     columnGap: 6,
   },
   headerEditText: {
-    color: '#0EB4D3',
+    color: colors.primary,
     fontSize: 13,
     fontWeight: '900',
   },
   scrollContent: { paddingHorizontal: 16, paddingBottom: 56 },
 
-  card: { backgroundColor: '#fff', borderRadius: 18, padding: 16, marginBottom: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
+  card: { backgroundColor: colors.surface, borderRadius: 18, padding: 16, marginBottom: 18, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 10, elevation: 3 },
   cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sectionTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: '#2d3748', marginRight: 12 },
+  sectionTitle: { flex: 1, fontSize: 16, fontWeight: 'bold', color: colors.textPrimary, marginRight: 12 },
   actionButtons: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   actionPill: {
     minHeight: 34,
@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     columnGap: 6,
-    backgroundColor: '#E3F8FF',
+    backgroundColor: colors.primaryLight,
   },
   actionPillDanger: {
     minHeight: 34,
@@ -53,7 +53,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     columnGap: 6,
-    backgroundColor: '#FEE2E2',
+    backgroundColor: colors.dangerSoft,
   },
   actionButtonDisabled: {
     opacity: 0.65,
@@ -61,15 +61,15 @@ const styles = StyleSheet.create({
   buttonPressed: {
     transform: [{ scale: 0.97 }],
   },
-  modifyBtnText: { color: '#0EB4D3', fontWeight: 'bold', fontSize: 13 },
-  deleteTripText: { color: '#E53935', fontWeight: 'bold', fontSize: 13 },
+  modifyBtnText: { color: colors.primary, fontWeight: 'bold', fontSize: 13 },
+  deleteTripText: { color: colors.danger, fontWeight: 'bold', fontSize: 13 },
   infoGrid: { flexDirection: 'row', columnGap: 14, marginBottom: 14 },
   infoCol: { flex: 1 },
-  label: { fontSize: 12, color: '#a0aec0', marginBottom: 6, fontWeight: '600' },
+  label: { fontSize: 12, color: colors.textMuted, marginBottom: 6, fontWeight: '600' },
   iconRow: { flexDirection: 'row', alignItems: 'center', columnGap: 7 },
-  infoValue: { flex: 1, fontSize: 14, fontWeight: '700', color: '#2d3748' },
+  infoValue: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.textPrimary },
   dateRangeText: {
-    color: '#94A3B8',
+    color: colors.textSecondary,
     fontSize: 11,
     fontWeight: '600',
     marginTop: 5,
@@ -82,8 +82,8 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#fff',
-    backgroundColor: '#edf2f7',
+    borderColor: colors.surface,
+    backgroundColor: colors.surfaceMuted,
   },
   avatarOverlap: {
     marginLeft: -8,
@@ -93,31 +93,31 @@ const styles = StyleSheet.create({
     height: 32,
     borderRadius: 16,
     borderWidth: 2,
-    borderColor: '#fff',
-    backgroundColor: '#0EB4D3',
+    borderColor: colors.surface,
+    backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarMoreText: {
-    color: '#fff',
+    color: colors.white,
     fontSize: 11,
     fontWeight: '900',
   },
   emptyMembersText: {
     fontSize: 12,
-    color: '#a0aec0',
+    color: colors.textMuted,
     marginLeft: 8,
     maxWidth: 120,
     fontStyle: 'italic',
   },
-  avatarPlus: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#edf2f7', justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: '#fff' },
-  budgetAmount: { fontSize: 17, fontWeight: 'bold', color: '#0EB4D3', textAlign: 'right' },
-  budgetUnit: { fontSize: 12, color: '#a0aec0', fontWeight: 'normal' },
+  avatarPlus: { width: 32, height: 32, borderRadius: 16, backgroundColor: colors.surfaceMuted, justifyContent: 'center', alignItems: 'center', borderWidth: 2, borderColor: colors.surface },
+  budgetAmount: { fontSize: 17, fontWeight: 'bold', color: colors.primary, textAlign: 'right' },
+  budgetUnit: { fontSize: 12, color: colors.textMuted, fontWeight: 'normal' },
 
   dayHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff', // Giữ nền trắng
+    backgroundColor: colors.surface,
     padding: 14,
     borderRadius: 16,
     marginBottom: 12,
@@ -129,23 +129,23 @@ const styles = StyleSheet.create({
   },
 
   dayBadge: {
-    backgroundColor: '#0EB4D3',
+    backgroundColor: colors.primary,
     width: 44,
     height: 44,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#0EB4D3',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4
   },
-  dayBadgeText: { color: '#fff', fontWeight: 'bold', fontSize: 18 },
+  dayBadgeText: { color: colors.white, fontWeight: 'bold', fontSize: 18 },
 
   dayTitleCol: { flex: 1, marginLeft: 14, marginRight: 10 },
-  dayTitle: { fontSize: 16, fontWeight: 'bold', color: '#2d3748' },
-  daySubtitle: { fontSize: 13, color: '#a0aec0', marginTop: 2 },
+  dayTitle: { fontSize: 16, fontWeight: 'bold', color: colors.textPrimary },
+  daySubtitle: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
 
   iconButton: {
     width: 34,
@@ -166,11 +166,11 @@ const styles = StyleSheet.create({
   scheduleDayTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
   },
 
   scheduleDayDate: {
-    color: '#888',
+    color: colors.textMuted,
     fontSize: 12,
     fontWeight: '600',
     marginTop: 2,
@@ -182,13 +182,13 @@ const styles = StyleSheet.create({
 
   itineraryCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#EDF0F2',
+    borderColor: colors.border,
   },
 
   itineraryImage: {
@@ -205,12 +205,12 @@ const styles = StyleSheet.create({
   itineraryTitle: {
     fontSize: 15,
     fontWeight: 'bold',
-    color: '#000',
+    color: colors.textPrimary,
   },
 
   itineraryRating: {
     fontSize: 12,
-    color: '#888',
+    color: colors.textSecondary,
     marginBottom: 8,
     marginTop: 2,
   },
@@ -227,14 +227,14 @@ const styles = StyleSheet.create({
 
   detailLabel: {
     fontSize: 10,
-    color: '#888',
+    color: colors.textMuted,
     marginBottom: 2,
   },
 
   detailValue: {
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
   },
 
   deleteBtn: {
@@ -247,7 +247,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     borderWidth: 1,
-    borderColor: '#1E88E5',
+    borderColor: colors.primary,
     borderStyle: 'dashed',
     borderRadius: 12,
     marginTop: 4,
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
   },
 
   addLocationText: {
-    color: '#1E88E5',
+    color: colors.primary,
     fontWeight: 'bold',
     fontSize: 15,
   },
@@ -266,15 +266,15 @@ const styles = StyleSheet.create({
   budgetCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#EDF0F2',
+    borderColor: colors.border,
   },
 
   budgetIconContainer: {
-    backgroundColor: '#1E88E5',
+    backgroundColor: colors.primary,
     width: 48,
     height: 48,
     borderRadius: 12,
@@ -290,12 +290,12 @@ const styles = StyleSheet.create({
   budgetCardAmount: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: colors.textPrimary,
   },
 
   budgetCurrency: {
     fontSize: 13,
-    color: '#888',
+    color: colors.textSecondary,
   },
 
   timelineDay: {
@@ -314,14 +314,14 @@ const styles = StyleSheet.create({
   dayHeaderCollapsed: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#E3F8FF',
+    backgroundColor: colors.primaryLight,
     padding: 14,
     paddingRight: 12,
     borderRadius: 16,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#B9ECF8',
-    shadowColor: '#0EB4D3',
+    borderColor: colors.border,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.12,
     shadowRadius: 8,
@@ -329,7 +329,7 @@ const styles = StyleSheet.create({
   },
 
   dayBadgeExpanded: {
-    backgroundColor: '#0EB4D3',
+    backgroundColor: colors.primary,
     width: 34,
     height: 34,
     borderRadius: 10,
@@ -338,7 +338,7 @@ const styles = StyleSheet.create({
   },
 
   dayBadgeCollapsed: {
-    backgroundColor: '#0EB4D3',
+    backgroundColor: colors.primary,
     width: 46,
     height: 46,
     borderRadius: 14,
@@ -347,13 +347,13 @@ const styles = StyleSheet.create({
   },
 
   dayBadgeTextExpanded: {
-    color: '#fff',
+    color: colors.white,
     fontWeight: '900',
     fontSize: 14,
   },
 
   dayBadgeTextCollapsed: {
-    color: '#fff',
+    color: colors.white,
     fontWeight: '900',
     fontSize: 16,
   },
@@ -361,13 +361,13 @@ const styles = StyleSheet.create({
   dayTitleExpanded: {
     fontSize: 14,
     fontWeight: '900',
-    color: '#2d3748',
+    color: colors.textPrimary,
   },
 
   dayTitleCollapsed: {
     fontSize: 16,
     fontWeight: '900',
-    color: '#075B70',
+    color: colors.primary,
   },
 
   timelineWrap: {
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
     top: 4,
     bottom: 8,
     width: 1,
-    backgroundColor: '#D9E4EE',
+    backgroundColor: colors.border,
   },
 
   timelineItem: {
@@ -403,27 +403,27 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     borderWidth: 2,
-    borderColor: '#0EB4D3',
-    backgroundColor: '#fff',
+    borderColor: colors.primary,
+    backgroundColor: colors.surface,
     marginRight: 10,
   },
 
   timeTitle: {
-    color: '#0EB4D3',
+    color: colors.primary,
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 0.4,
   },
 
   timeText: {
-    color: '#A0AEC0',
+    color: colors.textMuted,
     fontSize: 10,
     fontWeight: '700',
   },
 
   timelineCard: {
     marginLeft: 10,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 14,
     padding: 12,
     flexDirection: 'row',
@@ -455,13 +455,13 @@ const styles = StyleSheet.create({
 
   timelineTitle: {
     flex: 1,
-    color: '#2D3748',
+    color: colors.textPrimary,
     fontSize: 15,
     fontWeight: '900',
   },
 
   timelineDescription: {
-    color: '#718096',
+    color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 17,
     marginTop: 5,
@@ -470,7 +470,7 @@ const styles = StyleSheet.create({
   ratingPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF7ED',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -478,14 +478,14 @@ const styles = StyleSheet.create({
   },
 
   ratingText: {
-    color: '#F97316',
+    color: colors.warning,
     fontSize: 9,
     fontWeight: '900',
   },
 
   estimatePill: {
     alignSelf: 'flex-start',
-    backgroundColor: '#CFFAF0',
+    backgroundColor: colors.successSoft,
     borderRadius: 4,
     paddingHorizontal: 8,
     paddingVertical: 5,
@@ -493,10 +493,10 @@ const styles = StyleSheet.create({
   },
 
   estimateText: {
-    color: '#0FAD90',
+    color: colors.success,
     fontSize: 10,
     fontWeight: '900',
   },
 });
 
-export default styles;
+export default getStyles;

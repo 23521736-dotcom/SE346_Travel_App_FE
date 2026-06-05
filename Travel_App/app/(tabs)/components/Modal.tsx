@@ -1,5 +1,7 @@
-import React, { ReactNode } from 'react';
+import React, { ReactNode, useMemo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '../context/ThemeContext';
+import { ThemeType } from '../common/theme';
 
 interface Props {
   visible: boolean;
@@ -9,32 +11,35 @@ interface Props {
 }
 
 const SimpleModal = ({ visible, onClose, title, children }: Props) => {
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   if (!visible) return null;
 
   return (
-    <View style={modalStyles.container}>
+    <View style={styles.container}>
       <TouchableOpacity
-        style={modalStyles.overlay}
+        style={styles.overlay}
         activeOpacity={1}
         onPress={onClose}
       />
 
-      <View style={modalStyles.modalBox}>
-        <Text style={modalStyles.title}>{title}</Text>
+      <View style={styles.modalBox}>
+        <Text style={styles.title}>{title}</Text>
 
-        <View style={modalStyles.content}>
+        <View style={styles.content}>
           {children}
         </View>
 
-        <TouchableOpacity style={modalStyles.button} onPress={onClose}>
-          <Text style={{ }}>Đóng</Text>
+        <TouchableOpacity style={styles.button} onPress={onClose}>
+          <Text style={{ color: themeColors.primary, fontWeight: '700' }}>Đóng</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 };
 
-const modalStyles = StyleSheet.create({
+const getStyles = (colors: ThemeType) => StyleSheet.create({
   container: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: 'center',
@@ -43,15 +48,15 @@ const modalStyles = StyleSheet.create({
   },
   overlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: colors.overlay,
   },
   modalBox: {
     width: '80%',
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     borderRadius: 10,
     padding: 20,
     elevation: 5,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
   },
@@ -60,6 +65,7 @@ const modalStyles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    color: colors.textPrimary,
   },
   content: {
     marginBottom: 20,

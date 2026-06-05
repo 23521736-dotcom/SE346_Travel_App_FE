@@ -1,9 +1,9 @@
 import { Platform, StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-export const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.border,
   },
   headerTitle: {
     fontSize: 18,
@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     marginBottom: 20,
     ...Platform.select({
       ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 10 },
@@ -86,9 +86,9 @@ export const styles = StyleSheet.create({
     marginBottom: 0,
   },
   input: {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -110,7 +110,7 @@ export const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     marginRight: 8,
     backgroundColor: colors.surface,
   },
@@ -169,3 +169,5 @@ export const styles = StyleSheet.create({
     backgroundColor: 'white',
   }
 });
+
+export default getStyles;

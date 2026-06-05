@@ -35,17 +35,22 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { ActivityIndicator, View } from 'react-native';
-import { colors } from './common/colors';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
 const MainTabs = () => {
+  const { colors: themeColors } = useTheme();
   return (
     <Tab.Navigator screenOptions={() => ({
-      tabBarActiveTintColor: '#00B4D8',
-      tabBarInactiveTintColor: 'gray'
+      tabBarActiveTintColor: themeColors.primary,
+      tabBarInactiveTintColor: themeColors.textMuted,
+      tabBarStyle: {
+        backgroundColor: themeColors.tabBar,
+        borderTopColor: themeColors.border,
+      }
     })}>
       <Tab.Screen
         name="Home"
@@ -99,10 +104,15 @@ const MainTabs = () => {
 };
 
 const OwnerTabs = () => {
+  const { colors: themeColors } = useTheme();
   return (
     <Tab.Navigator screenOptions={() => ({
-      tabBarActiveTintColor: '#00B4D8',
-      tabBarInactiveTintColor: 'gray'
+      tabBarActiveTintColor: themeColors.primary,
+      tabBarInactiveTintColor: themeColors.textMuted,
+      tabBarStyle: {
+        backgroundColor: themeColors.tabBar,
+        borderTopColor: themeColors.border,
+      }
     })}>
       <Tab.Screen
         name="Dashboard"
@@ -124,16 +134,16 @@ const OwnerTabs = () => {
               width: 60,
               height: 60,
               borderRadius: 30,
-              backgroundColor: '#00B4D8',
+              backgroundColor: themeColors.primary,
               justifyContent: 'center',
               alignItems: 'center',
-              shadowColor: '#00B4D8',
+              shadowColor: themeColors.primary,
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.4,
               shadowRadius: 5,
               elevation: 8,
               borderWidth: 4,
-              borderColor: '#FFFFFF',
+              borderColor: themeColors.white,
             }}>
               <Ionicons
                 name="add"
@@ -157,10 +167,15 @@ const OwnerTabs = () => {
 };
 
 const AdminTabs = () => {
+  const { colors: themeColors } = useTheme();
   return (
     <Tab.Navigator screenOptions={() => ({
-      tabBarActiveTintColor: '#00B4D8',
-      tabBarInactiveTintColor: 'gray'
+      tabBarActiveTintColor: themeColors.primary,
+      tabBarInactiveTintColor: themeColors.textMuted,
+      tabBarStyle: {
+        backgroundColor: themeColors.tabBar,
+        borderTopColor: themeColors.border,
+      }
     })}>
       <Tab.Screen
         name="User"
@@ -199,12 +214,13 @@ const AdminTabs = () => {
 
 const RootNavigation = () => {
   const { user, loading } = useAuth();
-  console.log('RootNavigation rendering, user:', user?.email, 'role:', user?.role);
+  const { colors: themeColors, themeMode } = useTheme();
+  console.log('RootNavigation rendering, user:', user?.email, 'role:', user?.role, 'theme:', themeMode);
 
   if (loading) {
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={colors.primary} />
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: themeColors.background }}>
+        <ActivityIndicator size="large" color={themeColors.primary} />
       </View>
     );
   }
@@ -212,7 +228,10 @@ const RootNavigation = () => {
   if (!user) {
     console.log('No user, showing Auth Stack');
     return (
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={{
+        headerShown: false,
+        contentStyle: { backgroundColor: themeColors.background }
+      }}>
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Terms of Service" component={TermsOfServiceScreen} />
@@ -233,7 +252,9 @@ const RootNavigation = () => {
   if (isAdmin) {
     console.log('Rendering AdminTabs');
     return (
-      <Stack.Navigator>
+      <Stack.Navigator screenOptions={{
+        contentStyle: { backgroundColor: themeColors.background }
+      }}>
         <Stack.Screen
           name="Main"
           component={AdminTabs}
@@ -246,7 +267,9 @@ const RootNavigation = () => {
   if (isOwner) {
     console.log('Rendering OwnerTabs');
     return (
-      <Stack.Navigator>
+      <Stack.Navigator screenOptions={{
+        contentStyle: { backgroundColor: themeColors.background }
+      }}>
         <Stack.Screen
           name="Main"
           component={OwnerTabs}
@@ -290,9 +313,9 @@ const RootNavigation = () => {
             headerShown: true,
             presentation: 'modal',
             title: "Edit Profile",
-            headerStyle: { backgroundColor: '#FFFFFF' },
+            headerStyle: { backgroundColor: themeColors.surface },
             headerShadowVisible: false,
-            headerTintColor: '#000',
+            headerTintColor: themeColors.textPrimary,
           }}
         />
       </Stack.Navigator>
@@ -301,7 +324,9 @@ const RootNavigation = () => {
 
   console.log('Rendering MainTabs (Traveler)');
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={{
+      contentStyle: { backgroundColor: themeColors.background }
+    }}>
       <Stack.Screen
         name="Main"
         component={MainTabs}
@@ -372,9 +397,9 @@ const RootNavigation = () => {
           headerShown: true,
           presentation: 'modal',
           title: "Edit Profile",
-          headerStyle: { backgroundColor: '#FFFFFF' },
+          headerStyle: { backgroundColor: themeColors.surface },
           headerShadowVisible: false,
-          headerTintColor: '#000',
+          headerTintColor: themeColors.textPrimary,
         }}
       />
       <Stack.Screen

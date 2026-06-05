@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
+const getStyles = (colors: ThemeType) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -13,7 +13,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.border,
   },
 
   scrollContent: {
@@ -40,12 +40,12 @@ const styles = StyleSheet.create({
   },
 
   input: {
-    backgroundColor: '#F5F7FA',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 10,
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     color: colors.textPrimary,
   },
 
@@ -58,16 +58,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    marginBottom: 10,
   },
 
   weightInput: {
     width: 60,
     textAlign: 'center',
-    backgroundColor: '#F5F7FA',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     padding: 8,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     color: colors.textPrimary,
   },
 
@@ -121,7 +122,7 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -203,7 +204,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.border,
   },
 
   timelineDot: {
@@ -217,7 +218,7 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: colors.borderLight,
+    backgroundColor: colors.border,
     marginLeft: 4,
   },
 
@@ -262,7 +263,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
+    borderTopColor: colors.border,
   },
 
   primaryButton: {
@@ -301,7 +302,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: colors.borderLight,
+    backgroundColor: colors.border,
   },
 
   stepDotActive: {
@@ -314,4 +315,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default styles;
+export default getStyles;

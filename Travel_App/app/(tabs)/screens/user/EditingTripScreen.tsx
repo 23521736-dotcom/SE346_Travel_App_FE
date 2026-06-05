@@ -1,7 +1,7 @@
 import { Feather, Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {
   ActivityIndicator,
@@ -35,7 +35,8 @@ import {
   TripData,
   upsertTripDraft,
 } from '../../store/tripDraftStore';
-import styles from './EditingTripScreen.style';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './EditingTripScreen.style';
 
 type DateInputType = 'start' | 'end';
 const WebDateInput = 'input' as any;
@@ -259,6 +260,9 @@ function formatBudget(value: number) {
 }
 
 export default function EditingTripScreen({ navigation, route }: any) {
+  const { colors: themeColors, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const incomingTrip = {
     ...defaultTrip,
     ...(route?.params?.tripData as TripData | undefined),
@@ -664,13 +668,14 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.background} />
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity
             onPress={() => navigation.goBack()}
             style={styles.iconButton}
           >
-            <Feather name="chevron-left" size={24} color="#333" />
+            <Feather name="chevron-left" size={24} color={themeColors.primary} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Editing Itinerary</Text>
           <TouchableOpacity
@@ -719,8 +724,8 @@ export default function EditingTripScreen({ navigation, route }: any) {
         <View style={styles.section}>
           <Text style={styles.label}>Itinerary Name</Text>
           {saveError ? (
-            <View style={{ marginBottom: 10, padding: 10, borderRadius: 8, backgroundColor: '#FEE2E2' }}>
-              <Text style={{ color: '#991B1B', fontWeight: '600' }}>{saveError}</Text>
+            <View style={{ marginBottom: 10, padding: 10, borderRadius: 8, backgroundColor: themeColors.dangerSoft }}>
+              <Text style={{ color: themeColors.danger, fontWeight: '600' }}>{saveError}</Text>
             </View>
           ) : null}
           <View style={styles.inputBox}>
@@ -728,6 +733,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
               value={trip.title}
               onChangeText={(value) => updateText('title', value)}
               style={styles.inputText}
+              placeholderTextColor={themeColors.textMuted}
             />
           </View>
 
@@ -737,7 +743,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
               style={styles.datePickerButton}
               onPress={() => openDatePicker('start')}
             >
-              <Feather name="calendar" size={18} color="#1E88E5" style={styles.inputIcon} />
+              <Feather name="calendar" size={18} color={themeColors.primary} style={styles.inputIcon} />
               <View>
                 <Text style={styles.datePickerLabel}>Start date</Text>
                 <Text style={styles.inputText}>
@@ -750,7 +756,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
               style={styles.datePickerButton}
               onPress={() => openDatePicker('end')}
             >
-              <Feather name="calendar" size={18} color="#1E88E5" style={styles.inputIcon} />
+              <Feather name="calendar" size={18} color={themeColors.primary} style={styles.inputIcon} />
               <View>
                 <Text style={styles.datePickerLabel}>End date</Text>
                 <Text style={styles.inputText}>
@@ -762,11 +768,12 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
           <Text style={styles.label}>Hotel</Text>
           <View style={styles.inputBox}>
-            <Ionicons name="bed-outline" size={18} color="#1E88E5" style={styles.inputIcon} />
+            <Ionicons name="bed-outline" size={18} color={themeColors.primary} style={styles.inputIcon} />
             <TextInput
               value={trip.hotel}
               onChangeText={(value) => updateText('hotel', value)}
               style={styles.inputText}
+              placeholderTextColor={themeColors.textMuted}
             />
           </View>
         </View>
@@ -785,6 +792,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
                   onChangeText={(value) => updateDayTitle(day.dayId, value)}
                   style={styles.dayTitleInput}
                   editable={!isSavingTrip}
+                  placeholderTextColor={themeColors.textMuted}
                 />
               </View>
 
@@ -797,12 +805,12 @@ export default function EditingTripScreen({ navigation, route }: any) {
                     <View style={styles.itineraryTitleRow}>
                       <Text numberOfLines={1} style={styles.itineraryTitle}>{loc.name}</Text>
                       <View style={styles.itineraryRatingPill}>
-                        <Ionicons name="star" size={12} color="#F97316" />
+                        <Ionicons name="star" size={12} color={themeColors.warning} />
                         <Text style={styles.itineraryRating}>{loc.rating}</Text>
                       </View>
                     </View>
                     <View style={styles.itineraryLocationRow}>
-                      <Ionicons name="location-outline" size={13} color="#64748B" />
+                      <Ionicons name="location-outline" size={13} color={themeColors.textSecondary} />
                       <Text numberOfLines={1} style={styles.itineraryLocation}>
                         {loc.location || 'Location not set'}
                       </Text>
@@ -810,19 +818,20 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
                     <View style={styles.itineraryDetailsRow}>
                       <View style={styles.detailPill}>
-                        <Ionicons name="time-outline" size={13} color="#1E88E5" />
+                        <Ionicons name="time-outline" size={13} color={themeColors.primary} />
                         <TextInput
                           value={loc.time}
                           onChangeText={(value) =>
                             updateLocationTime(day.dayId, getLocationSelectionId(loc), value)
                           }
                           placeholder="Time not set"
+                          placeholderTextColor={themeColors.textMuted}
                           editable={!isSavingTrip}
                           style={styles.timeInput}
                         />
                       </View>
                       <View style={styles.detailPill}>
-                        <Ionicons name="cash-outline" size={13} color="#0F766E" />
+                        <Ionicons name="cash-outline" size={13} color={themeColors.success} />
                         <Text style={styles.budgetValue}>VND {formatBudget(getCostValue(loc.cost))}</Text>
                       </View>
                     </View>
@@ -832,7 +841,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
                     style={styles.deleteBtn}
                     onPress={() => deleteLocation(day.dayId, getLocationSelectionId(loc))}
                   >
-                    <Feather name="trash-2" size={20} color="#FF6B6B" />
+                    <Feather name="trash-2" size={20} color={themeColors.danger} />
                   </TouchableOpacity>
                 </View>
                 );
@@ -856,7 +865,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
                 disabled={isSavingTrip}
               >
                 <View style={styles.addLocationIconWrap}>
-                  <Feather name="map-pin" size={15} color="#1E88E5" />
+                  <Feather name="map-pin" size={15} color={themeColors.white} />
                 </View>
                 <Text style={styles.addLocationText}>
                   Thêm địa điểm cho {getVietnameseDayTitle(day.title, index)}
@@ -870,7 +879,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
           <Text style={styles.sectionTitle}>Total estimated budget</Text>
           <View style={styles.budgetCard}>
             <View style={styles.budgetIconContainer}>
-              <MaterialCommunityIcons name="cash" size={24} color="#FFF" />
+              <MaterialCommunityIcons name="cash" size={24} color={themeColors.white} />
             </View>
             <View style={styles.budgetInfo}>
               <Text style={styles.budgetAmount}>VND: {formatBudget(totalEstimatedBudget)}</Text>
@@ -925,7 +934,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
             disabled={isSavingTrip}
           >
             <View style={styles.addMemberIconBtn}>
-              <Feather name="user-plus" size={16} color="#1E88E5" />
+              <Feather name="user-plus" size={16} color={themeColors.primary} />
             </View>
             <View style={{ marginLeft: 8 }}>
               <Text style={styles.addMemberTitle}>Add member</Text>
@@ -947,7 +956,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
           <View
             style={{
               flex: 1,
-              backgroundColor: 'rgba(15, 23, 42, 0.45)',
+              backgroundColor: themeColors.overlay,
               justifyContent: 'center',
               alignItems: 'center',
               padding: 16,
@@ -957,7 +966,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
               style={{
                 width: '100%',
                 maxWidth: 420,
-                backgroundColor: '#FFF',
+                backgroundColor: themeColors.surface,
                 borderRadius: 20,
                 padding: 16,
                 shadowColor: '#000',
@@ -967,16 +976,16 @@ export default function EditingTripScreen({ navigation, route }: any) {
                 elevation: 8,
               }}
             >
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#1E88E5', marginBottom: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: themeColors.primary, marginBottom: 12 }}>
                 {activeDateInput === 'start' ? 'Choose start date' : 'Choose end date'}
               </Text>
 
               <View
                 style={{
-                  backgroundColor: '#F4F7FB',
+                  backgroundColor: themeColors.surfaceMuted,
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: '#D8E2F0',
+                  borderColor: themeColors.border,
                   paddingHorizontal: 12,
                   paddingVertical: 8,
                 }}
@@ -997,7 +1006,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
                     border: 'none',
                     outline: 'none',
                     backgroundColor: 'transparent',
-                    color: '#1f2937',
+                    color: themeColors.textPrimary,
                     minHeight: 34,
                   }}
                 />
@@ -1005,7 +1014,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
 
               <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 }}>
                 <TouchableOpacity onPress={closeDatePicker} style={{ paddingVertical: 10, paddingHorizontal: 14 }}>
-                  <Text style={{ color: '#666', fontWeight: '600' }}>Cancel</Text>
+                  <Text style={{ color: themeColors.textSecondary, fontWeight: '600' }}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleConfirmDate(webPickerDate)}
@@ -1014,10 +1023,10 @@ export default function EditingTripScreen({ navigation, route }: any) {
                     paddingVertical: 10,
                     paddingHorizontal: 16,
                     borderRadius: 10,
-                    backgroundColor: '#1E88E5',
+                    backgroundColor: themeColors.primary,
                   }}
                 >
-                  <Text style={{ color: '#FFF', fontWeight: '700' }}>Apply</Text>
+                  <Text style={{ color: themeColors.white, fontWeight: '700' }}>Apply</Text>
                 </TouchableOpacity>
               </View>
             </View>

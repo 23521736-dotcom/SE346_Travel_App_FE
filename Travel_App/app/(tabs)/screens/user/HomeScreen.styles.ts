@@ -1,9 +1,9 @@
 import { Platform, StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import type { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
   
   // Search bar override
   searchContainer: {
@@ -30,13 +30,13 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#D8EEF7',
+    borderColor: colors.border,
     borderRadius: 25,
     paddingLeft: 45,
     paddingRight: 45,
     height: 45,
-    color: '#333',
-    shadowColor: '#000',
+    color: colors.textPrimary,
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   },
 
   categoryButtonText: {
-    color: 'black',
+    color: colors.textPrimary,
     fontSize: 18,
     fontWeight: 'bold',
   },
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
   },
 
   filterText: {
-    color: colors.black,
+    color: colors.textPrimary,
     fontSize: 14,
     fontWeight: '600',
   },
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     margin: 10,
     borderWidth: 1,
     borderRadius: 15,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     padding: 12,
   },
 
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
 
   TagContainer:  {
     height: 1, 
-    backgroundColor: colors.surface, 
+    backgroundColor: colors.border,
     width: '100%', 
     marginVertical: 10 
   },
@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     columnGap: 4,
-    backgroundColor: '#0F6C82',
+    backgroundColor: colors.deal,
     paddingHorizontal: 9,
     paddingVertical: 5,
     borderRadius: 999,
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+    backgroundColor: colors.overlay,
   },
 
   bottomSheetContainer: {
@@ -164,13 +164,13 @@ const styles = StyleSheet.create({
   },
 
   bottomSheet: {
-    backgroundColor: 'white',
+    backgroundColor: colors.surface,
     paddingHorizontal: 24,
     paddingTop: 24,
     paddingBottom: Platform.OS === 'ios' ? 40 : 24,
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: -3 },
     shadowOpacity: 0.15,
     shadowRadius: 15,
@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#2D3748',
+    color: colors.textPrimary,
   },
 
   closeButton: {
@@ -211,19 +211,19 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#718096',
+    color: colors.textSecondary,
     marginBottom: 8,
   },
 
   inputWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F7FAFC',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 14,
     paddingHorizontal: 16,
     height: 52,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderColor: colors.border,
   },
 
   icon: {
@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 15,
-    color: '#2D3748',
+    color: colors.textPrimary,
     height: '100%',
   },
 
@@ -248,17 +248,17 @@ const styles = StyleSheet.create({
   },
 
   cancelButtonText: {
-    color: '#718096',
+    color: colors.textSecondary,
     fontWeight: '600',
     fontSize: 15,
   },
 
   primaryButton: {
-    backgroundColor: '#0EB4D3',
+    backgroundColor: colors.primary,
     paddingVertical: 16,
     borderRadius: 30,
     alignItems: 'center',
-    shadowColor: '#0EB4D3',
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 6,
@@ -273,4 +273,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default styles;
+export default getStyles;

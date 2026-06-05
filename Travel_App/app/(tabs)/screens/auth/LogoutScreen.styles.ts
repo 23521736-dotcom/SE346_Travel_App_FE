@@ -1,10 +1,9 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  // Kế thừa style từ commonStyles (chứa container, imageFrame, button, buttonText...)
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
   containerChild: {
     margin: 10,
@@ -12,18 +11,16 @@ const styles = StyleSheet.create({
     rowGap: 10
   },
 
-  // Style riêng cho nút Logout (màu đỏ nhạt)
   buttonLogOut: {
     backgroundColor: colors.dangerSoft,
     paddingVertical: 15,
-    width: 350, // Hoặc dùng '100%' tùy layout của bạn
+    width: 350,
     borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
   },
 
-  // Text màu đỏ cho nút Logout
   buttonLogOutText: {
     color: colors.danger,
     fontSize: 18,
@@ -44,4 +41,4 @@ const styles = StyleSheet.create({
   }
 });
 
-export default styles;
+export default getStyles;

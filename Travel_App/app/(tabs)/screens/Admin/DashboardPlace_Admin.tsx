@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -14,8 +14,9 @@ import {
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 
-import { styles } from './DashboardPlace_Admin.style';
+import getStyles from './DashboardPlace_Admin.style';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import {
     fetchAdminPlaces,
     approvePlace,
@@ -45,6 +46,8 @@ function getStatusLabel(status: string) {
 
 export default function DashboardPlace_Admin({ navigation }: any) {
     const { logout } = useAuth();
+    const { colors: themeColors, isDark } = useTheme();
+    const styles = useMemo(() => getStyles(themeColors), [themeColors]);
 
     const tabs = ['Active Places', 'Pending Approval', 'Rejected'];
 
@@ -54,7 +57,6 @@ export default function DashboardPlace_Admin({ navigation }: any) {
     const [expandedDescIds, setExpandedDescIds] = useState<string[]>([]);
     const [previewImage, setPreviewImage] = useState<string | null>(null);
 
-    // Rejection reason modal
     const [rejectModalPlaceId, setRejectModalPlaceId] = useState<string | null>(null);
     const [rejectionReason, setRejectionReason] = useState('');
     const [actionLoading, setActionLoading] = useState(false);
@@ -149,7 +151,7 @@ export default function DashboardPlace_Admin({ navigation }: any) {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.background} />
 
             <View style={styles.container}>
                 <View style={styles.header}>
@@ -178,15 +180,13 @@ export default function DashboardPlace_Admin({ navigation }: any) {
 
                     {loading ? (
                         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                            <ActivityIndicator size="large" color="#0284c7" />
-                            <Text style={{ marginTop: 12, color: '#71717a' }}>Loading places...</Text>
+                            <ActivityIndicator size="large" color={themeColors.primary} />
+                            <Text style={{ marginTop: 12, color: themeColors.textSecondary }}>Loading places...</Text>
                         </View>
                     ) : (
                         <ScrollView
                             showsVerticalScrollIndicator={false}
                             contentContainerStyle={styles.scrollContent}
-                            refreshing={loading}
-                            onRefresh={loadPlaces}
                         >
                             {places.map((item) => {
                                 const isExpanded = expandedDescIds.includes(item.Id);
@@ -235,11 +235,11 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                                         ) : null}
 
                                         {item.RejectionReason && (
-                                            <View style={{ backgroundColor: '#fef2f2', padding: 10, borderRadius: 8, marginTop: 8 }}>
-                                                <Text style={{ color: '#991b1b', fontSize: 12, fontWeight: '600' }}>
+                                            <View style={{ backgroundColor: themeColors.dangerSoft, padding: 10, borderRadius: 8, marginTop: 8 }}>
+                                                <Text style={{ color: themeColors.danger, fontSize: 12, fontWeight: '600' }}>
                                                     Rejection Reason:
                                                 </Text>
-                                                <Text style={{ color: '#7f1d1d', fontSize: 13, marginTop: 2 }}>
+                                                <Text style={{ color: themeColors.textPrimary, fontSize: 13, marginTop: 2 }}>
                                                     {item.RejectionReason}
                                                 </Text>
                                             </View>
@@ -299,7 +299,6 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                 </View>
             </View>
 
-            {/* Image Preview Modal */}
             <Modal
                 visible={previewImage !== null}
                 transparent={true}
@@ -324,7 +323,6 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                 </View>
             </Modal>
 
-            {/* Rejection Reason Modal */}
             <Modal
                 visible={rejectModalPlaceId !== null}
                 transparent={true}
@@ -333,37 +331,39 @@ export default function DashboardPlace_Admin({ navigation }: any) {
             >
                 <View style={{
                     flex: 1,
-                    backgroundColor: 'rgba(0,0,0,0.5)',
+                    backgroundColor: themeColors.overlay,
                     justifyContent: 'center',
                     alignItems: 'center',
                     padding: 24,
                 }}>
                     <View style={{
-                        backgroundColor: '#fff',
+                        backgroundColor: themeColors.surface,
                         borderRadius: 16,
                         padding: 24,
                         width: '100%',
                         maxWidth: 400,
                     }}>
-                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: '#09090b', marginBottom: 8 }}>
+                        <Text style={{ fontSize: 18, fontWeight: 'bold', color: themeColors.textPrimary, marginBottom: 8 }}>
                             Reject Place
                         </Text>
-                        <Text style={{ fontSize: 14, color: '#71717a', marginBottom: 16 }}>
+                        <Text style={{ fontSize: 14, color: themeColors.textSecondary, marginBottom: 16 }}>
                             Please provide a reason for rejection (optional):
                         </Text>
                         <TextInput
                             style={{
                                 borderWidth: 1,
-                                borderColor: '#e4e4e7',
+                                borderColor: themeColors.border,
                                 borderRadius: 12,
                                 padding: 12,
                                 fontSize: 14,
                                 minHeight: 80,
                                 textAlignVertical: 'top',
                                 marginBottom: 16,
+                                color: themeColors.textPrimary,
+                                backgroundColor: themeColors.surfaceMuted,
                             }}
                             placeholder="e.g. Incomplete information, low quality images..."
-                            placeholderTextColor="#a1a1aa"
+                            placeholderTextColor={themeColors.textMuted}
                             multiline
                             value={rejectionReason}
                             onChangeText={setRejectionReason}
@@ -375,10 +375,10 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                                     paddingHorizontal: 16,
                                     paddingVertical: 10,
                                     borderRadius: 10,
-                                    backgroundColor: '#f4f4f5',
+                                    backgroundColor: themeColors.surfaceMuted,
                                 }}
                             >
-                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#52525b' }}>Cancel</Text>
+                                <Text style={{ fontSize: 14, fontWeight: '600', color: themeColors.textSecondary }}>Cancel</Text>
                             </TouchableOpacity>
                             <TouchableOpacity
                                 onPress={handleRejectConfirm}
@@ -387,10 +387,10 @@ export default function DashboardPlace_Admin({ navigation }: any) {
                                     paddingHorizontal: 16,
                                     paddingVertical: 10,
                                     borderRadius: 10,
-                                    backgroundColor: '#dc2626',
+                                    backgroundColor: themeColors.danger,
                                 }}
                             >
-                                <Text style={{ fontSize: 14, fontWeight: '600', color: '#fff' }}>
+                                <Text style={{ fontSize: 14, fontWeight: '600', color: themeColors.white }}>
                                     {actionLoading ? 'Rejecting...' : 'Reject'}
                                 </Text>
                             </TouchableOpacity>
@@ -400,4 +400,4 @@ export default function DashboardPlace_Admin({ navigation }: any) {
             </Modal>
         </SafeAreaView>
     );
-};
+}

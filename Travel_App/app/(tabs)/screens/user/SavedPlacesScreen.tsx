@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -15,9 +15,9 @@ import { addFavorite, fetchFavorites, removeFavorite } from '../../../../lib/api
 import { fetchPromotionPlaceIds } from '../../../../lib/api/places';
 import type { PlaceDetail, PlaceListItem } from '../../../../lib/api/types';
 import { normalizePlaceCategory, PLACE_CATEGORIES } from '../../../../lib/placeCategories';
-import { colors } from '../../common/colors';
 import { getApiErrorMessage } from '../../context/AuthContext';
-import styles from "./SavedPlacesScreen.style";
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from "./SavedPlacesScreen.style";
 
 const FILTERS = [{ value: 'All', label: 'All' }, ...PLACE_CATEGORIES];
 
@@ -63,6 +63,9 @@ function toPlaceDetail(place: PlaceListItem, isFavorite: boolean): PlaceDetail {
 }
 
 export default function SavedPlaces({ navigation }: any) {
+    const { colors: themeColors } = useTheme();
+    const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
     const [activeFilter, setActiveFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [places, setPlaces] = useState<PlaceListItem[]>([]);
@@ -145,25 +148,22 @@ export default function SavedPlaces({ navigation }: any) {
         <SafeAreaView style={styles.container}>
             <View style={styles.headerContainer}>
                 <View style={styles.headerTop}>
-                    {/* <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <Feather name="arrow-left" size={24} color="#1e293b" />
-                    </TouchableOpacity> */}
                     <Text style={styles.headerTitle}>Saved Places</Text>
                     <View style={{ width: 24 }} />
                 </View>
 
                 <View style={styles.searchContainer}>
-                    <Ionicons name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
+                    <Ionicons name="search" size={20} color={themeColors.textMuted} style={styles.searchIcon} />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="Search in your saved list..."
-                        placeholderTextColor="#9ca3af"
+                        placeholderTextColor={themeColors.textMuted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                     />
                     {searchQuery.length > 0 && (
                         <TouchableOpacity style={styles.clearIcon} onPress={() => setSearchQuery('')}>
-                            <Ionicons name="close-circle" size={20} color="#9ca3af" />
+                            <Ionicons name="close-circle" size={20} color={themeColors.textMuted} />
                         </TouchableOpacity>
                     )}
                 </View>
@@ -173,9 +173,15 @@ export default function SavedPlaces({ navigation }: any) {
                         <TouchableOpacity
                             key={filter.value}
                             onPress={() => setActiveFilter(filter.value)}
-                            style={[styles.filterChip, activeFilter === filter.value && styles.filterChipActive]}
+                            style={[
+                                styles.filterChip,
+                                activeFilter === filter.value && styles.filterChipActive
+                            ]}
                         >
-                            <Text style={[styles.filterText, activeFilter === filter.value && styles.filterTextActive]}>
+                            <Text style={[
+                                styles.filterText,
+                                activeFilter === filter.value && styles.filterTextActive
+                            ]}>
                                 {filter.label}
                             </Text>
                         </TouchableOpacity>
@@ -186,7 +192,7 @@ export default function SavedPlaces({ navigation }: any) {
             <ScrollView style={styles.listContainer} contentContainerStyle={styles.listContent}>
                 {loading && places.length === 0 ? (
                     <View style={styles.emptyStateContainer}>
-                        <ActivityIndicator size="large" color={colors.primary} />
+                        <ActivityIndicator size="large" color={themeColors.primary} />
                     </View>
                 ) : filteredPlaces.length > 0 ? (
                     filteredPlaces.map((place) => {
@@ -226,13 +232,13 @@ export default function SavedPlaces({ navigation }: any) {
                                         <Text style={styles.cardTitle} numberOfLines={1}>{place.Name}</Text>
                                         <View style={styles.ratingBadge}>
                                             <Ionicons name="star" size={12} color="#f97316" />
-                                            <Text style={styles.ratingText}>{place.Rate}</Text>
+                                            <Text style={[styles.ratingText, { color: themeColors.textPrimary }]}>{place.Rate}</Text>
                                         </View>
                                     </View>
 
                                     <View style={styles.locationRow}>
                                         <View style={styles.locationInfo}>
-                                            <Ionicons name="location-outline" size={14} color="#6b7280" />
+                                            <Ionicons name="location-outline" size={14} color={themeColors.textSecondary} />
                                             <Text style={styles.locationText}>{place.Located}</Text>
                                         </View>
                                         <View style={{ flexDirection: 'row', columnGap: 14, alignItems: 'center' }}>
@@ -264,7 +270,7 @@ export default function SavedPlaces({ navigation }: any) {
                     })
                 ) : (
                     <View style={styles.emptyStateContainer}>
-                        <Ionicons name="search-outline" size={48} color="#cbd5e1" />
+                        <Ionicons name="search-outline" size={48} color={themeColors.textMuted} />
                         <Text style={styles.emptyStateText}>No places found.</Text>
                     </View>
                 )}

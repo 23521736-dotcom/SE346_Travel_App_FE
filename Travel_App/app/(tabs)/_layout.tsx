@@ -1,15 +1,14 @@
 import { Tabs } from 'expo-router';
 import React from 'react';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useTheme } from './context/ThemeContext';
 
 export default function TabLayout() {
-    const colorScheme = useColorScheme();
+    const { colors: themeColors } = useTheme();
 
     return (
         <Tabs
             screenOptions={{
-                tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
+                tabBarActiveTintColor: themeColors.primary,
                 headerShown: false,
                 tabBarStyle: {
                     display: 'none'

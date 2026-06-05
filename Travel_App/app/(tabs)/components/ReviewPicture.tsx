@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Image, Modal, ScrollView, Text, TouchableOpacity, View, StyleSheet } from 'react-native';
-import { colors } from '../common/colors';
-import { commonStyles } from '../common/styles';
+import { getCommonStyles } from '../common/styles';
+import { useTheme } from '../context/ThemeContext';
+import { ThemeType } from '../common/theme';
 
 interface PicturesContainerProps {
     pictures: string[];
 }
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
   modalContainer: {
     flex: 1,
@@ -32,6 +33,9 @@ const styles = StyleSheet.create({
 });
 
 export const PicturesContainer = ({ pictures }: PicturesContainerProps) => {
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
@@ -55,7 +59,7 @@ export const PicturesContainer = ({ pictures }: PicturesContainerProps) => {
             onPress={() => handleOpenImage(picURL)}
             activeOpacity={0.8}
           >
-            <View style={[styles.imageFrame, { marginRight: 5, width: 150, height: 100, borderRadius: 10, borderWidth: 1, borderColor: colors.border }]}>
+            <View style={[styles.imageFrame, { marginRight: 10, width: 150, height: 100, borderRadius: 10, borderWidth: 1, borderColor: themeColors.border, backgroundColor: themeColors.surfaceMuted }]}>
               <Image
                 source={{ uri: picURL }}
                 style={{ width: "100%", height: "100%" }}
@@ -77,7 +81,7 @@ export const PicturesContainer = ({ pictures }: PicturesContainerProps) => {
             style={styles.closeButton}
             onPress={() => setModalVisible(false)}
           >
-            <Text style={{ color: 'white', fontSize: 18, fontWeight: 'bold' }}>×</Text>
+            <Text style={{ color: 'white', fontSize: 32, fontWeight: 'bold' }}>×</Text>
           </TouchableOpacity>
 
           {selectedImage && (

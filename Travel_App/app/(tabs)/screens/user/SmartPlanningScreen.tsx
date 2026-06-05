@@ -5,7 +5,6 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
-  FlatList,
   Image,
   Modal,
   Platform,
@@ -28,9 +27,9 @@ import { fetchPlaces } from '../../../../lib/api/places';
 import type { PlaceListItem } from '../../../../lib/api/types';
 import { createTrip, mapApiTripToDraft } from '../../../../lib/api/trips';
 import { upsertTripDraft } from '../../store/tripDraftStore';
-import { colors } from '../../common/colors';
 import { getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../../lib/placeCategories';
-import styles from './SmartPlanningScreen.styles';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './SmartPlanningScreen.styles';
 
 type DateInputType = 'start' | 'end';
 const WebDateInput = 'input' as any;
@@ -129,6 +128,9 @@ function formatTime(time: string) {
 }
 
 export default function SmartPlanningScreen() {
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const navigation = useNavigation();
 
   // Step management
@@ -382,43 +384,43 @@ export default function SmartPlanningScreen() {
     <View style={styles.sectionCard}>
       <Text style={styles.sectionTitle}>Thông tin chuyến đi</Text>
 
-      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Tên chuyến đi</Text>
+      <Text style={{ fontSize: 13, color: themeColors.textSecondary, marginBottom: 4 }}>Tên chuyến đi</Text>
       <TextInput
         style={styles.input}
         placeholder="VD: Khám phá Đà Lạt 3 ngày"
-        placeholderTextColor="#999"
+        placeholderTextColor={themeColors.textMuted}
         value={title}
         onChangeText={setTitle}
       />
 
-      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Điểm đến</Text>
+      <Text style={{ fontSize: 13, color: themeColors.textSecondary, marginBottom: 4 }}>Điểm đến</Text>
       <TextInput
         style={styles.input}
         placeholder="VD: Đà Lạt, Lâm Đồng"
-        placeholderTextColor="#999"
+        placeholderTextColor={themeColors.textMuted}
         value={destination}
         onChangeText={setDestination}
       />
 
       <View style={styles.dateTimeRow}>
         <View style={{ flex: 1, marginRight: 8 }}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Ngày bắt đầu</Text>
+          <Text style={{ fontSize: 13, color: themeColors.textSecondary, marginBottom: 4 }}>Ngày bắt đầu</Text>
           <TouchableOpacity
             style={styles.input}
             onPress={() => openDatePicker('start')}
           >
-            <Text style={{ color: startDate ? colors.textPrimary : '#999' }}>
+            <Text style={{ color: startDate ? themeColors.textPrimary : themeColors.textMuted }}>
               {startDate ? formatDate(startDate) : 'YYYY-MM-DD'}
             </Text>
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1, marginLeft: 8 }}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Ngày kết thúc</Text>
+          <Text style={{ fontSize: 13, color: themeColors.textSecondary, marginBottom: 4 }}>Ngày kết thúc</Text>
           <TouchableOpacity
             style={styles.input}
             onPress={() => openDatePicker('end')}
           >
-            <Text style={{ color: endDate ? colors.textPrimary : '#999' }}>
+            <Text style={{ color: endDate ? themeColors.textPrimary : themeColors.textMuted }}>
               {endDate ? formatDate(endDate) : 'YYYY-MM-DD'}
             </Text>
           </TouchableOpacity>
@@ -427,32 +429,32 @@ export default function SmartPlanningScreen() {
 
       <View style={styles.dateTimeRow}>
         <View style={{ flex: 1, marginRight: 8 }}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Giờ bắt đầu/ngày</Text>
+          <Text style={{ fontSize: 13, color: themeColors.textSecondary, marginBottom: 4 }}>Giờ bắt đầu/ngày</Text>
           <TextInput
             style={styles.input}
             placeholder="08:00"
-            placeholderTextColor="#999"
+            placeholderTextColor={themeColors.textMuted}
             value={dailyStartTime}
             onChangeText={setDailyStartTime}
           />
         </View>
         <View style={{ flex: 1, marginLeft: 8 }}>
-          <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Giờ kết thúc/ngày</Text>
+          <Text style={{ fontSize: 13, color: themeColors.textSecondary, marginBottom: 4 }}>Giờ kết thúc/ngày</Text>
           <TextInput
             style={styles.input}
             placeholder="22:00"
-            placeholderTextColor="#999"
+            placeholderTextColor={themeColors.textMuted}
             value={dailyEndTime}
             onChangeText={setDailyEndTime}
           />
         </View>
       </View>
 
-      <Text style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 4 }}>Ngân sách (VNĐ)</Text>
+      <Text style={{ fontSize: 13, color: themeColors.textSecondary, marginBottom: 4 }}>Ngân sách (VNĐ)</Text>
       <TextInput
         style={styles.input}
         placeholder="VD: 5000000"
-        placeholderTextColor="#999"
+        placeholderTextColor={themeColors.textMuted}
         value={budget}
         onChangeText={setBudget}
         keyboardType="numeric"
@@ -473,38 +475,38 @@ export default function SmartPlanningScreen() {
       <View style={styles.sectionCard}>
         <View style={{ flexDirection: 'row', marginBottom: 12 }}>
           <TouchableOpacity
-            style={[styles.primaryButton, { flex: 1, marginRight: 8, padding: 10, backgroundColor: filter === 'all' ? colors.primary : colors.borderLight }]}
+            style={[styles.primaryButton, { flex: 1, marginRight: 8, padding: 10, backgroundColor: filter === 'all' ? themeColors.primary : themeColors.surfaceMuted }]}
             onPress={() => setFilter('all')}
           >
-            <Text style={[styles.buttonText, { color: filter === 'all' ? colors.white : colors.textSecondary }]}>Tất cả</Text>
+            <Text style={[styles.buttonText, { color: filter === 'all' ? themeColors.white : themeColors.textSecondary }]}>Tất cả</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.primaryButton, { flex: 1, marginLeft: 8, padding: 10, backgroundColor: filter === 'favorites' ? colors.primary : colors.borderLight }]}
+            style={[styles.primaryButton, { flex: 1, marginLeft: 8, padding: 10, backgroundColor: filter === 'favorites' ? themeColors.primary : themeColors.surfaceMuted }]}
             onPress={() => setFilter('favorites')}
           >
-            <Text style={[styles.buttonText, { color: filter === 'favorites' ? colors.white : colors.textSecondary }]}>Yêu thích</Text>
+            <Text style={[styles.buttonText, { color: filter === 'favorites' ? themeColors.white : themeColors.textSecondary }]}>Yêu thích</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={{ fontSize: 14, fontWeight: '600', color: colors.primary, marginTop: 4 }}>
+        <Text style={{ fontSize: 14, fontWeight: '600', color: themeColors.primary, marginTop: 4 }}>
           Đã chọn {selectedCount} địa điểm
         </Text>
 
         {/* Category filters */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginVertical: 8 }}>
           <TouchableOpacity
-            style={[styles.primaryButton, { marginRight: 8, padding: 8, paddingHorizontal: 16, backgroundColor: !categoryFilter ? colors.primary : colors.borderLight }]}
+            style={[styles.primaryButton, { marginRight: 8, padding: 8, paddingHorizontal: 16, backgroundColor: !categoryFilter ? themeColors.primary : themeColors.surfaceMuted }]}
             onPress={() => setCategoryFilter('')}
           >
-            <Text style={[styles.buttonText, { fontSize: 13, color: !categoryFilter ? colors.white : colors.textSecondary }]}>Tất cả</Text>
+            <Text style={[styles.buttonText, { fontSize: 13, color: !categoryFilter ? themeColors.white : themeColors.textSecondary }]}>Tất cả</Text>
           </TouchableOpacity>
           {PLACE_CATEGORIES.filter((cat) => cat.value !== 'STAYS').map((cat) => (
             <TouchableOpacity
               key={cat.value}
-              style={[styles.primaryButton, { marginRight: 8, padding: 8, paddingHorizontal: 16, backgroundColor: categoryFilter === cat.value ? colors.primary : colors.borderLight }]}
+              style={[styles.primaryButton, { marginRight: 8, padding: 8, paddingHorizontal: 16, backgroundColor: categoryFilter === cat.value ? themeColors.primary : themeColors.surfaceMuted }]}
               onPress={() => setCategoryFilter(cat.value)}
             >
-              <Text style={[styles.buttonText, { fontSize: 13, color: categoryFilter === cat.value ? colors.white : colors.textSecondary }]}>
+              <Text style={[styles.buttonText, { fontSize: 13, color: categoryFilter === cat.value ? themeColors.white : themeColors.textSecondary }]}>
                 {cat.label}
               </Text>
             </TouchableOpacity>
@@ -522,7 +524,7 @@ export default function SmartPlanningScreen() {
           { key: 'SHOPPING', label: 'Mua sắm' },
         ].map((item) => (
           <View key={item.key} style={styles.preferenceWeightRow}>
-            <Text style={{ flex: 1 }}>{item.label}</Text>
+            <Text style={{ flex: 1, color: themeColors.textPrimary }}>{item.label}</Text>
             <TextInput
               style={styles.weightInput}
               value={String(preferenceWeights[item.key as keyof typeof preferenceWeights])}
@@ -541,12 +543,12 @@ export default function SmartPlanningScreen() {
       {/* Places list */}
       {loadingPlaces ? (
         <View style={{ paddingVertical: 28, alignItems: 'center' }}>
-          <ActivityIndicator size="small" color={colors.primary} />
+          <ActivityIndicator size="small" color={themeColors.primary} />
         </View>
       ) : (
         <View style={styles.sectionCard}>
           {visiblePlaces.length === 0 ? (
-            <Text style={{ textAlign: 'center', color: colors.textSecondary, padding: 20 }}>
+            <Text style={{ textAlign: 'center', color: themeColors.textSecondary, padding: 20 }}>
               Không có địa điểm nào
             </Text>
           ) : (
@@ -563,12 +565,12 @@ export default function SmartPlanningScreen() {
                     <Text style={styles.placeName}>{place.title}</Text>
                     <Text style={styles.placeCategory}>{getPlaceCategoryLabel(place.category)}</Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-                      <Ionicons name="star" size={12} color="#F97316" />
+                      <Ionicons name="star" size={12} color={themeColors.warning} />
                       <Text style={styles.placeRating}>{place.rating}</Text>
                     </View>
                   </View>
                   <View style={[styles.checkbox, isSelected && styles.checkboxChecked]}>
-                    {isSelected && <Ionicons name="checkmark" size={16} color={colors.white} />}
+                    {isSelected && <Ionicons name="checkmark" size={16} color={themeColors.white} />}
                   </View>
                 </TouchableOpacity>
               );
@@ -583,7 +585,7 @@ export default function SmartPlanningScreen() {
         disabled={optimizing || selectedPlaces.size === 0}
       >
         {optimizing ? (
-          <ActivityIndicator size="small" color={colors.white} />
+          <ActivityIndicator size="small" color={themeColors.white} />
         ) : (
           <Text style={styles.buttonText}>Tối ưu hóa</Text>
         )}
@@ -622,11 +624,11 @@ export default function SmartPlanningScreen() {
 
         {/* Warning for unassigned places */}
         {summary.unassignedPlaces.length > 0 && (
-          <View style={[styles.sectionCard, { backgroundColor: colors.warningSoft }]}>
-            <Text style={{ color: colors.warning, fontWeight: '600', marginBottom: 4 }}>
+          <View style={[styles.sectionCard, { backgroundColor: themeColors.warningSoft }]}>
+            <Text style={{ color: themeColors.warning, fontWeight: '600', marginBottom: 4 }}>
               Cảnh báo
             </Text>
-            <Text style={{ color: colors.textSecondary, fontSize: 12 }}>
+            <Text style={{ color: themeColors.textSecondary, fontSize: 12 }}>
               {summary.unassignedPlaces.length} địa điểm không được phân công: {summary.unassignedPlaces.join(', ')}
             </Text>
           </View>
@@ -637,20 +639,20 @@ export default function SmartPlanningScreen() {
           <View key={day.dayNumber} style={styles.dayCard}>
             <View style={styles.dayHeader}>
               <Text style={styles.dayTitle}>Ngày {day.dayNumber}</Text>
-              <Text style={{ fontSize: 12, color: colors.textSecondary }}>{day.date}</Text>
+              <Text style={{ fontSize: 12, color: themeColors.textSecondary }}>{day.date}</Text>
             </View>
 
             <View style={styles.dayStats}>
               <View style={styles.dayStatItem}>
-                <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                <Ionicons name="time-outline" size={14} color={themeColors.textSecondary} />
                 <Text style={styles.dayStatText}>{formatDuration(day.totalDuration)}</Text>
               </View>
               <View style={styles.dayStatItem}>
-                <Ionicons name="cash-outline" size={14} color={colors.textSecondary} />
+                <Ionicons name="cash-outline" size={14} color={themeColors.textSecondary} />
                 <Text style={styles.dayStatText}>{formatVnd(day.totalEstimatedCost)} VNĐ</Text>
               </View>
               <View style={styles.dayStatItem}>
-                <Ionicons name="navigate-outline" size={14} color={colors.textSecondary} />
+                <Ionicons name="navigate-outline" size={14} color={themeColors.textSecondary} />
                 <Text style={styles.dayStatText}>{(day.totalTravelDistance).toFixed(1)}km</Text>
               </View>
             </View>
@@ -660,7 +662,7 @@ export default function SmartPlanningScreen() {
                 <View style={styles.activityItem}>
                   <View style={{ marginRight: 8 }}>
                     <View style={styles.timelineDot} />
-                    {activityIndex < day.activities.length - 1 && <View style={styles.timelineLine} />}
+                    {activityIndex < day.activities.length - 1 && <View style={[styles.timelineLine, { backgroundColor: themeColors.border }]} />}
                   </View>
                   <View style={{ width: 55 }}>
                     <Text style={styles.activityTime}>{formatTime(activity.scheduledTime)}</Text>
@@ -693,18 +695,18 @@ export default function SmartPlanningScreen() {
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator size="small" color={colors.white} />
+            <ActivityIndicator size="small" color={themeColors.white} />
           ) : (
             <Text style={styles.buttonText}>Áp dụng & Tạo chuyến đi</Text>
           )}
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.primaryButton, { backgroundColor: colors.borderLight, marginTop: 8 }]}
+          style={[styles.primaryButton, { backgroundColor: themeColors.surfaceMuted, marginTop: 8 }]}
           onPress={handleBackToEdit}
           disabled={loading}
         >
-          <Text style={[styles.buttonText, { color: colors.textPrimary }]}>Quay lại chỉnh sửa</Text>
+          <Text style={[styles.buttonText, { color: themeColors.textPrimary }]}>Quay lại chỉnh sửa</Text>
         </TouchableOpacity>
       </View>
     );
@@ -722,9 +724,9 @@ export default function SmartPlanningScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} hitSlop={10}>
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Ionicons name="arrow-back" size={24} color={themeColors.textPrimary} />
         </TouchableOpacity>
-        <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textPrimary }}>
+        <Text style={{ fontSize: 18, fontWeight: '700', color: themeColors.textPrimary }}>
           Lập kế hoạch thông minh
         </Text>
         <View style={{ width: 24 }} />
@@ -752,7 +754,7 @@ export default function SmartPlanningScreen() {
           <View
             style={{
               flex: 1,
-              backgroundColor: 'rgba(15, 23, 42, 0.45)',
+              backgroundColor: themeColors.overlay,
               justifyContent: 'center',
               alignItems: 'center',
               padding: 16,
@@ -762,7 +764,7 @@ export default function SmartPlanningScreen() {
               style={{
                 width: '100%',
                 maxWidth: 420,
-                backgroundColor: '#FFF',
+                backgroundColor: themeColors.surface,
                 borderRadius: 20,
                 padding: 16,
                 shadowColor: '#000',
@@ -772,16 +774,16 @@ export default function SmartPlanningScreen() {
                 elevation: 8,
               }}
             >
-              <Text style={{ fontSize: 18, fontWeight: '700', color: colors.primary, marginBottom: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: themeColors.primary, marginBottom: 12 }}>
                 {activeDateInput === 'start' ? 'Chọn ngày bắt đầu' : 'Chọn ngày kết thúc'}
               </Text>
 
               <View
                 style={{
-                  backgroundColor: '#F4F7FB',
+                  backgroundColor: themeColors.surfaceMuted,
                   borderRadius: 12,
                   borderWidth: 1,
-                  borderColor: '#D8E2F0',
+                  borderColor: themeColors.border,
                   paddingHorizontal: 12,
                   paddingVertical: 8,
                 }}
@@ -802,7 +804,7 @@ export default function SmartPlanningScreen() {
                     border: 'none',
                     outline: 'none',
                     backgroundColor: 'transparent',
-                    color: colors.textPrimary,
+                    color: themeColors.textPrimary,
                     minHeight: 34,
                   }}
                 />
@@ -810,7 +812,7 @@ export default function SmartPlanningScreen() {
 
               <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 16 }}>
                 <TouchableOpacity onPress={closeDatePicker} style={{ paddingVertical: 10, paddingHorizontal: 14 }}>
-                  <Text style={{ color: '#666', fontWeight: '600' }}>Hủy</Text>
+                  <Text style={{ color: themeColors.textSecondary, fontWeight: '600' }}>Hủy</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   onPress={() => handleConfirmDate(webPickerDate)}
@@ -819,10 +821,10 @@ export default function SmartPlanningScreen() {
                     paddingVertical: 10,
                     paddingHorizontal: 16,
                     borderRadius: 10,
-                    backgroundColor: colors.primary,
+                    backgroundColor: themeColors.primary,
                   }}
                 >
-                  <Text style={{ color: colors.white, fontWeight: '700' }}>Áp dụng</Text>
+                  <Text style={{ color: themeColors.white, fontWeight: '700' }}>Áp dụng</Text>
                 </TouchableOpacity>
               </View>
             </View>

@@ -1,11 +1,11 @@
 import { formatDate, getTimeValue } from '@/lib/service/PromotionShedule';
 import { Ionicons } from '@expo/vector-icons';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { Text, TextInput, TouchableOpacity, View } from 'react-native';
-import DateTimePickerModal from "react-native-modal-datetime-picker"; // Import bộ chọn ngày
-import { colors } from '../common/colors';
-import { styles } from '../screens/owner/AddLocationScreen.style';
-import { PromotionEditorStyles } from './PromotionEditor.style';
+import DateTimePickerModal from "react-native-modal-datetime-picker";
+import { useTheme } from '../context/ThemeContext';
+import getAddLocationStyles from '../screens/owner/AddLocationScreen.style';
+import getEditorStyles from './PromotionEditor.style';
 
 interface EditorProps {
   initialData?: any;
@@ -14,6 +14,9 @@ interface EditorProps {
 }
 
 const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel }) => {
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getAddLocationStyles(themeColors), [themeColors]);
+  const PromotionEditorStyles = useMemo(() => getEditorStyles(themeColors), [themeColors]);
 
   const [title, setTitle] = useState(initialData?.title || '');
   const [startDate, setStartDate] = useState(initialData?.schedule?.startDate || '');
@@ -21,27 +24,24 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
   const [endTime, setEndTime] = useState(initialData?.schedule?.endTime || '');
   const [startTime, setStartTime] = useState(initialData?.schedule?.startTime || '');
   const [selectedDays, setSelectedDays] = useState(initialData?.schedule?.days || []);
-  const [specificTime, setSpecificTime] = useState(initialData?.schedule?.specificTime || false); // All day / Specific
+  const [specificTime, setSpecificTime] = useState(initialData?.schedule?.specificTime || false);
 
   const days = ['M', 'T', 'W', 'Th', 'F', 'Sa', 'S'];
 
-  // State quản lý việc đóng/mở Calendar và chọn Time
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
-  const [activePicker, setActivePicker] = useState<'start' | 'end'>('start'); // qd chọn Start Date hay End Date
+  const [activePicker, setActivePicker] = useState<'start' | 'end'>('start');
 
   const [isTimePickerVisible, setTimePickerVisibility] = useState(false);
   const [activeTimePicker, setActiveTimePicker] = useState<'start' | 'end'>('start');
 
-  // --- LOGIC 1: XỬ LÝ CHỌN THỨ (REPEAT ON) ---
   const toggleDay = (day: string) => {
     if (selectedDays.includes(day)) {
       setSelectedDays(selectedDays.filter((d: string) => d !== day));
     } else {
-      setSelectedDays([...selectedDays, day]); // Thêm vào mảng
+      setSelectedDays([...selectedDays, day]);
     }
   };
 
-  // --- LOGIC 2: XỬ LÝ CHỌN NGÀY & FORMAT ---
   const showDatePicker = (type: 'start' | 'end') => {
     setActivePicker(type);
     setDatePickerVisibility(true);
@@ -57,14 +57,12 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
     setDatePickerVisibility(false);
   };
 
-  // --- LOGIC CHỌN GIỜ ---
   const showTimePicker = (type: 'start' | 'end') => {
     setActiveTimePicker(type);
     setTimePickerVisibility(true);
   };
 
   const handleConfirmTime = (date: Date) => {
-    // Format: "5:00 PM"
     const formattedTime = date.toLocaleTimeString('en-US', {
       hour: 'numeric',
       minute: '2-digit',
@@ -89,25 +87,21 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
 
     try {
       const parts = dateStr.replace(',', '').split(' ');
-
       if (parts.length < 3) return null;
-
       const monthName = parts[0];
       const day = parseInt(parts[1]);
       const year = parseInt(parts[2]);
       const monthIndex = monthMap[monthName];
-
-      // Kiểm tra xem dữ liệu sau khi tách có hợp lệ không
       if (monthIndex === undefined || isNaN(day) || isNaN(year)) {
         return null;
       }
-
       return new Date(year, monthIndex, day);
     } catch (error) {
-      console.error("Lỗi khi parse ngày tháng:", error);
+      console.error("Error parsing date:", error);
       return null;
     }
   };
+
   const handleCancel = () => {
     setTitle('');
     setStartDate('');
@@ -135,13 +129,11 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
     const startD = parseDateString(startDate);
     const endD = parseDateString(endDate);
     const today = new Date();
-    today.setHours(0, 0, 0, 0); // Đưa về 0h sáng để chỉ so sánh ngày
-    // 2. Kiểm tra ngày bắt đầu không được ở quá khứ
+    today.setHours(0, 0, 0, 0);
     if ((startD?.getTime() ?? 0) < today.getTime()) {
       alert("The start day is in the past now.");
       return;
     }
-    // 3. Kiểm tra Start Date <= End Date
     if ((startD?.getTime() ?? 0) > (endD?.getTime() ?? 0)) {
       alert("Start Date must be earlier than End Date.");
       return;
@@ -153,7 +145,6 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
       }
       const startV = getTimeValue(startTime);
       const endV = getTimeValue(endTime);
-
       if (startV >= endV) {
         alert("Start Time must be earlier than End Time.");
         return;
@@ -171,36 +162,34 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
         specificTime,
       }
     };
-
     onSave(finalData);
   }
 
   return (
-    <View style={[styles.card, { borderColor: colors.primary, borderWidth: 1.5 }]}>
+    <View style={[styles.card, { borderColor: themeColors.primary, borderWidth: 1.5 }]}>
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Ionicons name="pricetag" size={20} color={colors.primary} />
-          <Text style={{ fontWeight: 'bold', marginLeft: 8, color: colors.primary }}>
+          <Ionicons name="pricetag" size={20} color={themeColors.primary} />
+          <Text style={{ fontWeight: 'bold', marginLeft: 8, color: themeColors.primary }}>
             {initialData ? 'Edit Offer' : 'Create New Offer'}
           </Text>
         </View>
         <TouchableOpacity onPress={() => handleCancel()}>
-          <Text style={{ color: colors.textSecondary }}>Cancel</Text>
+          <Text style={{ color: themeColors.textSecondary }}>Cancel</Text>
         </TouchableOpacity>
       </View>
 
-      {/* title */}
       <Text style={styles.label}>title</Text>
       <TextInput
-        style={[styles.input, { height: 60, textAlignVertical: 'top' }]}
+        style={[styles.input, { height: 60, textAlignVertical: 'top', color: themeColors.textPrimary }]}
         placeholder="e.g. Get 20% off on all lunch menu"
+        placeholderTextColor={themeColors.textMuted}
         multiline
         value={title}
         onChangeText={setTitle}
       />
 
-      {/* Date Selection */}
       <View style={PromotionEditorStyles.dateRow}>
         <View style={{ flex: 1 }}>
           <Text style={styles.label}>Start Date</Text>
@@ -208,8 +197,8 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
             style={PromotionEditorStyles.dateInputBox}
             onPress={() => showDatePicker('start')}
           >
-            <Text style={{ fontSize: 12 }}>{startDate}</Text>
-            <Ionicons name="calendar-outline" size={16} color={colors.textPrimary} />
+            <Text style={{ fontSize: 12, color: themeColors.textPrimary }}>{startDate}</Text>
+            <Ionicons name="calendar-outline" size={16} color={themeColors.textPrimary} />
           </TouchableOpacity>
         </View>
         <View style={{ flex: 1 }}>
@@ -218,19 +207,18 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
             style={PromotionEditorStyles.dateInputBox}
             onPress={() => showDatePicker('end')}
           >
-            <Text style={{ fontSize: 12 }}>{endDate}</Text>
-            <Ionicons name="calendar-outline" size={16} />
+            <Text style={{ fontSize: 12, color: themeColors.textPrimary }}>{endDate}</Text>
+            <Ionicons name="calendar-outline" size={16} color={themeColors.textPrimary} />
           </TouchableOpacity>
         </View>
       </View>
 
-      {/* Repeat On  */}
       <Text style={styles.label}>Repeat On</Text>
       <View style={{ flexDirection: 'row', marginBottom: 16 }}>
         {days.map((day, index) => (
           <TouchableOpacity
             key={index}
-            onPress={() => toggleDay(day)} // Thêm hàm toggle
+            onPress={() => toggleDay(day)}
             style={[
               PromotionEditorStyles.dayCircle,
               selectedDays.includes(day) && PromotionEditorStyles.dayCircleActive
@@ -238,7 +226,7 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
           >
             <Text style={{
               fontSize: 10,
-              color: selectedDays.includes(day) ? 'white' : colors.textPrimary
+              color: selectedDays.includes(day) ? 'white' : themeColors.textPrimary
             }}>
               {day}
             </Text>
@@ -246,27 +234,23 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
         ))}
       </View>
 
-      {/* Active Time Toggle */}
       <Text style={styles.label}>Active Time</Text>
       <View style={PromotionEditorStyles.timeToggleContainer}>
         <TouchableOpacity
-          //key={}
           onPress={() => setSpecificTime(false)}
           style={[PromotionEditorStyles.timeToggleButton, !specificTime && PromotionEditorStyles.timeToggleButtonActive]}
         >
-          <Text style={{ fontSize: 12, fontWeight: 'bold', color: !specificTime ? colors.primary : colors.textSecondary }}>All day</Text>
+          <Text style={{ fontSize: 12, fontWeight: 'bold', color: !specificTime ? themeColors.primary : themeColors.textSecondary }}>All day</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          //key={mode}
           onPress={() => setSpecificTime(true)}
           style={[PromotionEditorStyles.timeToggleButton, specificTime && PromotionEditorStyles.timeToggleButtonActive]}
         >
-          <Text style={{ fontSize: 12, fontWeight: 'bold', color: specificTime ? colors.primary : colors.textSecondary }}>Specific</Text>
+          <Text style={{ fontSize: 12, fontWeight: 'bold', color: specificTime ? themeColors.primary : themeColors.textSecondary }}>Specific</Text>
         </TouchableOpacity>
       </View>
 
-      {/* Time */}
       {specificTime && (
         <View style={PromotionEditorStyles.dateRow}>
           <View style={{ flex: 1, marginRight: 8 }}>
@@ -275,8 +259,8 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
               style={PromotionEditorStyles.dateInputBox}
               onPress={() => showTimePicker('start')}
             >
-              <Text style={{ fontSize: 12 }}>{startTime}</Text>
-              <Ionicons name="time-outline" size={16} color={colors.textPrimary} />
+              <Text style={{ fontSize: 12, color: themeColors.textPrimary }}>{startTime}</Text>
+              <Ionicons name="time-outline" size={16} color={themeColors.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -286,18 +270,13 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
               style={PromotionEditorStyles.dateInputBox}
               onPress={() => showTimePicker('end')}
             >
-              <Text style={{ fontSize: 12 }}>{endTime}</Text>
-              <Ionicons name="time-outline" size={16} color={colors.textPrimary} />
+              <Text style={{ fontSize: 12, color: themeColors.textPrimary }}>{endTime}</Text>
+              <Ionicons name="time-outline" size={16} color={themeColors.textPrimary} />
             </TouchableOpacity>
           </View>
         </View>
       )}
 
-      {/* <Text style={PromotionEditorStyles.helperText}>
-        {getScheduleString(scheduleData)}
-      </Text> */}
-
-      {/* Publish Button */}
       <TouchableOpacity
         style={[styles.button, { marginTop: 16 }]}
         onPress={() => handleSave()}
@@ -305,8 +284,6 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
         <Text style={styles.buttonText}>Publish Offer</Text>
       </TouchableOpacity>
 
-
-      {/* Modal hiển thị Calendar */}
       <DateTimePickerModal
         isVisible={isDatePickerVisible}
         mode="date"
@@ -315,17 +292,16 @@ const PromotionEditor: React.FC<EditorProps> = ({ initialData, onSave, onCancel 
         onCancel={() => setDatePickerVisibility(false)}
       />
 
-      {/* Modal chọn Giờ  */}
       <DateTimePickerModal
         isVisible={isTimePickerVisible}
         mode="time"
         onConfirm={handleConfirmTime}
         onCancel={() => setTimePickerVisibility(false)}
-        is24Hour={false} // Hiển thị AM/PM
+        is24Hour={false}
       />
 
     </View>
   );
 };
 
-export default PromotionEditor; 
+export default PromotionEditor;

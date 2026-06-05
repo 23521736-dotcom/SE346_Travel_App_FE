@@ -1,12 +1,10 @@
-import { colors } from "./colors";
-
 import { StyleSheet } from "react-native";
+import { ThemeType } from "./theme";
 
-export const commonStyles = StyleSheet.create({
+export const getCommonStyles = (colors: ThemeType) => StyleSheet.create({
   background: {
     flex: 1,
     backgroundColor: colors.background,
-    marginTop: 40
   },
 
   overlay: {
@@ -67,7 +65,7 @@ export const commonStyles = StyleSheet.create({
     height: 180,
     borderWidth: 2,
     borderColor: colors.border,
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 20,
     overflow: 'hidden',
   },

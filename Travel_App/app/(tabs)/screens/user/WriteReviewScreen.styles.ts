@@ -1,24 +1,22 @@
 import { StyleSheet } from 'react-native';
-import { colors } from '../../common/colors';
+import { ThemeType } from '../../common/theme';
 
-const styles = StyleSheet.create({
+const getStyles = (colors: ThemeType) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-    //marginTop: 15,
   },
 
   header: {
     height: 70,
     paddingHorizontal: 16,
     paddingTop: 30,
-    //paddingVertical: 30,
     backgroundColor: colors.surface,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.border,
   },
 
   iconButton: {
@@ -88,13 +86,14 @@ const styles = StyleSheet.create({
     fontSize: 15,
     lineHeight: 22,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
 
   photoHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 12,
   },
 
   photoCount: {
@@ -167,7 +166,7 @@ const styles = StyleSheet.create({
     paddingBottom: 35,
     backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
+    borderTopColor: colors.border,
   },
 
   submitButton: {
@@ -196,4 +195,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default styles;
+export default getStyles;

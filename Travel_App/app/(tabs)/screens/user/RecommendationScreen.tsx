@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -11,10 +11,10 @@ import {
   Text,
   View,
 } from 'react-native';
-import { colors } from '../../common/colors';
 import { fetchRecommendations } from '../../../../lib/api/recommendations';
 import type { RecommendationPlace, RecommendationsResponse } from '../../../../lib/api/recommendations';
-import styles from './RecommendationScreen.styles';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './RecommendationScreen.styles';
 
 type SectionData = {
   key: keyof RecommendationsResponse;
@@ -31,6 +31,9 @@ const SECTIONS: SectionData[] = [
 ];
 
 export default function RecommendationScreen({ navigation }: any) {
+  const { colors: themeColors, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const [recommendations, setRecommendations] = useState<RecommendationsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -76,14 +79,14 @@ export default function RecommendationScreen({ navigation }: any) {
           <Text style={styles.placeRegion} numberOfLines={1}>{item.region}</Text>
           <Text style={styles.placeExplanation} numberOfLines={2}>{item.explanation}</Text>
           <View style={styles.ratingRow}>
-            <Ionicons name="star" size={14} color="#FFB800" />
+            <Ionicons name="star" size={14} color={themeColors.warning} />
             <Text style={styles.ratingText}>{item.averageRating.toFixed(1)}</Text>
             <Text style={styles.ratingCount}>({item.ratingCount})</Text>
           </View>
         </View>
       </Pressable>
     ),
-    [navigateToDetail]
+    [navigateToDetail, styles, themeColors.warning]
   );
 
   const renderSection = useCallback(
@@ -96,7 +99,7 @@ export default function RecommendationScreen({ navigation }: any) {
         <View style={styles.section} key={section.key}>
           <View style={styles.sectionHeader}>
             <View style={styles.sectionTitleRow}>
-              <Ionicons name={section.icon as any} size={20} color={colors.primary} />
+              <Ionicons name={section.icon as any} size={20} color={themeColors.primary} />
               <Text style={styles.sectionTitle}>{section.title}</Text>
             </View>
           </View>
@@ -116,13 +119,13 @@ export default function RecommendationScreen({ navigation }: any) {
         </View>
       );
     },
-    [recommendations, renderPlaceCard]
+    [recommendations, renderPlaceCard, styles, themeColors.primary]
   );
 
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={colors.primary} />
+        <ActivityIndicator size="large" color={themeColors.primary} />
         <Text style={styles.loadingText}>Đang tải gợi ý cho bạn...</Text>
       </View>
     );
@@ -133,7 +136,7 @@ export default function RecommendationScreen({ navigation }: any) {
       <View style={styles.header}>
         <View style={styles.headerRow}>
           <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+            <Ionicons name="arrow-back" size={24} color={themeColors.textPrimary} />
           </Pressable>
           <View style={{ flex: 1 }}>
             <Text style={styles.headerTitle}>Gợi ý cho bạn</Text>
@@ -148,8 +151,8 @@ export default function RecommendationScreen({ navigation }: any) {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={onRefresh}
-            colors={[colors.primary]}
-            tintColor={colors.primary}
+            colors={[themeColors.primary]}
+            tintColor={themeColors.primary}
           />
         }
         showsVerticalScrollIndicator={false}

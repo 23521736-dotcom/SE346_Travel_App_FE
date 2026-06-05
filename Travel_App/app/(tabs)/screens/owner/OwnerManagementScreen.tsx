@@ -17,7 +17,8 @@ import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
 import { fetchOwnerPlaces } from '../../../../lib/api/owner';
 import type { OwnerPlace, OwnerPlaceDetail } from '../../../../lib/api/owner';
 import { getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../../lib/placeCategories';
-import styles from './OwnerManagementScreen.styles';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './OwnerManagementScreen.styles';
 
 const FILTERS = [{ value: 'All', label: 'All' }, ...PLACE_CATEGORIES];
 
@@ -29,7 +30,7 @@ function getPlaceRate(place: OwnerPlace | OwnerPlaceDetail) {
   return typeof place.Rate === 'number' ? place.Rate : 0;
 }
 
-function getStatusBadge(place: OwnerPlace) {
+function getStatusBadge(place: OwnerPlace, styles: any) {
   const status = place.Status || 'PENDING';
   switch (status) {
     case 'APPROVED':
@@ -55,6 +56,9 @@ function getStatusBadge(place: OwnerPlace) {
 
 export default function OwnerManagementScreen({ navigation }: any) {
   const { user } = useAuth();
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const [activeFilter, setActiveFilter] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
   const [places, setPlaces] = useState<OwnerPlace[]>([]);
@@ -117,7 +121,7 @@ export default function OwnerManagementScreen({ navigation }: any) {
           <View style={styles.categoryBadge}>
             <Text style={styles.categoryText}>{getPlaceCategoryLabel(getPlaceCategory(item))}</Text>
           </View>
-          {getStatusBadge(item)}
+          {getStatusBadge(item, styles)}
         </View>
 
         <View style={styles.cardBody}>
@@ -128,7 +132,7 @@ export default function OwnerManagementScreen({ navigation }: any) {
 
             <View style={styles.locationRow}>
               <View style={styles.locationInfo}>
-                <Ionicons name="location-outline" size={14} color="#6b7280" />
+                <Ionicons name="location-outline" size={14} color={themeColors.textSecondary} />
                 <Text style={styles.locationText} numberOfLines={1}>
                   {item.Location}
                 </Text>
@@ -137,16 +141,16 @@ export default function OwnerManagementScreen({ navigation }: any) {
           </View>
 
           <View style={styles.ratingBadge}>
-            <Ionicons name="star" size={14} color="#f97316" />
+            <Ionicons name="star" size={14} color={themeColors.warning} />
             <Text style={styles.ratingText}>{getPlaceRate(item).toFixed(1)}</Text>
           </View>
 
         </View>
         {item.Status === 'REJECTED' && item.RejectionReason && (
           <View style={{ paddingHorizontal: 15, paddingBottom: 12 }}>
-            <View style={{ backgroundColor: '#fef2f2', padding: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
-              <Ionicons name="alert-circle-outline" size={14} color="#dc2626" style={{ marginTop: 1, marginRight: 6 }} />
-              <Text style={{ color: '#991b1b', fontSize: 12, flex: 1 }} numberOfLines={2}>
+            <View style={{ backgroundColor: themeColors.dangerSoft, padding: 8, borderRadius: 8, flexDirection: 'row', alignItems: 'flex-start' }}>
+              <Ionicons name="alert-circle-outline" size={14} color={themeColors.danger} style={{ marginTop: 1, marginRight: 6 }} />
+              <Text style={{ color: themeColors.danger, fontSize: 12, flex: 1 }} numberOfLines={2}>
                 {item.RejectionReason}
               </Text>
             </View>
@@ -162,22 +166,22 @@ export default function OwnerManagementScreen({ navigation }: any) {
         <View style={styles.headerTop}>
           <Text style={styles.headerTitle}>Places Management</Text>
           <TouchableOpacity style={styles.addButton} onPress={() => navigation.navigate('Add Location')}>
-            <Ionicons name="add" size={22} color="#fff" />
+            <Ionicons name="add" size={22} color={themeColors.white} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.searchContainer}>
-          <Ionicons name="search" size={20} color="#9ca3af" style={styles.searchIcon} />
+          <Ionicons name="search" size={20} color={themeColors.textMuted} style={styles.searchIcon} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search your places..."
-            placeholderTextColor="#9ca3af"
+            placeholderTextColor={themeColors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity style={styles.clearIcon} onPress={() => setSearchQuery('')}>
-              <Ionicons name="close-circle" size={20} color="#9ca3af" />
+              <Ionicons name="close-circle" size={20} color={themeColors.textMuted} />
             </TouchableOpacity>
           )}
         </View>
@@ -209,10 +213,10 @@ export default function OwnerManagementScreen({ navigation }: any) {
         ListEmptyComponent={
           <View style={styles.emptyStateContainer}>
             {loading ? (
-              <ActivityIndicator size="large" color="#0f6c82" />
+              <ActivityIndicator size="large" color={themeColors.primary} />
             ) : (
               <>
-                <Ionicons name="business-outline" size={48} color="#cbd5e1" />
+                <Ionicons name="business-outline" size={48} color={themeColors.border} />
                 <Text style={styles.emptyStateText}>No places found.</Text>
               </>
             )}

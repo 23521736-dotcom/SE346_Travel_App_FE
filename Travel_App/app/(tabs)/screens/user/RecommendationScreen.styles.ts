@@ -1,9 +1,9 @@
 import { StyleSheet, Dimensions } from 'react-native';
-import { colors } from '../../common/colors';
+import { ThemeType } from '../../common/theme';
 
 const CARD_WIDTH = Dimensions.get('window').width * 0.7;
 
-export default StyleSheet.create({
+const getStyles = (colors: ThemeType) => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -12,7 +12,7 @@ export default StyleSheet.create({
     padding: 16,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.border,
   },
   headerRow: {
     flexDirection: 'row',
@@ -69,7 +69,7 @@ export default StyleSheet.create({
     borderRadius: 14,
     overflow: 'hidden',
     elevation: 3,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -77,6 +77,7 @@ export default StyleSheet.create({
   placeImage: {
     width: '100%',
     height: 140,
+    backgroundColor: colors.surfaceMuted,
   },
   matchBadge: {
     position: 'absolute',
@@ -122,6 +123,9 @@ export default StyleSheet.create({
     color: colors.textPrimary,
     marginLeft: 3,
   },
+  ratingTextValue: {
+    color: colors.warning,
+  },
   ratingCount: {
     fontSize: 11,
     color: colors.textMuted,
@@ -147,3 +151,5 @@ export default StyleSheet.create({
     color: colors.textSecondary,
   },
 });
+
+export default getStyles;

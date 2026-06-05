@@ -20,7 +20,8 @@ import {
   type OwnerDashboardData,
 } from '@/lib/api/dashboard';
 import { useAuth } from '../../context/AuthContext';
-import styles from './DashboardScreen.style';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './DashboardScreen.style';
 
 const emptyDashboard: OwnerDashboardData = {
   summary: {
@@ -104,6 +105,9 @@ function getChartTicks(maxValue: number): number[] {
 
 export default function DashboardScreen({ navigation }: any) {
   const { user } = useAuth();
+  const { colors: themeColors, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const [dashboard, setDashboard] = useState<OwnerDashboardData>(emptyDashboard);
   const [selectedPlaceId, setSelectedPlaceId] = useState<string | null>(null);
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
@@ -246,12 +250,12 @@ export default function DashboardScreen({ navigation }: any) {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <StatusBar barStyle="dark-content" backgroundColor="#f8f9ff" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.background} />
 
       <View style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.iconButton} activeOpacity={0.75} onPress={handleBack}>
-            <Ionicons name="chevron-back" size={22} color="#006591" />
+            <Ionicons name="chevron-back" size={22} color={themeColors.primary} />
           </TouchableOpacity>
 
           <Text style={styles.headerTitle} numberOfLines={1}>
@@ -263,7 +267,7 @@ export default function DashboardScreen({ navigation }: any) {
             activeOpacity={0.75}
             onPress={() => loadDashboard(true)}
           >
-            <Ionicons name="refresh" size={20} color="#006591" />
+            <Ionicons name="refresh" size={20} color={themeColors.primary} />
           </TouchableOpacity>
         </View>
 
@@ -276,14 +280,14 @@ export default function DashboardScreen({ navigation }: any) {
         >
           {loading ? (
             <View style={[styles.card, styles.stateCard]}>
-              <ActivityIndicator color="#006591" />
+              <ActivityIndicator color={themeColors.primary} />
               <Text style={styles.stateText}>Loading dashboard...</Text>
             </View>
           ) : null}
 
           {!loading && error ? (
             <View style={[styles.card, styles.stateCard]}>
-              <Ionicons name="alert-circle-outline" size={24} color="#006591" />
+              <Ionicons name="alert-circle-outline" size={24} color={themeColors.danger} />
               <Text style={styles.stateText}>{error}</Text>
             </View>
           ) : null}
@@ -299,7 +303,7 @@ export default function DashboardScreen({ navigation }: any) {
                   <Ionicons
                     name={dashboard.summary.growthPercent < 0 ? 'trending-down' : 'trending-up'}
                     size={15}
-                    color="#006591"
+                    color={themeColors.primary}
                   />
                   <Text style={styles.trendText}>
                     {formatGrowth(dashboard.summary.growthPercent)}
@@ -308,8 +312,6 @@ export default function DashboardScreen({ navigation }: any) {
               </View>
               <Text style={styles.mutedText}>Compared with last month</Text>
             </View>
-
-
           </View>
 
           <View style={styles.section}>
@@ -409,7 +411,7 @@ export default function DashboardScreen({ navigation }: any) {
                     ]}
                   >
                     {isSelected ? <View style={styles.selectedPlaceAccent} /> : null}
-                    <View style={styles.placeTopRow}>
+                    <View style={placeTopRow}>
                       {place.imageUrl ? (
                         <Image
                           source={{ uri: place.imageUrl }}
@@ -423,7 +425,7 @@ export default function DashboardScreen({ navigation }: any) {
                             isSelected && styles.selectedPlaceImage,
                           ]}
                         >
-                          <Ionicons name="image-outline" size={24} color="#6e7881" />
+                          <Ionicons name="image-outline" size={24} color={themeColors.textMuted} />
                         </View>
                       )}
                       <TouchableOpacity
@@ -443,7 +445,7 @@ export default function DashboardScreen({ navigation }: any) {
                       </TouchableOpacity>
                       {isSelected ? (
                         <View style={styles.selectedPlaceBadge}>
-                          <Ionicons name="checkmark" size={16} color="#006591" />
+                          <Ionicons name="checkmark" size={16} color={themeColors.primary} />
                         </View>
                       ) : null}
                     </View>

@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from "@react-navigation/native";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -22,8 +22,8 @@ import {
   type ApiNotificationItem,
   type NotificationTab,
 } from "../../../../lib/api/notification";
-import { colors } from "../../common/colors";
-import styles from "./NotificationScreen_user.styles";
+import { useTheme } from "../../context/ThemeContext";
+import getStyles from "./NotificationScreen_user.styles";
 
 type NotificationType =
   | "invited"
@@ -182,7 +182,7 @@ function getNotificationDisplay(item: NotificationItem): NotificationDisplay {
   }
 }
 
-function getIconStyles(tone: IconTone) {
+function getIconStyles(tone: IconTone, colors: any, styles: any) {
   if (tone === "secondary") {
     return {
       wrap: styles.iconCircleSecondary,
@@ -193,7 +193,7 @@ function getIconStyles(tone: IconTone) {
   if (tone === "tertiary") {
     return {
       wrap: styles.iconCircleTertiary,
-      color: "#D97706",
+      color: colors.warning,
     };
   }
 
@@ -247,15 +247,19 @@ function NotificationCard({
   onAccept,
   onDecline,
   onDelete,
+  colors,
+  styles,
 }: {
   item: NotificationItem;
   onPress: (item: NotificationItem) => void;
   onAccept: (item: NotificationItem) => void;
   onDecline: (item: NotificationItem) => void;
   onDelete: (item: NotificationItem) => void;
+  colors: any;
+  styles: any;
 }) {
   const display = getNotificationDisplay(item);
-  const iconStyle = getIconStyles(display.iconTone);
+  const iconStyle = getIconStyles(display.iconTone, colors, styles);
 
   const handleAccept = (event: GestureResponderEvent) => {
     event.stopPropagation();
@@ -337,6 +341,9 @@ function NotificationCard({
 }
 
 export default function NotificationScreenUser() {
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const navigation = useNavigation<any>();
   const [activeTab, setActiveTab] = useState<NotificationTab>("all");
   const [items, setItems] = useState<NotificationItem[]>([]);
@@ -429,7 +436,7 @@ export default function NotificationScreenUser() {
           <Text style={styles.headerTitle}>Notification</Text>
         </View>
         <Pressable style={styles.headerIconButton}>
-          <Ionicons name="notifications" size={22} color={colors.primary} />
+          <Ionicons name="notifications" size={22} color={themeColors.primary} />
         </Pressable>
       </View>
 
@@ -468,7 +475,7 @@ export default function NotificationScreenUser() {
       >
         {loading ? (
           <View style={styles.statusWrap}>
-            <ActivityIndicator size="small" color={colors.primary} />
+            <ActivityIndicator size="small" color={themeColors.primary} />
             <Text style={styles.statusText}>Loading notifications...</Text>
           </View>
         ) : null}
@@ -495,6 +502,8 @@ export default function NotificationScreenUser() {
               onAccept={handleAccept}
               onDecline={handleDecline}
               onDelete={handleDelete}
+              colors={themeColors}
+              styles={styles}
             />
           ))
           : null}

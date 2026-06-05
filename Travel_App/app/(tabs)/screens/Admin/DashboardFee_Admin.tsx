@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -9,11 +9,10 @@ import {
     View
 } from 'react-native';
 
-// Import file style
-import { styles } from './DashboardFee_Admin.style';
+import getStyles from './DashboardFee_Admin.style';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 
-// --- ĐỊNH NGHĨA KIỂU DỮ LIỆU ---
 interface Transaction {
     id: string;
     ownerName: string;
@@ -23,10 +22,11 @@ interface Transaction {
     status: 'Paid' | 'Unpaid';
 }
 
-const DashboardFee_Admin: React.FC = (navigation) => {
+const DashboardFee_Admin: React.FC = () => {
     const { logout } = useAuth();
+    const { colors: themeColors, isDark } = useTheme();
+    const styles = useMemo(() => getStyles(themeColors), [themeColors]);
 
-    // --- DỮ LIỆU MẪU ---
     const [transactions, setTransactions] = useState<Transaction[]>([
         { id: '1', ownerName: 'Blue Lagoon Resort', amount: '$2,450.00', avatarBg: '#e0f2fe', avatarColor: '#0284c7', status: 'Paid' },
         { id: '2', ownerName: 'Gion District Stay', amount: '$1,200.00', avatarBg: '#e0f2fe', avatarColor: '#0284c7', status: 'Unpaid' },
@@ -42,23 +42,19 @@ const DashboardFee_Admin: React.FC = (navigation) => {
         { id: '12', ownerName: 'Riverfront', amount: '$890.00', avatarBg: '#e0f2fe', avatarColor: '#0284c7', status: 'Paid' },
     ]);
 
-    // --- STATE CHO TAB & SHOW ALL ---
     const transactionTabs = ['Unpaid', 'Paid'];
     const [activeTab, setActiveTab] = useState<string>('Unpaid');
     const [showAll, setShowAll] = useState<boolean>(false);
 
-    // Lọc giao dịch theo Tab
     const filteredTransactions = transactions.filter(t => t.status === activeTab);
 
-    // Giới hạn 5 item nếu không bật Show All
     const displayedTransactions = showAll ? filteredTransactions : filteredTransactions.slice(0, 5);
 
     const handleTabChange = (tab: string) => {
         setActiveTab(tab);
-        setShowAll(false); // Reset lại trạng thái Show All khi đổi tab
+        setShowAll(false);
     };
 
-    // --- HÀM XỬ LÝ CHUYỂN ĐỔI TRẠNG THÁI ---
     const toggleTransactionStatus = (transactionId: string) => {
         setTransactions(prevTransactions =>
             prevTransactions.map(transaction =>
@@ -71,10 +67,9 @@ const DashboardFee_Admin: React.FC = (navigation) => {
 
     return (
         <SafeAreaView style={styles.safeArea}>
-            <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
+            <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.background} />
 
             <View style={styles.container}>
-                {/* Top Header */}
                 <View style={styles.header}>
                     <View style={styles.headerLeft}>
                         <Text style={styles.headerTitle}>Admin Dashboard</Text>
@@ -84,14 +79,11 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Main Content */}
                 <ScrollView
                     showsVerticalScrollIndicator={false}
                     contentContainerStyle={styles.scrollContent}
                 >
-                    {/* Financial Overview Summary */}
                     <View style={styles.summaryCard}>
-
                         <Text style={styles.mainTitle}>Total Payouts Summary</Text>
 
                         <View style={styles.amountBlock}>
@@ -105,7 +97,6 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                         </View>
                     </View>
 
-                    {/* Thẻ Commission Settings */}
                     <View style={styles.card}>
                         <View style={styles.cardHeader}>
                             <Text style={styles.cardTitle}>Commission Settings</Text>
@@ -116,8 +107,8 @@ const DashboardFee_Admin: React.FC = (navigation) => {
 
                         <View style={styles.settingRow}>
                             <View style={styles.settingRowLeft}>
-                                <View style={[styles.settingIconMock, { backgroundColor: '#e0f2fe' }]}>
-                                    <Text style={{ color: '#0284c7', fontWeight: 'bold' }}>%</Text>
+                                <View style={[styles.settingIconMock, { backgroundColor: themeColors.primaryLight }]}>
+                                    <Text style={{ color: themeColors.primary, fontWeight: 'bold' }}>%</Text>
                                 </View>
                                 <Text style={styles.settingLabel}>Platform Fee %</Text>
                             </View>
@@ -126,8 +117,8 @@ const DashboardFee_Admin: React.FC = (navigation) => {
 
                         <View style={styles.settingRow}>
                             <View style={styles.settingRowLeft}>
-                                <View style={[styles.settingIconMock, { backgroundColor: '#e0f2fe' }]}>
-                                    <Text style={{ color: '#0284c7', fontSize: 14 }}>📍</Text>
+                                <View style={[styles.settingIconMock, { backgroundColor: themeColors.primaryLight }]}>
+                                    <Text style={{ color: themeColors.primary, fontSize: 14 }}>📍</Text>
                                 </View>
                                 <Text style={styles.settingLabel}>Create Place Fee</Text>
                             </View>
@@ -136,8 +127,8 @@ const DashboardFee_Admin: React.FC = (navigation) => {
 
                         <View style={styles.settingRow}>
                             <View style={styles.settingRowLeft}>
-                                <View style={[styles.settingIconMock, { backgroundColor: '#fef3c7' }]}>
-                                    <Text style={{ color: '#b45309', fontSize: 14 }}>🎯</Text>
+                                <View style={[styles.settingIconMock, { backgroundColor: themeColors.warningSoft }]}>
+                                    <Text style={{ color: themeColors.warning, fontSize: 14 }}>🎯</Text>
                                 </View>
                                 <Text style={styles.settingLabel}>Create Promotion Fee</Text>
                             </View>
@@ -145,7 +136,6 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                         </View>
                     </View>
 
-                    {/* Thẻ Recent Transactions List */}
                     <View style={[styles.card, { paddingHorizontal: 0 }]}>
                         <View style={styles.transactionHeader}>
                             <View style={styles.transactionTitleRow}>
@@ -157,12 +147,11 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                                 <TextInput
                                     style={styles.smallSearchInput}
                                     placeholder="Search owner..."
-                                    placeholderTextColor="#94a3b8"
+                                    placeholderTextColor={themeColors.textMuted}
                                 />
                             </View>
                         </View>
 
-                        {/* Tabs Phân loại Paid/Unpaid */}
                         <View style={styles.tabContainer}>
                             {transactionTabs.map((tab) => (
                                 <TouchableOpacity
@@ -177,14 +166,12 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                             ))}
                         </View>
 
-                        {/* Table Header */}
                         <View style={styles.tableHead}>
                             <Text style={[styles.tableHeadText, { flex: 1.5 }]}>OWNER NAME</Text>
                             <Text style={[styles.tableHeadText, { flex: 1 }]}>TRANSACTION{'\n'}AMOUNT</Text>
                             <Text style={[styles.tableHeadText, { flex: 0.8, textAlign: 'center' }]}>STATUS</Text>
                         </View>
 
-                        {/* Danh sách giao dịch */}
                         {displayedTransactions.map((item, index) => (
                             <View
                                 key={item.id}
@@ -193,17 +180,14 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                                     (index === displayedTransactions.length - 1 && !showAll && filteredTransactions.length <= 5) && { borderBottomWidth: 0 }
                                 ]}
                             >
-                                {/* Owner Name Col */}
                                 <View style={[styles.colName, { flex: 1.5 }]}>
                                     <Text style={styles.ownerNameText}>{item.ownerName}</Text>
                                 </View>
 
-                                {/* Amount Col */}
                                 <View style={{ flex: 1, justifyContent: 'center' }}>
                                     <Text style={styles.ownerAmountText}>{item.amount}</Text>
                                 </View>
 
-                                {/* Status Col */}
                                 <View style={{ flex: 0.8, alignItems: 'center', justifyContent: 'center' }}>
                                     <TouchableOpacity
                                         activeOpacity={0.7}
@@ -225,7 +209,6 @@ const DashboardFee_Admin: React.FC = (navigation) => {
                             <Text style={styles.emptyText}>No {activeTab.toLowerCase()} transactions found.</Text>
                         )}
 
-                        {/* Nút Show All / Show Less */}
                         {filteredTransactions.length > 5 && (
                             <TouchableOpacity
                                 style={styles.viewAllBtn}

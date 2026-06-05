@@ -25,7 +25,8 @@ import {
     TripData,
     upsertTripDraft,
 } from '../../store/tripDraftStore';
-import styles from './AddLocationScreen_user.style';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './AddLocationScreen_user.style';
 import { getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../../lib/placeCategories';
 
 type SavedPlaceItem = {
@@ -40,9 +41,6 @@ type SavedPlaceItem = {
     cost: string;
     hasPromotion?: boolean;
 };
-
-// const FILTERS = ['All', 'Festivals', 'Dining', 'Attractions'];
-// const SAVED_FILTERS = ['All', 'Festivals', 'Dining', 'Attractions'];
 
 function normalizeDayKey(value?: string) {
     return String(value || '').trim().toLowerCase().replace(/^day_/, '');
@@ -88,6 +86,9 @@ function mapFavoritePlace(place: PlaceListItem, promotionPlaceIds: Set<string> =
 }
 
 export default function AddLocationScreen_user({ navigation, route }: any) {
+    const { colors: themeColors, isDark } = useTheme();
+    const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
     const [searchQuery, setSearchQuery] = useState('');
     const [submittedQuery, setSubmittedQuery] = useState('');
     const [activeFilter, setActiveFilter] = useState('All');
@@ -248,18 +249,18 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                     <View style={styles.resultCardHeader}>
                         <Text numberOfLines={1} style={styles.resultCardTitle}>{item.title}</Text>
                         <View style={styles.resultRatingPill}>
-                            <Ionicons name="star" size={12} color="#D97706" />
+                            <Ionicons name="star" size={12} color={themeColors.warning} />
                             <Text style={styles.resultRatingText}>{item.rating}</Text>
                         </View>
                     </View>
 
                     <View style={styles.resultLocationRow}>
-                        <Ionicons name="location-outline" size={14} color="#8a95a5" />
+                        <Ionicons name="location-outline" size={14} color={themeColors.textMuted} />
                         <Text style={styles.resultLocationText}>{item.location}</Text>
                     </View>
 
                     <View style={styles.resultLocationRow}>
-                        <Ionicons name="cash-outline" size={14} color="#8a95a5" />
+                        <Ionicons name="cash-outline" size={14} color={themeColors.textMuted} />
                         <Text style={styles.resultLocationText}>VND: {formatVnd(item.cost)}</Text>
                     </View>
 
@@ -271,7 +272,7 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                             style={[styles.resultAddButton, isSelected && styles.resultAddButtonSelected]}
                             onPress={() => toggleItem(item)}
                         >
-                            <Feather name={isSelected ? 'check' : 'plus'} size={20} color="#fff" />
+                            <Feather name={isSelected ? 'check' : 'plus'} size={20} color={themeColors.white} />
                         </Pressable>
                     </View>
                 </View>
@@ -284,16 +285,17 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
             <SafeAreaView style={styles.resultContainer}>
                 <View style={styles.resultHeaderRow}>
                     <Pressable onPress={() => setSubmittedQuery('')} hitSlop={10}>
-                        <Feather name="arrow-left" size={24} color="#1a202c" />
+                        <Feather name="arrow-left" size={24} color={themeColors.textPrimary} />
                     </Pressable>
                     <View style={styles.resultSearchBar}>
-                        <Feather name="search" size={18} color="#8a95a5" />
+                        <Feather name="search" size={18} color={themeColors.textMuted} />
                         <TextInput
                             style={[styles.resultSearchInput, { outline: 'none' } as any]}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                             onSubmitEditing={submitSearch}
                             placeholder="Search destination"
+                            placeholderTextColor={themeColors.textMuted}
                             returnKeyType="search"
                         />
                     </View>
@@ -352,7 +354,7 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
                 <View style={styles.header}>
                     <TouchableOpacity onPress={() => navigation.goBack()}>
-                        <Feather name="arrow-left" size={24} color="#003A70" />
+                        <Feather name="arrow-left" size={24} color={themeColors.primary} />
                     </TouchableOpacity>
                     <Text style={styles.headerTitle}>
                         {dayTitle ? `Add Destination - ${dayTitle}` : 'Add Destination'}
@@ -362,12 +364,12 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
 
                 <View style={styles.searchContainer}>
                     <Pressable onPress={submitSearch} hitSlop={8}>
-                        <Feather name="search" size={20} color="#8E9EAB" />
+                        <Feather name="search" size={20} color={themeColors.textMuted} />
                     </Pressable>
                     <TextInput
                         style={[styles.searchInput, { outline: 'none' } as any]}
                         placeholder="Where do you want to go in Tokyo?"
-                        placeholderTextColor="#8E9EAB"
+                        placeholderTextColor={themeColors.textMuted}
                         value={searchQuery}
                         onChangeText={setSearchQuery}
                         onSubmitEditing={submitSearch}
@@ -402,7 +404,7 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                                 <Feather
                                     name={source === 'All' ? 'map-pin' : 'bookmark'}
                                     size={15}
-                                    color={isActive ? '#FFFFFF' : '#64748B'}
+                                    color={isActive ? themeColors.white : themeColors.textSecondary}
                                 />
                                 <Text style={[styles.sourceSwitchText, isActive && styles.sourceSwitchTextActive]}>
                                     {source === 'All' ? 'All' : 'From Saved'}
@@ -413,14 +415,14 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                 </View>
 
                 {saveError ? (
-                    <View style={{ marginHorizontal: 12, marginBottom: 10, padding: 10, borderRadius: 8, backgroundColor: '#FEE2E2' }}>
-                        <Text style={{ color: '#991B1B', fontWeight: '600' }}>{saveError}</Text>
+                    <View style={{ marginHorizontal: 12, marginBottom: 10, padding: 10, borderRadius: 8, backgroundColor: themeColors.dangerSoft }}>
+                        <Text style={{ color: themeColors.danger, fontWeight: '600' }}>{saveError}</Text>
                     </View>
                 ) : null}
 
                 {locationSource === 'All' && loadingAllPlaces || locationSource === 'Saved' && loadingSavedPlaces ? (
                     <View style={{ paddingVertical: 28 }}>
-                        <ActivityIndicator size="small" color="#006699" />
+                        <ActivityIndicator size="small" color={themeColors.primary} />
                     </View>
                 ) : visiblePlaces.filter((place) => matchesPlaceCategory(place.category, activeFilter)).map((place) => {
                     const isSelected = selectedItems.includes(place.id);
@@ -438,13 +440,13 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                             <View style={styles.cardInfo}>
                                 <Text numberOfLines={1} style={styles.placeName}>{place.title}</Text>
                                 <View style={styles.ratingRow}>
-                                    <FontAwesome name="star" size={12} color="#D4A373" />
+                                    <FontAwesome name="star" size={12} color={themeColors.warning} />
                                     <Text numberOfLines={2} style={styles.ratingText}>
                                         {place.rating} ({place.reviews}) - {place.location}
                                     </Text>
                                 </View>
                                 <View style={styles.priceRow}>
-                                    <Ionicons name="cash-outline" size={13} color="#006699" />
+                                    <Ionicons name="cash-outline" size={13} color={themeColors.primary} />
                                     <Text style={styles.priceText}>VND: {formatVnd(place.cost)}</Text>
                                 </View>
                             </View>
@@ -453,7 +455,7 @@ export default function AddLocationScreen_user({ navigation, route }: any) {
                                 style={[styles.addBtn, isSelected && styles.addedBtn]}
                                 onPress={() => toggleItem(place)}
                             >
-                                <Feather name={isSelected ? 'x' : 'plus'} size={20} color="#FFFFFF" />
+                                <Feather name={isSelected ? 'x' : 'plus'} size={20} color={themeColors.white} />
                             </TouchableOpacity>
                         </View>
                     );

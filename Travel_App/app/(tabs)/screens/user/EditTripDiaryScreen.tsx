@@ -16,8 +16,8 @@ import {
 import { getApiErrorMessage } from "../../../../lib/api/client";
 import { createTripDiaryEntry, TripDiaryEntry, updateTripDiaryEntry } from "../../../../lib/api/diary";
 import { uploadDiaryImages, type UploadImageInput } from "../../../../lib/api/uploads";
-import { colors } from "../../common/colors";
-import styles from "./EditTripDiaryScreen.styles";
+import { useTheme } from "../../context/ThemeContext";
+import getStyles from "./EditTripDiaryScreen.styles";
 
 type LocalDiaryImage = UploadImageInput & { id: string };
 const WebDateTimeInput = "input" as any;
@@ -101,6 +101,9 @@ function normalizeInitialImages(imageUrls: string[] = []): LocalDiaryImage[] {
 }
 
 export default function EditTripDiaryScreen({ navigation, route }: any) {
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const params = (route.params || {}) as EditTripDiaryParams;
   const entry = params.entry;
   const tripId = params.tripId ?? entry?.tripId;
@@ -213,12 +216,12 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
           style={styles.headerButton}
           disabled={isSaving}
         >
-          <Ionicons name="chevron-back" size={25} color={colors.textPrimary} />
+          <Ionicons name="chevron-back" size={25} color={themeColors.textPrimary} />
         </Pressable>
 
-        <Text style={styles.headerTitle}>{screenTitle}</Text>
+        <Text style={[styles.headerTitle, { color: themeColors.textPrimary }]}>{screenTitle}</Text>
 
-        <View />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView
@@ -228,7 +231,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
       >
         <View style={styles.tripInfoCard}>
           <View style={styles.infoIconWrap}>
-            <Ionicons name="journal" size={24} color={colors.primary} />
+            <Ionicons name="journal" size={24} color={themeColors.primary} />
           </View>
           <View style={styles.infoTextWrap}>
             <Text style={styles.infoLabel}>Linked trip</Text>
@@ -243,7 +246,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
             value={title}
             onChangeText={setTitle}
             placeholder="Ví dụ: Buổi tối ở Shinjuku"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={themeColors.textMuted}
             style={styles.singleLineInput}
           />
 
@@ -252,7 +255,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
             value={locationName}
             onChangeText={setLocationName}
             placeholder="Tên nơi bạn ghé thăm"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={themeColors.textMuted}
             style={styles.singleLineInput}
           />
 
@@ -269,7 +272,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
                   outline: "none",
                   backgroundColor: "transparent",
                   fontSize: 15,
-                  color: "#111827",
+                  color: themeColors.textPrimary,
                 }}
               />
             </View>
@@ -278,7 +281,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
                 value={occurredAtInput}
                 onChangeText={setOccurredAtInput}
                 placeholder="01/08/2026 20:30"
-              placeholderTextColor={colors.textMuted}
+              placeholderTextColor={themeColors.textMuted}
               style={styles.singleLineInput}
                 keyboardType="numbers-and-punctuation"
             />
@@ -293,7 +296,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
         <View style={styles.photoGrid}>
           <Pressable style={styles.addPhotoTile} onPress={handlePickImage} disabled={isSaving}>
             <View style={styles.addPhotoContent}>
-              <Ionicons name="camera-outline" size={30} color={colors.primary} />
+              <Ionicons name="camera-outline" size={30} color={themeColors.primary} />
               <Text style={styles.addPhotoText}>Thêm ảnh</Text>
             </View>
           </Pressable>
@@ -307,7 +310,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
                 style={styles.removePhotoButton}
                 disabled={isSaving}
               >
-                <Ionicons name="close-circle" size={22} color={colors.danger} />
+                <Ionicons name="close-circle" size={22} color={themeColors.danger} />
               </Pressable>
             </View>
           ))}
@@ -315,7 +318,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
 
         <View style={styles.captionCard}>
           <View style={styles.captionHeader}>
-            <Ionicons name="create-outline" size={20} color={colors.primary} />
+            <Ionicons name="create-outline" size={20} color={themeColors.primary} />
             <Text style={styles.captionTitle}>Nội dung</Text>
           </View>
           <TextInput
@@ -324,7 +327,7 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
             multiline
             textAlignVertical="top"
             placeholder="Viết cảm nghĩ, câu chuyện, món ăn, thời tiết hoặc khoảnh khắc đáng nhớ..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={themeColors.textMuted}
             style={styles.captionInput}
           />
         </View>
@@ -335,9 +338,9 @@ export default function EditTripDiaryScreen({ navigation, route }: any) {
           disabled={!canSave}
         >
           {isSaving ? (
-            <ActivityIndicator size="small" color={colors.white} />
+            <ActivityIndicator size="small" color="white" />
           ) : (
-            <Ionicons name="checkmark-circle" size={22} color={colors.white} />
+            <Ionicons name="checkmark-circle" size={22} color="white" />
           )}
           <Text style={styles.saveButtonText}>{isSaving ? "Đang lưu..." : "Lưu nhật ký"}</Text>
         </Pressable>

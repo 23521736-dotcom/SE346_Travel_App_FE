@@ -1,9 +1,9 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
   avatarBorder: {
     borderWidth: 3,
@@ -19,9 +19,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingTop: 10,
     paddingBottom: 35,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: colors.borderLight,
+    borderTopColor: colors.border,
   },
 
   writeReviewButton: {
@@ -45,13 +45,13 @@ const styles = StyleSheet.create({
 
   modalBackdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    backgroundColor: colors.overlay,
     justifyContent: 'center',
     padding: 20,
   },
 
   editModal: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     borderRadius: 16,
     padding: 18,
   },
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceMuted,
   },
 
   editStarRow: {
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   editTextArea: {
     minHeight: 130,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 12,
     color: colors.textPrimary,
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   },
 
   cancelEditButton: {
-    backgroundColor: colors.surface,
+    backgroundColor: colors.surfaceMuted,
   },
 
   cancelEditButtonText: {
@@ -134,4 +134,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default styles;
+export default getStyles;

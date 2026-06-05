@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
     Image,
     ImageSourcePropType,
@@ -9,13 +9,17 @@ import {
     View,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
-import styles from './ProfileScreen.styles';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './ProfileScreen.styles';
 
 interface SettingItemProps {
   title: string;
   iconSource: ImageSourcePropType;
   iconBgColor: string;
+  iconTintColor?: string;
   hasSwitch?: boolean;
+  switchValue?: boolean;
+  onSwitchChange?: (value: boolean) => void;
   onPress?: () => void;
 }
 const DEFAULT_AVATAR =
@@ -23,18 +27,25 @@ const DEFAULT_AVATAR =
 export default function ProfileScreen({ navigation }: any) {
   const [isNotificationsEnabled, setIsNotificationsEnabled] = useState(true);
   const { user } = useAuth();
+  const { colors, toggleTheme, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(colors), [colors]);
+
   const displayName = user?.fullName || user?.name || 'User';
   const avatar = user?.avatarUrl || DEFAULT_AVATAR;
+
   const SettingItem = ({
     title,
     iconSource,
     iconBgColor,
+    iconTintColor,
     hasSwitch,
+    switchValue,
+    onSwitchChange,
     onPress,
   }: SettingItemProps) => {
     return (
       <TouchableOpacity
-        style={styles.itemContainer}
+        style={[styles.itemContainer, { backgroundColor: colors.surface }]}
         onPress={onPress}
         disabled={hasSwitch}
       >
@@ -44,30 +55,30 @@ export default function ProfileScreen({ navigation }: any) {
               source={iconSource}
               style={[
                 styles.icon,
-                { tintColor: iconBgColor === '#e5f3fa' ? '#177bb3' : '#64748b' },
+                { tintColor: iconTintColor || (isDark ? colors.textPrimary : '#177bb3') },
               ]}
             />
           </View>
-          <Text style={styles.itemText}>{title}</Text>
+          <Text style={[styles.itemText, { color: colors.textPrimary }]}>{title}</Text>
         </View>
 
         {hasSwitch ? (
           <Switch
-            trackColor={{ false: '#d1d5db', true: '#177bb3' }}
+            trackColor={{ false: isDark ? '#334155' : '#d1d5db', true: colors.primary }}
             thumbColor={'#ffffff'}
-            ios_backgroundColor="#d1d5db"
-            onValueChange={() => setIsNotificationsEnabled(!isNotificationsEnabled)}
-            value={isNotificationsEnabled}
+            ios_backgroundColor={isDark ? '#334155' : "#d1d5db"}
+            onValueChange={onSwitchChange}
+            value={switchValue}
           />
         ) : (
-          <Text style={styles.chevron}>{'>'}</Text>
+          <Text style={[styles.chevron, { color: colors.textSecondary }]}>{'>'}</Text>
         )}
       </TouchableOpacity>
     );
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
@@ -80,47 +91,62 @@ export default function ProfileScreen({ navigation }: any) {
               style={styles.avatar}
             />
           </View>
-          <Text style={styles.userName}>
+          <Text style={[styles.userName, { color: colors.textPrimary }]}>
             {displayName}
           </Text>
           {user?.username ? (
-            <Text style={styles.userEmail}>@{user.username}</Text>
+            <Text style={[styles.userEmail, { color: colors.textSecondary }]}>@{user.username}</Text>
           ) : null}
         </View>
         {/* --- ACCOUNT SETTINGS --- */}
-        <Text style={styles.sectionTitle}>ACCOUNT SETTINGS</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>ACCOUNT SETTINGS</Text>
         <SettingItem
           title="Edit Personal Information"
           iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1077/1077063.png' }}
-          iconBgColor="#e5f3fa"
+          iconBgColor={isDark ? '#0C4A6E' : "#e5f3fa"}
           onPress={() => navigation.navigate("Edit Profile")}
         />
 
+        <SettingItem
+          title="Dark Mode"
+          iconSource={{ uri: isDark ? 'https://cdn-icons-png.flaticon.com/128/1829/1829191.png' : 'https://cdn-icons-png.flaticon.com/128/702/702471.png' }}
+          iconBgColor={isDark ? '#334155' : '#fef9c3'}
+          iconTintColor={isDark ? '#FBBF24' : '#EAB308'}
+          hasSwitch={true}
+          switchValue={isDark}
+          onSwitchChange={toggleTheme}
+        />
+
         {/* --- PREFERENCES --- */}
-        <Text style={styles.sectionTitle}>PREFERENCES</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>PREFERENCES</Text>
         <SettingItem
           title="Notifications"
           iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1827/1827370.png' }}
-          iconBgColor="#e5f3fa"
+          iconBgColor={isDark ? '#0C4A6E' : "#e5f3fa"}
           hasSwitch={true}
+          switchValue={isNotificationsEnabled}
+          onSwitchChange={setIsNotificationsEnabled}
         />
 
         {/* --- SUPPORT & LEGAL --- */}
-        <Text style={styles.sectionTitle}>SUPPORT & LEGAL</Text>
+        <Text style={[styles.sectionTitle, { color: colors.primary }]}>SUPPORT & LEGAL</Text>
         <SettingItem
           title="Terms of Service"
           iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/2912/2912760.png' }}
-          iconBgColor="#f1f5f9"
+          iconBgColor={isDark ? '#334155' : "#f1f5f9"}
           onPress={() => navigation.navigate('Terms of Service')}
         />
         <SettingItem
           title="Privacy Policy"
           iconSource={{ uri: 'https://cdn-icons-png.flaticon.com/128/1161/1161388.png' }}
-          iconBgColor="#f1f5f9"
+          iconBgColor={isDark ? '#334155' : "#f1f5f9"}
           onPress={() => navigation.navigate('Privacy Policy')}
         />
 
-        <TouchableOpacity style={styles.logoutButton} onPress={() => navigation.navigate('Log Out')}>
+        <TouchableOpacity
+          style={styles.logoutButton}
+          onPress={() => navigation.navigate('Log Out')}
+        >
           <Image
             source={{ uri: 'https://cdn-icons-png.flaticon.com/128/1828/1828427.png' }}
             style={styles.logoutIcon}

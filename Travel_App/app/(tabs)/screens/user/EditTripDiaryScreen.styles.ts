@@ -1,13 +1,13 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
   screen: {
     flex: 1,
-    backgroundColor: "#F8FAFC",
+    backgroundColor: colors.background,
   },
 
   header: {
@@ -16,7 +16,7 @@ const styles = StyleSheet.create({
     paddingBottom: 12,
     backgroundColor: colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: colors.borderLight,
+    borderBottomColor: colors.border,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "#F1F5F9",
+    backgroundColor: colors.surfaceMuted,
   },
 
   headerTitle: {
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     padding: 16,
     flexDirection: "row",
     columnGap: 14,
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderStyle: "dashed",
     borderColor: colors.primary,
-    backgroundColor: "#EFF9FE",
+    backgroundColor: colors.primaryLight,
     overflow: "hidden",
   },
 
@@ -164,7 +164,7 @@ const styles = StyleSheet.create({
   },
 
   addPhotoText: {
-    color: colors.primaryDark,
+    color: colors.primary,
     fontSize: 12,
     fontWeight: "800",
     lineHeight: 16,
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: colors.white,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     padding: 16,
   },
 
@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
     paddingHorizontal: 14,
     color: colors.textPrimary,
     fontSize: 15,
@@ -229,8 +229,8 @@ const styles = StyleSheet.create({
     minHeight: 48,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
     paddingHorizontal: 14,
     justifyContent: "center",
   },
@@ -252,8 +252,8 @@ const styles = StyleSheet.create({
     minHeight: 150,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: colors.borderLight,
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.border,
+    backgroundColor: colors.surfaceMuted,
     padding: 14,
     color: colors.textPrimary,
     fontSize: 15,
@@ -286,4 +286,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default styles;
+export default getStyles;

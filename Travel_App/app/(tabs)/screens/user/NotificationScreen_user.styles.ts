@@ -1,20 +1,20 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
   screen: {
     flex: 1,
-    backgroundColor: "#F8FAFF",
+    backgroundColor: colors.background,
   },
 
   header: {
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 14,
-    backgroundColor: "rgba(248,250,255,0.96)",
+    backgroundColor: colors.background,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -31,7 +31,7 @@ const styles = StyleSheet.create({
     height: 42,
     borderRadius: 21,
     borderWidth: 2,
-    borderColor: "#0EA5E9",
+    borderColor: colors.primary,
     backgroundColor: colors.surfaceMuted,
   },
 
@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
     width: 42,
     height: 42,
     borderRadius: 21,
-    backgroundColor: "rgba(0,174,239,0.1)",
+    backgroundColor: colors.primaryLight,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     height: 48,
     borderRadius: 12,
-    backgroundColor: "#E5EEFF",
+    backgroundColor: colors.surfaceMuted,
     padding: 4,
     flexDirection: "row",
   },
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   },
 
   tabText: {
-    color: "#3E4850",
+    color: colors.textSecondary,
     fontSize: 14,
     fontWeight: "700",
   },
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   },
 
   statusText: {
-    color: "#3E4850",
+    color: colors.textSecondary,
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
   },
 
   emptyText: {
-    color: "#6E7881",
+    color: colors.textMuted,
     fontSize: 14,
     fontWeight: "600",
     textAlign: "center",
@@ -168,7 +168,7 @@ const styles = StyleSheet.create({
   },
 
   unreadCard: {
-    backgroundColor: "#EFF6FF",
+    backgroundColor: colors.primaryLight,
     borderLeftWidth: 4,
     borderLeftColor: colors.primary,
   },
@@ -191,15 +191,15 @@ const styles = StyleSheet.create({
   },
 
   iconCirclePrimary: {
-    backgroundColor: "rgba(0,174,239,0.12)",
+    backgroundColor: colors.primaryLight,
   },
 
   iconCircleSecondary: {
-    backgroundColor: "#DBE4EA",
+    backgroundColor: colors.surfaceMuted,
   },
 
   iconCircleTertiary: {
-    backgroundColor: "rgba(245,158,11,0.14)",
+    backgroundColor: colors.warningSoft,
   },
 
   cardContent: {
@@ -226,14 +226,14 @@ const styles = StyleSheet.create({
   },
 
   timeText: {
-    color: "#6E7881",
+    color: colors.textMuted,
     fontSize: 12,
     lineHeight: 18,
     fontWeight: "600",
   },
 
   descriptionText: {
-    color: "#3E4850",
+    color: colors.textSecondary,
     fontSize: 13,
     lineHeight: 19,
     marginTop: 4,
@@ -265,14 +265,14 @@ const styles = StyleSheet.create({
     minHeight: 34,
     borderRadius: 17,
     borderWidth: 1,
-    borderColor: "#6E7881",
+    borderColor: colors.border,
     paddingHorizontal: 18,
     alignItems: "center",
     justifyContent: "center",
   },
 
   declineButtonText: {
-    color: "#3E4850",
+    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: "800",
   },
@@ -286,4 +286,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default styles;
+export default getStyles;

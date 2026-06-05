@@ -1,7 +1,7 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../common/colors";
+import { ThemeType } from "../common/theme";
 
-export const PromotionEditorStyles = StyleSheet.create({
+const getStyles = (colors: ThemeType) => StyleSheet.create({
   dateRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -10,9 +10,9 @@ export const PromotionEditorStyles = StyleSheet.create({
   },
   dateInputBox: {
     flex: 1,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceMuted,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
     borderRadius: 12,
     padding: 12,
     flexDirection: 'row',
@@ -23,12 +23,12 @@ export const PromotionEditorStyles = StyleSheet.create({
     width: 35,
     height: 35,
     borderRadius: 17.5,
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceMuted,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 4,
     borderWidth: 1,
-    borderColor: colors.borderLight,
+    borderColor: colors.border,
   },
   dayCircleActive: {
     backgroundColor: colors.primary,
@@ -36,7 +36,7 @@ export const PromotionEditorStyles = StyleSheet.create({
   },
   timeToggleContainer: {
     flexDirection: 'row',
-    backgroundColor: colors.background,
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 8,
     padding: 4,
     alignSelf: 'flex-start',
@@ -50,7 +50,7 @@ export const PromotionEditorStyles = StyleSheet.create({
   timeToggleButtonActive: {
     backgroundColor: colors.surface,
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
@@ -62,3 +62,5 @@ export const PromotionEditorStyles = StyleSheet.create({
     marginTop: 12,
   }
 });
+
+export default getStyles;

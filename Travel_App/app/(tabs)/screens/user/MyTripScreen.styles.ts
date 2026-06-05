@@ -1,9 +1,9 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
   screen: {
     flex: 1,
@@ -54,7 +54,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#F1F5F9",
+    borderColor: colors.border,
     padding: 10,
     overflow: "hidden",
     shadowColor: colors.shadow,
@@ -268,8 +268,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderStyle: "dashed",
-    borderColor: "#CBD5E1",
-    backgroundColor: "#F8FAFC",
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -348,7 +348,7 @@ const styles = StyleSheet.create({
   },
 
   tripErrorText: {
-    color: "#DC2626",
+    color: colors.danger,
     fontSize: 13,
     fontWeight: "700",
     textAlign: "center",
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: colors.surface,
-    backgroundColor: "#CBD5E1",
+    backgroundColor: colors.border,
     marginRight: -6,
   },
 
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     height: 34,
     borderRadius: 17,
     borderWidth: 1,
-    borderColor: "rgba(229,57,53,0.18)",
+    borderColor: colors.dangerSoft,
     alignItems: "center",
     justifyContent: "center",
     backgroundColor: colors.surface,
@@ -475,11 +475,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
-    backgroundColor: "#FFEDD5",
+    backgroundColor: colors.warningSoft,
   },
 
   holdBadgeText: {
-    color: "#C2410C",
+    color: colors.warning,
     fontSize: 10,
     fontWeight: "800",
     textTransform: "uppercase",
@@ -496,7 +496,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: "rgba(0,174,239,0.22)",
+    borderColor: colors.primaryLight,
     padding: 12,
     flexDirection: "row",
     alignItems: "center",
@@ -547,4 +547,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default styles;
+export default getStyles;

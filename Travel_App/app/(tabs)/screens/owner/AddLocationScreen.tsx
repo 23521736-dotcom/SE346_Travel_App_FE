@@ -2,7 +2,7 @@ import { formatDate } from '@/lib/service/PromotionShedule';
 import type { PromotionItem } from '@/lib/types/promotion';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Alert,
@@ -28,10 +28,10 @@ import {
 } from '../../../../lib/api/owner';
 import { uploadPlaceCover } from '../../../../lib/api/uploads';
 import { DEFAULT_PLACE_CATEGORY, getPlaceCategoryLabel, normalizePlaceCategory, PLACE_CATEGORIES } from '../../../../lib/placeCategories';
-import { colors } from '../../common/colors';
+import { useTheme } from '../../context/ThemeContext';
 import PromotionCard from "../../components/PromotionCard";
 import PromotionEditor from '../../components/PromotionEditor';
-import { styles } from './AddLocationScreen.style';
+import getStyles from './AddLocationScreen.style';
 
 const normalizeImages = (mainImage?: string, images?: string[]) => {
   return Array.from(new Set([mainImage, ...(images ?? [])].filter(Boolean) as string[]));
@@ -40,6 +40,9 @@ const normalizeImages = (mainImage?: string, images?: string[]) => {
 const getOwnerPlaceImage = (place?: OwnerPlace) => place?.Image ?? place?.image ?? '';
 
 const AddLocationScreen = ({ navigation, route }: any) => {
+  const { colors: themeColors, isDark } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const placeParam = route?.params?.place as OwnerPlace | undefined;
   const placeId = route?.params?.placeId ?? placeParam?.Id;
   const initialImage = getOwnerPlaceImage(placeParam);
@@ -199,7 +202,6 @@ const AddLocationScreen = ({ navigation, route }: any) => {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsMultipleSelection: true,
-        //allowsEditing: true,
         quality: 0.85,
       });
 
@@ -308,7 +310,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
 
   return (
     <SafeAreaView style={styles.background}>
-      <StatusBar barStyle="dark-content" />
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor={themeColors.background} />
 
       <View style={styles.header}>
         <TouchableOpacity
@@ -320,7 +322,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
             }
           }}
         >
-          <Ionicons name="arrow-back" size={24} color={colors.textPrimary} />
+          <Ionicons name="arrow-back" size={24} color={themeColors.textPrimary} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Location Details</Text>
         <TouchableOpacity onPress={handleReset}>
@@ -330,7 +332,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
         <View style={styles.alertContainer}>
-          <Ionicons name="warning" size={20} color={colors.warning} style={{ marginRight: 8 }} />
+          <Ionicons name="warning" size={20} color={themeColors.warning} style={{ marginRight: 8 }} />
           <View style={{ flex: 1 }}>
             <Text style={styles.alertTitle}>Policy Reminder</Text>
             <Text style={styles.alertText}>
@@ -345,19 +347,19 @@ const AddLocationScreen = ({ navigation, route }: any) => {
           <TextInput
             style={styles.input}
             placeholder="e.g. The Grand View Hotel"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={themeColors.textMuted}
             value={placeName}
             onChangeText={setPlaceName}
           />
 
           <View style={styles.labelRow}>
-            <Ionicons name="location-outline" size={14} color={colors.textMuted} />
+            <Ionicons name="location-outline" size={14} color={themeColors.textMuted} />
             <Text style={[styles.label, styles.labelInRow]}>Region / City</Text>
           </View>
           <TextInput
             style={styles.input}
             placeholder="e.g. Kyoto, Japan"
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={themeColors.textMuted}
             value={region}
             onChangeText={setRegion}
           />
@@ -381,7 +383,7 @@ const AddLocationScreen = ({ navigation, route }: any) => {
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Tell visitors what makes this place special..."
-            placeholderTextColor={colors.textMuted}
+            placeholderTextColor={themeColors.textMuted}
             multiline
             numberOfLines={3}
             value={description}
@@ -396,17 +398,17 @@ const AddLocationScreen = ({ navigation, route }: any) => {
             onPress={handlePickCover}
             disabled={isUploading}
           >
-            <View style={{ backgroundColor: colors.primaryLight, padding: 10, borderRadius: 30, marginBottom: 8 }}>
+            <View style={{ backgroundColor: themeColors.primaryLight, padding: 10, borderRadius: 30, marginBottom: 8 }}>
               {isUploading ? (
-                <ActivityIndicator size="small" color={colors.primary} />
+                <ActivityIndicator size="small" color={themeColors.primary} />
               ) : (
-                <Ionicons name="cloud-upload" size={24} color={colors.primary} />
+                <Ionicons name="cloud-upload" size={24} color={themeColors.primary} />
               )}
             </View>
-            <Text style={{ fontWeight: 'bold', fontSize: 14 }}>
+            <Text style={{ fontWeight: 'bold', fontSize: 14, color: themeColors.textPrimary }}>
               {isUploading ? 'Uploading...' : 'Tap to add images'}
             </Text>
-            <Text style={{ fontSize: 10, color: colors.textMuted, marginTop: 4 }}>Supports JPG, PNG (Max 10MB)</Text>
+            <Text style={{ fontSize: 10, color: themeColors.textMuted, marginTop: 4 }}>Supports JPG, PNG (Max 10MB)</Text>
           </TouchableOpacity>
 
           {imageUrls.length > 0 && (
@@ -424,10 +426,10 @@ const AddLocationScreen = ({ navigation, route }: any) => {
                         height: 90,
                         borderRadius: 12,
                         borderWidth: isMain ? 3 : 1,
-                        borderColor: isMain ? colors.primary : colors.borderLight,
+                        borderColor: isMain ? themeColors.primary : themeColors.border,
                         marginRight: 10,
                         overflow: 'hidden',
-                        backgroundColor: colors.background,
+                        backgroundColor: themeColors.surfaceMuted,
                       }}
                     >
                       <Image source={{ uri }} style={{ width: '100%', height: '100%' }} />
@@ -436,12 +438,12 @@ const AddLocationScreen = ({ navigation, route }: any) => {
                           position: 'absolute',
                           left: 6,
                           top: 6,
-                          backgroundColor: colors.primary,
+                          backgroundColor: themeColors.primary,
                           borderRadius: 10,
                           paddingHorizontal: 8,
                           paddingVertical: 2,
                         }}>
-                          <Text style={{ color: colors.textOnPrimary, fontSize: 10, fontWeight: '700' }}>Main</Text>
+                          <Text style={{ color: themeColors.white, fontSize: 10, fontWeight: '700' }}>Main</Text>
                         </View>
                       )}
                       <TouchableOpacity
@@ -493,12 +495,12 @@ const AddLocationScreen = ({ navigation, route }: any) => {
 
         {!isAdding && (
           <View style={[styles.uploadBox, { padding: 16, borderStyle: 'dashed' }]}>
-            <Text style={{ fontSize: 12, color: colors.textSecondary }}>Want to boost visitors?</Text>
+            <Text style={{ fontSize: 12, color: themeColors.textSecondary }}>Want to boost visitors?</Text>
             <TouchableOpacity onPress={() => {
               setIsAdding(true);
               setEditingId(null);
             }}>
-              <Text style={[styles.linkText, { fontWeight: 'bold' }]}>Create a seasonal offer</Text>
+              <Text style={{ color: themeColors.primary, fontWeight: 'bold' }}>Create a seasonal offer</Text>
             </TouchableOpacity>
           </View>
         )}

@@ -1,9 +1,9 @@
 import { StyleSheet } from "react-native";
-import { commonStyles } from "../../common/styles";
-import { colors } from "../../common/colors";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
   background: {
     flex: 1,
@@ -62,9 +62,9 @@ const styles = StyleSheet.create({
     marginBottom: 11,
     paddingHorizontal: 14,
     borderRadius: 14,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)', // Vẫn giữ độ sâu (inset) nhưng màu tối hơn
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     borderWidth: 1.5,
-    borderColor: 'rgba(148, 163, 184, 0.3)', // Viền xám bạc thay vì xanh lơ rực rỡ
+    borderColor: 'rgba(148, 163, 184, 0.3)',
   },
   roleSection: {
     marginTop: 3,
@@ -204,4 +204,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default styles;
+export default getStyles;

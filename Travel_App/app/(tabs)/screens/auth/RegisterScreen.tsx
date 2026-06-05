@@ -1,5 +1,5 @@
 import { Checkbox } from 'expo-checkbox';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -14,9 +14,13 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getApiErrorMessage, useAuth } from '../../context/AuthContext';
-import styles from './RegisterScreen.styles';
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from './RegisterScreen.styles';
 
 export default function RegisterScreen({ navigation }: any) {
+    const { colors: themeColors } = useTheme();
+    const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
     const nav = navigation ?? useNavigation<any>();
     const [isPasswordVisible, setPasswordVisible] = useState(false);
     const [isCfPasswordVisible, setCfPasswordVisible] = useState(false);
@@ -109,7 +113,7 @@ export default function RegisterScreen({ navigation }: any) {
                         <View style={styles.inputContainer}>
                             <Image
                                 source={require('../../../../assets/images/user-icon.png')}
-                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }}
                             />
                             <TextInput
                                 placeholder="Full Name"
@@ -151,7 +155,7 @@ export default function RegisterScreen({ navigation }: any) {
                         <View style={styles.inputContainer}>
                             <Image
                                 source={require('../../../../assets/images/password-icon.png')}
-                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }}
                             />
                             <TextInput
                                 placeholder="Password"
@@ -186,7 +190,7 @@ export default function RegisterScreen({ navigation }: any) {
                         <View style={styles.inputContainer}>
                             <Image
                         source={require('../../../../assets/images/cfpassword-icon.png')}
-                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }} // Chuyển sang xám bạc
+                                style={{ width: 20, height: 20, marginRight: 12, tintColor: '#94a3b8' }}
                             />
                             <TextInput
                                 placeholder="Confirm Password"

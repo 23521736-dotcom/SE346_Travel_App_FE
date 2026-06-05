@@ -1,9 +1,9 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
   
   // Nút tròn đè lên ảnh
   roundButton: {
@@ -99,7 +99,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#E0F2FE',
+    backgroundColor: colors.primaryLight,
     marginRight: 12,
   },
 
@@ -117,14 +117,14 @@ const styles = StyleSheet.create({
 
   promotionBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: '#E0F2FE',
+    backgroundColor: colors.primaryLight,
     borderRadius: 999,
     paddingHorizontal: 10,
     paddingVertical: 4,
   },
 
   promotionBadgeText: {
-    color: '#0369A1',
+    color: colors.primary,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -156,4 +156,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default styles;
+export default getStyles;

@@ -13,8 +13,8 @@ import {
 } from "react-native";
 import { getApiErrorMessage } from "../../../../lib/api/client";
 import { deleteTripDiaryEntry, fetchTripDiary, TripDiaryEntry } from "../../../../lib/api/diary";
-import { colors } from "../../common/colors";
-import styles from "./TripDiaryScreen.styles";
+import { useTheme } from "../../context/ThemeContext";
+import getStyles from "./TripDiaryScreen.styles";
 
 const fallbackHeroImage =
   "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=1200&auto=format&fit=crop";
@@ -44,18 +44,22 @@ function TimelineCard({
   onEdit,
   onDelete,
   isDeleting,
+  colors,
+  styles,
 }: {
   entry: TripDiaryEntry;
   onEdit: (entry: TripDiaryEntry) => void;
   onDelete: (entry: TripDiaryEntry) => void;
   isDeleting?: boolean;
+  colors: any;
+  styles: any;
 }) {
   const visibleImages = entry.imageUrls.slice(0, 3);
   const extraCount = Math.max(entry.imageUrls.length - visibleImages.length, 0);
   const isTwoColumn = visibleImages.length === 2;
 
   return (
-    <ScrollView style={[styles.timelineCard, isDeleting && styles.timelineCardDeleting]}>
+    <View style={[styles.timelineCard, isDeleting && styles.timelineCardDeleting]}>
       <View style={styles.timelineDot} />
 
       <View style={styles.cardHeader}>
@@ -64,12 +68,12 @@ function TimelineCard({
             {entry.title}
           </Text>
           <View style={styles.timeRow}>
-            <Ionicons name="time-outline" size={16} color="#3E4850" />
+            <Ionicons name="time-outline" size={16} color={colors.textSecondary} />
             <Text style={styles.timeText}>{formatDiaryDate(entry.occurredAt)}</Text>
           </View>
           {entry.locationName ? (
             <View style={styles.timeRow}>
-              <Ionicons name="location-outline" size={16} color="#3E4850" />
+              <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
               <Text style={styles.timeText}>{entry.locationName}</Text>
             </View>
           ) : null}
@@ -82,7 +86,7 @@ function TimelineCard({
             onPress={() => onEdit(entry)}
             disabled={isDeleting}
           >
-            <Ionicons name="create-outline" size={20} color="#6E7881" />
+            <Ionicons name="create-outline" size={20} color={colors.textSecondary} />
           </Pressable>
           <Pressable
             hitSlop={8}
@@ -129,11 +133,14 @@ function TimelineCard({
       <View style={styles.quoteBox}>
         <Text style={styles.quoteText}>{entry.content}</Text>
       </View>
-    </ScrollView>
+    </View>
   );
 }
 
 export default function TripDiaryScreen({ navigation, route }: any) {
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const tripId = route?.params?.id ?? route?.params?.tripId;
   const tripTitle = route?.params?.title ?? route?.params?.tripTitle ?? "Trip diary";
   const tripDate = route?.params?.date;
@@ -249,16 +256,10 @@ export default function TripDiaryScreen({ navigation, route }: any) {
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           <Pressable style={styles.iconButton} onPress={() => navigation.goBack()}>
-            <Ionicons name="arrow-back" size={24} color={colors.primaryDark} />
+            <Ionicons name="arrow-back" size={24} color={themeColors.primary} />
           </Pressable>
           <Text style={styles.title}>Trip Diary</Text>
         </View>
-
-        {/* <View style={styles.headerActions}>
-          <Pressable hitSlop={8} style={styles.primaryIconButton} onPress={() => openEditor()}>
-            <Ionicons name="add" size={23} color={colors.white} />
-          </Pressable>
-        </View> */}
       </View>
 
       <ScrollView
@@ -269,7 +270,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
           <Image source={{ uri: heroImage }} style={styles.heroImage} />
           <View style={styles.heroOverlay}>
             <Pressable style={styles.playButton} onPress={() => alert("Phát video")}>
-              <Ionicons name="play" size={30} color={colors.white} />
+              <Ionicons name="play" size={30} color="white" />
             </Pressable>
           </View>
           <View style={styles.heroTextWrap}>
@@ -282,14 +283,14 @@ export default function TripDiaryScreen({ navigation, route }: any) {
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>Saved Memories</Text>
             <Pressable style={styles.addEntryButton} onPress={() => openEditor()}>
-              <Ionicons name="add" size={18} color={colors.white} />
+              <Ionicons name="add" size={18} color="white" />
               <Text style={styles.addEntryText}>Write Diary</Text>
             </Pressable>
           </View>
 
           {isLoading ? (
             <View style={styles.stateBox}>
-              <ActivityIndicator color={colors.primary} />
+              <ActivityIndicator color={themeColors.primary} />
               <Text style={styles.stateText}>Loading diary...</Text>
             </View>
           ) : null}
@@ -302,7 +303,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
 
           {!isLoading && !entries.length && !errorMessage ? (
             <View style={styles.emptyBox}>
-              <MaterialCommunityIcons name="notebook-plus-outline" size={42} color={colors.primary} />
+              <MaterialCommunityIcons name="notebook-plus-outline" size={42} color={themeColors.primary} />
               <Text style={styles.emptyTitle}>No diary entries yet</Text>
               <Text style={styles.emptyText}>Save the feelings, photos, and memorable moments from this trip.</Text>
               <Pressable style={styles.emptyButton} onPress={() => openEditor()}>
@@ -319,6 +320,8 @@ export default function TripDiaryScreen({ navigation, route }: any) {
                 <TimelineCard
                   key={entry.id}
                   entry={entry}
+                  colors={themeColors}
+                  styles={styles}
                   onEdit={openEditor}
                   onDelete={confirmDeleteEntry}
                   isDeleting={deletingEntryId === entry.id}
@@ -330,7 +333,7 @@ export default function TripDiaryScreen({ navigation, route }: any) {
 
         <View style={styles.ctaWrap}>
           <Pressable style={styles.ctaButton}>
-            <MaterialCommunityIcons name="movie-open-play" size={22} color={colors.white} />
+            <MaterialCommunityIcons name="movie-open-play" size={22} color="white" />
             <Text style={styles.ctaText}>Create Memory Video</Text>
           </Pressable>
           <Text style={styles.helperText}>

@@ -1,14 +1,13 @@
 import { StyleSheet } from "react-native";
-import { colors } from "../../common/colors";
-import { commonStyles } from "../../common/styles";
+import { getCommonStyles } from "../../common/styles";
+import { ThemeType } from "../../common/theme";
 
-const styles = StyleSheet.create({
-  // Kế thừa các style chung
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc',
+        backgroundColor: colors.background,
     },
     content: {
         flex: 1,
@@ -21,7 +20,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 13,
         fontWeight: '700',
-        color: '#177bb3',
+        color: colors.primary,
         letterSpacing: 0.8,
         marginTop: 18,
         marginBottom: 12,
@@ -31,7 +30,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
-        backgroundColor: '#ffffff',
+        backgroundColor: colors.surface,
         paddingVertical: 12,
         paddingHorizontal: 16,
         borderRadius: 14,
@@ -61,18 +60,18 @@ const styles = StyleSheet.create({
     itemText: {
         fontSize: 15,
         fontWeight: '500',
-        color: '#334155',
+        color: colors.textPrimary,
     },
     chevron: {
         fontSize: 18,
-        color: '#94a3b8',
+        color: colors.textSecondary,
         fontWeight: '500',
     },
     logoutButton: {
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#fff1f2',
+        backgroundColor: colors.dangerSoft,
         paddingVertical: 15,
         borderRadius: 14,
         marginTop: 25,
@@ -80,13 +79,13 @@ const styles = StyleSheet.create({
     logoutIcon: {
         width: 20,
         height: 20,
-        tintColor: '#e11d48',
+        tintColor: colors.danger,
         marginRight: 10,
     },
     logoutText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#e11d48',
+        color: colors.danger,
     },
     headerContainer: {
         alignItems: 'center',
@@ -97,8 +96,8 @@ const styles = StyleSheet.create({
         width: 140,
         height: 140,
         borderRadius: 70,
-        backgroundColor: '#ffffff',
-        padding: 4, // Tạo viền trắng mỏng bọc ngoài ảnh
+        backgroundColor: colors.surface,
+        padding: 4,
         marginBottom: 14,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 6 },
@@ -114,15 +113,15 @@ const styles = StyleSheet.create({
     userName: {
         fontSize: 20,
         fontWeight: '800',
-        color: '#1e293b',
+        color: colors.textPrimary,
         marginBottom: 4,
     },
     userEmail: {
         fontSize: 14,
-        color: '#64748b',
+        color: colors.textSecondary,
         fontWeight: '500',
     },
       
 });
 
-export default styles;
+export default getStyles;

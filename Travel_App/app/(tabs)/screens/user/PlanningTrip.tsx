@@ -1,5 +1,5 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -26,7 +26,8 @@ import {
   upsertTripDraft,
 } from "../../store/tripDraftStore";
 import { getApiErrorMessage } from '../../../../lib/api/client';
-import styles from "./PlanningTrip.styles";
+import { useTheme } from '../../context/ThemeContext';
+import getStyles from "./PlanningTrip.styles";
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -203,6 +204,9 @@ function sortTripForPlanning(trip: TripData) {
 }
 
 export default function PlanningTrip({ navigation, route }: any) {
+  const { colors: themeColors } = useTheme();
+  const styles = useMemo(() => getStyles(themeColors), [themeColors]);
+
   const routeTrip = route?.params?.tripData as TripData | undefined;
   const routeTripId = route?.params?.tripId ? String(route.params.tripId) : undefined;
   const localTripIdRef = useRef<string>(routeTrip?.id || createLocalTripId());
@@ -331,28 +335,6 @@ export default function PlanningTrip({ navigation, route }: any) {
     }
   };
 
-  const confirmDeleteTrip = () => {
-    if (!trip.id) {
-      Alert.alert('Cannot delete trip', 'This trip has not been saved yet.');
-      return;
-    }
-
-    Alert.alert(
-      'Delete trip',
-      `Delete "${trip.title}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            void deleteCurrentTrip();
-          },
-        },
-      ]
-    );
-  };
-
   return (
     <SafeAreaView style={styles.container}>
       {/* 1. HEADER */}
@@ -362,7 +344,7 @@ export default function PlanningTrip({ navigation, route }: any) {
           onPress={() => navigation.goBack()}
           style={styles.iconButton}
         >
-          <Feather name="chevron-left" size={24} color="#333" />
+          <Feather name="chevron-left" size={24} color={themeColors.textPrimary} />
         </TouchableOpacity>
 
         <Text style={styles.headerTitle}>Trip Planning</Text>
@@ -373,7 +355,7 @@ export default function PlanningTrip({ navigation, route }: any) {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {isLoadingRouteTrip ? (
-          <ActivityIndicator size="small" color="#0EB4D3" />
+          <ActivityIndicator size="small" color={themeColors.primary} />
         ) : null}
 
         <View style={styles.card}>
@@ -389,27 +371,9 @@ export default function PlanningTrip({ navigation, route }: any) {
                   (isDeletingTrip || isLoadingRouteTrip) && styles.actionButtonDisabled,
                 ]}
               >
-                <Feather name="edit-2" size={14} color="#0EB4D3" />
+                <Feather name="edit-2" size={14} color={themeColors.primary} />
                 <Text style={styles.modifyBtnText}>Modify</Text>
               </Pressable>
-              {/* <Pressable
-                onPress={confirmDeleteTrip}
-                disabled={isDeletingTrip || isLoadingRouteTrip}
-                style={({ pressed }) => [
-                  styles.actionPillDanger,
-                  pressed && styles.buttonPressed,
-                  (isDeletingTrip || isLoadingRouteTrip) && styles.actionButtonDisabled,
-                ]}
-              >
-                {isDeletingTrip ? (
-                  <ActivityIndicator size="small" color="#E53935" />
-                ) : (
-                  <Feather name="trash-2" size={14} color="#E53935" />
-                )}
-                <Text style={styles.deleteTripText}>
-                  {isDeletingTrip ? 'Deleting' : 'Delete'}
-                </Text>
-              </Pressable> */}
             </View>
           </View>
 
@@ -417,14 +381,14 @@ export default function PlanningTrip({ navigation, route }: any) {
             <View style={styles.infoCol}>
               <Text style={styles.label}>Current Hotel</Text>
               <View style={styles.iconRow}>
-                <Ionicons name="bed" size={16} color="#0EB4D3" />
+                <Ionicons name="bed" size={16} color={themeColors.primary} />
                 <Text style={styles.infoValue}>{trip.hotel}</Text>
               </View>
             </View>
             <View style={styles.infoCol}>
               <Text style={styles.label}>Duration</Text>
               <View style={styles.iconRow}>
-                <Feather name="calendar" size={16} color="#0EB4D3" />
+                <Feather name="calendar" size={16} color={themeColors.primary} />
                 <Text style={styles.infoValue}>{trip.duration} Days</Text>
               </View>
               <Text style={styles.dateRangeText}>{getDateRangeText(trip)}</Text>
@@ -456,7 +420,7 @@ export default function PlanningTrip({ navigation, route }: any) {
                 ) : (
                   <>
                     <TouchableOpacity style={styles.avatarPlus}>
-                      <Feather name="plus" size={16} color="#718096" />
+                      <Feather name="plus" size={16} color={themeColors.textMuted} />
                     </TouchableOpacity>
                     <Text style={styles.emptyMembersText}>No members yet</Text>
                   </>
@@ -483,7 +447,7 @@ export default function PlanningTrip({ navigation, route }: any) {
               const dayTitle = day.title || `Day ${dayId}`;
 
               return (
-                <View key={day.dayId} style={styles.timelineDay}>
+                <View key={day.dayId || index} style={styles.timelineDay}>
                   <Pressable
                     onPress={() => toggleExpand(dayId)}
                     style={isExpanded ? styles.dayHeaderExpanded : styles.dayHeaderCollapsed}
@@ -506,7 +470,7 @@ export default function PlanningTrip({ navigation, route }: any) {
                     <Feather
                       name={isExpanded ? "chevron-up" : "chevron-down"}
                       size={20}
-                      color="#a0aec0"
+                      color={themeColors.textMuted}
                     />
                   </Pressable>
 
@@ -583,7 +547,7 @@ export default function PlanningTrip({ navigation, route }: any) {
                     <Feather
                       name={isExpanded ? "chevron-up" : "chevron-down"}
                       size={20}
-                      color="#a0aec0"
+                      color={themeColors.textMuted}
                     />
                   </Pressable>
                 </View>

@@ -1,18 +1,19 @@
 import { StyleSheet } from 'react-native';
-import { commonStyles } from '../../common/styles';
+import { getCommonStyles } from '../../common/styles';
+import { ThemeType } from '../../common/theme';
 
-const styles = StyleSheet.create({
-  ...commonStyles,
+const getStyles = (colors: ThemeType) => StyleSheet.create({
+  ...getCommonStyles(colors),
 
-  container: { flex: 1, backgroundColor: '#f8fafc' },
-  headerContainer: { paddingHorizontal: 20, paddingTop: 35, backgroundColor: '#fff', paddingBottom: 10 },
+  container: { flex: 1, backgroundColor: colors.background },
+  headerContainer: { paddingHorizontal: 20, paddingTop: 35, backgroundColor: colors.surface, paddingBottom: 10 },
   headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  headerTitle: { fontSize: 25, fontWeight: 'bold', color: '#1e293b', flex: 1 },
+  headerTitle: { fontSize: 25, fontWeight: 'bold', color: colors.textPrimary, flex: 1 },
   addButton: {
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#0f6c82',
+    backgroundColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -21,40 +22,40 @@ const styles = StyleSheet.create({
   clearIcon: { position: 'absolute', right: 15, zIndex: 1 },
   searchInput: {
     flex: 1,
-    backgroundColor: '#f1f5f9',
+    backgroundColor: colors.surfaceMuted,
     borderRadius: 25,
     paddingLeft: 45,
     paddingRight: 45,
     height: 45,
-    color: '#333',
+    color: colors.textPrimary,
   },
   filtersScroll: { flexDirection: 'row' },
   filterChip: {
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: colors.border,
     marginRight: 10,
   },
-  filterChipActive: { backgroundColor: '#0f6c82', borderColor: '#0f6c82' },
-  filterText: { color: '#64748b', fontSize: 14, fontWeight: '600' },
-  filterTextActive: { color: '#fff' },
+  filterChipActive: { backgroundColor: colors.primary, borderColor: colors.primary },
+  filterText: { color: colors.textSecondary, fontSize: 14, fontWeight: '600' },
+  filterTextActive: { color: colors.white },
   listContainer: { flex: 1 },
   listContent: { padding: 20, paddingBottom: 100 },
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 20,
     marginBottom: 20,
     overflow: 'hidden',
     elevation: 2,
-    shadowColor: '#000',
+    shadowColor: colors.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     borderWidth: 1,
-    borderColor: '#fff',
+    borderColor: colors.border,
   },
   imageContainer: { height: 180, width: '100%', position: 'relative' },
   cardImage: { width: '100%', height: '100%' },
@@ -62,31 +63,31 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 15,
     left: 15,
-    backgroundColor: 'rgba(15,108,130,0.9)',
+    backgroundColor: colors.overlay,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 14,
   },
-  categoryText: { color: '#fff', fontSize: 11, fontWeight: 'bold' },
+  categoryText: { color: colors.white, fontSize: 11, fontWeight: 'bold' },
   cardBody: { padding: 15, flexDirection: 'row', justifyContent: 'space-between'},
   cardText: { flexDirection: 'column', rowGap: 2, justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 5 },
-  cardTitle: { fontSize: 16, fontWeight: 'bold', color: '#1e293b', flex: 1, marginRight: 10 },
+  cardTitle: { fontSize: 16, fontWeight: 'bold', color: colors.textPrimary, flex: 1, marginRight: 10 },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff7ed',
+    backgroundColor: colors.surfaceMuted,
     paddingHorizontal: 5,
     paddingVertical: 0,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#ffedd5',
+    borderColor: colors.border,
   },
-  ratingText: { fontSize: 14, fontWeight: 'bold', color: '#c2410c', marginLeft: 5 },
+  ratingText: { fontSize: 14, fontWeight: 'bold', color: colors.warning, marginLeft: 5 },
   locationRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   locationInfo: { flexDirection: 'row', alignItems: 'center', flex: 1, marginRight: 12 },
-  locationText: { fontSize: 13, color: '#64748b', marginLeft: 4, flex: 1 },
+  locationText: { fontSize: 13, color: colors.textSecondary, marginLeft: 4, flex: 1 },
   emptyStateContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 50 },
-  emptyStateText: { marginTop: 10, color: '#94a3b8', fontSize: 14, fontWeight: '500' },
+  emptyStateText: { marginTop: 10, color: colors.textMuted, fontSize: 14, fontWeight: '500' },
 
   statusBadge: {
     position: 'absolute',
@@ -103,4 +104,4 @@ const styles = StyleSheet.create({
 
 });
 
-export default styles;
+export default getStyles;
