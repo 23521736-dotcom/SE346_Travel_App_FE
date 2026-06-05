@@ -25,6 +25,7 @@ import {
   removePlaceFromTripDay,
   upsertTripToBackend,
 } from '../../../../lib/api/trips';
+import { uploadTripCover } from '../../../../lib/api/uploads';
 import {
   getSchedulePeriodFromTime,
   getTripDraft,
@@ -41,6 +42,10 @@ import styles from './EditingTripScreen.style';
 type DateInputType = 'start' | 'end';
 const WebDateInput = 'input' as any;
 const LOCAL_TRIP_ID_PREFIX = 'local_trip_';
+
+function isRemoteUrl(value?: string | null) {
+  return typeof value === 'string' && /^https?:\/\//i.test(value.trim());
+}
 
 const defaultTrip: TripData = {
   title: 'New Trip',
@@ -574,14 +579,24 @@ export default function EditingTripScreen({ navigation, route }: any) {
     setIsSavingTrip(true);
     setSaveError(null);
     try {
+      const coverImageUrl = updatedTrip.coverImageUrl || updatedTrip.image;
+      const persistedCoverImageUrl =
+        coverImageUrl && !isRemoteUrl(coverImageUrl)
+          ? await uploadTripCover(coverImageUrl)
+          : coverImageUrl;
+      const tripWithPersistedCover = normalizeTripDays({
+        ...updatedTrip,
+        image: persistedCoverImageUrl,
+        coverImageUrl: persistedCoverImageUrl,
+      });
       const localDraftId = isLocalTripId(updatedTrip.id) ? updatedTrip.id : undefined;
       const backendTripId = localDraftId ? undefined : updatedTrip.id;
       const baselineTrip = normalizeTripDays(savedTripBaselineRef.current);
       const baselineDays = baselineTrip.itineraryData || [];
-      const updatedDays = updatedTrip.itineraryData || [];
+      const updatedDays = tripWithPersistedCover.itineraryData || [];
       const baselineDayMap = new Map(baselineDays.map((day) => [day.dayId, day]));
       const tripPayloadForMetadata = {
-        ...updatedTrip,
+        ...tripWithPersistedCover,
         itineraryData: updatedDays.map((day) => ({
           ...day,
           locations: baselineDayMap.get(day.dayId)?.locations || [],
@@ -593,7 +608,7 @@ export default function EditingTripScreen({ navigation, route }: any) {
         backendTripId
       );
 
-      let persistedTrip = mergeApiTripIntoDraft(updatedTrip, savedTrip);
+      let persistedTrip = mergeApiTripIntoDraft(tripWithPersistedCover, savedTrip);
       syncTripState(persistedTrip);
       const persistedTripId = persistedTrip.id || updatedTrip.id;
 

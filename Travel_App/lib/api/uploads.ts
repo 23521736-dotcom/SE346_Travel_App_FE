@@ -174,6 +174,17 @@ export async function uploadDiaryImages(images: UploadImageInput[]): Promise<str
   return [...remoteUrls, ...uploadedUrls];
 }
 
+export async function uploadTripCover(uri: string): Promise<string> {
+  const token = await getAccessToken();
+  const form = new FormData();
+  await appendImageFile(form, 'file', { uri }, 'trip-cover.jpg');
+
+  const endpoint = '/uploads/trip-cover';
+  const res = await uploadForm(endpoint, form, token);
+  const uploadedUrl = await parseUploadResponse(res, endpoint);
+  return Array.isArray(uploadedUrl) ? uploadedUrl[0] : uploadedUrl;
+}
+
 export async function uploadAvatar(uri: string): Promise<string> {
   const token = await getAccessToken();
   const form = new FormData();
