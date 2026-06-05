@@ -30,15 +30,15 @@ function getExpoHostUrl(port: number): string | null {
 }
 
 function defaultApiBaseUrl(): string {
-  const expoHostUrl = getExpoHostUrl(8000);
+  const expoHostUrl = getExpoHostUrl(8001);
   if (expoHostUrl) {
     return expoHostUrl;
   }
 
   if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:8000';
+    return 'http://10.0.2.2:8001';
   }
-  return 'http://10.208.131.222:8000';
+  return 'http://10.29.208.216:8001';
 }
 
 function resolveApiBaseUrl(): string {
@@ -62,3 +62,7 @@ export const API_BASE_URL =
   resolveApiBaseUrl();
 
 export const API_V1 = `${API_BASE_URL}/api/v1`;
+
+if (__DEV__) {
+  console.log('API_V1:', API_V1);
+}

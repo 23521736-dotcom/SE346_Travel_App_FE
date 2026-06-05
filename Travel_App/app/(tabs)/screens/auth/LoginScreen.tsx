@@ -130,15 +130,17 @@ export default function LoginScreen({ navigation }: any) {
             if (Platform.OS === 'web') {
                 window.location.reload();
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Login error:', err);
+            console.log("message:", err.message);
+            console.log("response:", err.response?.data);
+            console.log("request:", err.request);
             const msg = getApiErrorMessage(err);
             let text = msg === 'INVALID_CREDENTIALS' ? t('auth.invalidCredentials') : msg;
 
             if (msg.toLowerCase().includes('verify') || msg.toLowerCase().includes('activated')) {
                 text = 'Account is not activated. Please check your email to verify it.';
             }
-
             showAlert(t('auth.loginFailed'), text);
         } finally {
             setSubmitting(false);

@@ -162,11 +162,11 @@ export default function ForgotPasswordScreen_OTP({ navigation, route }: any) {
                                 </TouchableOpacity>
                             </View>
 
-                        </View>
-                    </View>
-                </KeyboardAvoidingView>
-            </ImageBackground>
-        </SafeAreaView>
+                        </View >
+                    </View >
+                </KeyboardAvoidingView >
+            </ImageBackground >
+        </SafeAreaView >
     );
 };
 

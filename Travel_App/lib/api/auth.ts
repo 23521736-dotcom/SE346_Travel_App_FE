@@ -50,10 +50,10 @@ export async function forgotPassword(email: string): Promise<{ message: string }
 }
 
 export async function resetPassword(email: string, otp: string, password: string): Promise<{ message: string }> {
-  const res = await apiClient.post<ApiOk<{ message: string }>>('/auth/reset-password', {
+  const res = await apiClient.post<ApiOk<{ message: string }>>('/auth/change-password-otp', {
     email,
     otp,
-    password,
+    newPassword: password,
   });
   return res.data.data;
 }
